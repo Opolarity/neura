@@ -2,8 +2,21 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
-import { getParameters } from "@/modules/settings/services/Parameters.service";
 import { formatDateTime } from "@/shared/utils/date";
+import {
+  getInvoiceTemplateConfig,
+  printedRepresentationLegend,
+  shouldShowCustomerDocument,
+  type InvoiceTemplateConfig,
+} from "@/shared/utils/document-templates/documentTemplateConfig";
+import { drawLogoInBox, loadDocumentLogo, resolveCompanyHeader } from "@/shared/utils/document-templates/pdfHeader";
+import {
+  CLOSING_MESSAGE,
+  FOOTER_TITLE,
+  renderInvoiceA4,
+  type InvoicePrintData,
+  type InvoicePrintExtraLine,
+} from "@/shared/utils/document-templates/invoiceA4Pdf";
 import { hasShippingItem } from "../utils/shippingItem";
 
 interface InvoiceData {
@@ -12,6 +25,7 @@ interface InvoiceData {
   invoice_number: string | null;
   total_amount: number;
   total_taxes: number | null;
+  total_free: number | null;
   client_name: string | null;
   customer_document_number: string;
   customer_document_type_id: number;
@@ -20,6 +34,7 @@ interface InvoiceData {
   client_address: string | null;
   qr_data: string | null;
   created_by: string;
+  vinculated_invoice_id: number | null;
 }
 
 interface InvoiceItem {
@@ -32,7 +47,7 @@ interface InvoiceItem {
   measurement_unit: string;
 }
 
-function numberToWords(num: number): string {
+export function numberToWords(num: number): string {
   const units = ["", "UNO", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
   const teens = ["DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECISÉIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE"];
   const tens = ["", "", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
@@ -73,63 +88,67 @@ function numberToWords(num: number): string {
   return words.trim() + ` Y ${decPart.toString().padStart(2, "0")}/100 SOLES`;
 }
 
-async function loadImage(url: string): Promise<{ dataUrl: string; width: number; height: number }> {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  const objectUrl = URL.createObjectURL(blob);
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d")!;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(objectUrl);
-      resolve({ dataUrl: canvas.toDataURL("image/png"), width: img.width, height: img.height });
-    };
-    img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("Failed to load image")); };
-    img.src = objectUrl;
-  });
+const DEFAULT_RETURN_POLICY =
+  "Recuerda que puedes realizar cambios y devoluciones dentro de los 15 días posteriores a la compra, siempre y cuando el producto esté en su estado original y con el ticket de compra.";
+
+export interface InvoicePdfOptions {
+  /**
+   * "80mm" (por defecto) o el formato de la plantilla (InvoicePrintFormat).
+   * Solo la lista de Comprobantes pide "configured": el POS, los comprobantes de
+   * la venta y WhatsApp quedan siempre en 80 mm.
+   */
+  format?: "80mm" | "configured";
 }
 
-/** El ticket del comprobante como PDF: el mismo que se imprime. */
-export async function generateInvoicePdfBlob(invoiceId: number): Promise<Blob> {
-  const [invoiceRes, itemsRes, paramsRes, parametersRes, branchRes, companyParams] =
-    await Promise.all([
-      supabase
-        .from("invoices")
-        .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data")
-        .eq("id", invoiceId)
-        .single(),
-      supabase.from("invoice_items").select("description, quantity, unit_price, discount, igv, total, measurement_unit").eq("invoice_id", invoiceId),
-      supabase.from("paremeters").select("name, value, code"),
-      supabase.from("parameters").select("name, value").eq("name", "InvoiceLogoUrl").maybeSingle(),
-      supabase.from("order_invoices").select("orders(*, branches(*))").eq("invoice_id", invoiceId).single(),
-      getParameters(["CompanyName", "CompanyPhoneNumber", "CompanyDocumentNumber", "CompanyEmail", "InvoiceFooterMessage"]),
-    ]);
+/**
+ * Lee el comprobante y lo resuelve con la plantilla. Es la única consulta de
+ * los PDF de comprobante: el ticket y el A4 dibujan lo mismo.
+ */
+export async function loadInvoicePrintData(
+  invoiceId: number,
+): Promise<{ data: InvoicePrintData; template: InvoiceTemplateConfig }> {
+  const [invoiceRes, itemsRes, branchRes, template] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select("id, tax_serie, invoice_number, total_amount, total_taxes, total_free, client_name, customer_document_number, customer_document_type_id, invoice_type_id, created_at, declared, client_email, client_address, created_by, qr_data, vinculated_invoice_id")
+      .eq("id", invoiceId)
+      .single(),
+    supabase.from("invoice_items").select("description, quantity, unit_price, discount, igv, total, measurement_unit").eq("invoice_id", invoiceId),
+    supabase.from("order_invoices").select("orders(*, branches(*))").eq("invoice_id", invoiceId).single(),
+    getInvoiceTemplateConfig(),
+  ]);
 
   if (invoiceRes.error || !invoiceRes.data) throw new Error("No se encontró el comprobante");
 
   const invoice = invoiceRes.data as InvoiceData;
   const items = (itemsRes.data || []) as InvoiceItem[];
-  const params = (paramsRes.data || []) as { name: string; value: string; code: string | null }[];
-  const getParam = (code: string) => params.find((p) => p.code === code)?.value || "";
+  const order = (branchRes.data as any)?.orders;
 
-  const shippingMethodCode = (branchRes.data as any)?.orders?.shipping_method_code;
+  const shippingMethodCode = order?.shipping_method_code;
   const [shippingMethod, discountOrders, neighborhood, docTypeRes, invTypeRes, profileRes] =
     await Promise.all([
       shippingMethodCode
         ? supabase.from("shipping_costs").select("name").eq("id", shippingMethodCode).single()
         : Promise.resolve(null),
-      supabase.from("order_discounts").select("name, discount_amount").eq("order_id", (branchRes.data as any)?.orders?.id),
-      supabase.from("neighborhoods").select("name").eq("id", (branchRes.data as any)?.orders?.branches?.neighborhood_id).single(),
+      supabase.from("order_discounts").select("name, discount_amount").eq("order_id", order?.id),
+      supabase.from("neighborhoods").select("name").eq("id", order?.branches?.neighborhood_id).single(),
       supabase.from("document_types").select("name").eq("id", invoice.customer_document_type_id).single(),
-      supabase.from("types").select("name").eq("id", invoice.invoice_type_id).single(),
+      supabase.from("types").select("name, code").eq("id", invoice.invoice_type_id).single(),
       supabase.from("profiles").select("account_id").eq("UID", invoice.created_by).single(),
     ]);
+
+  const typeCode = (invTypeRes.data?.code ?? "").trim();
+
+  // Nota de crédito: el A4 muestra el comprobante que modifica (no hay motivo guardado).
+  let modifiedDocument = "";
+  if (typeCode === "3" && invoice.vinculated_invoice_id) {
+    const { data: parent } = await supabase
+      .from("invoices")
+      .select("tax_serie, invoice_number")
+      .eq("id", invoice.vinculated_invoice_id)
+      .maybeSingle();
+    if (parent) modifiedDocument = [parent.tax_serie, parent.invoice_number].filter(Boolean).join("-");
+  }
 
   let cashierName = "";
   if (profileRes.data) {
@@ -141,70 +160,128 @@ export async function generateInvoicePdfBlob(invoiceId: number): Promise<Blob> {
     if (account) cashierName = [account.name, account.last_name].filter(Boolean).join(" ");
   }
 
-  const companyName = companyParams["CompanyName"] || "EMPRESA";
-  const companyAddress =
-    (branchRes.data as any)?.orders?.branches?.address + " " + neighborhood?.data?.name || "";
-  const companyPhone = companyParams["CompanyPhoneNumber"];
-  const companyEmail = companyParams["CompanyEmail"];
-  const companyRuc = companyParams["CompanyDocumentNumber"];
+  const establishmentAddress = order?.branches?.address + " " + neighborhood?.data?.name || "";
 
+  const logo = await loadDocumentLogo(template.logoUrl);
+
+  let qrDataUrl: string | null = null;
+  if (invoice.qr_data) {
+    try { qrDataUrl = await QRCode.toDataURL(invoice.qr_data, { width: 200, margin: 1 }); } catch {}
+  }
+
+  // Comprobantes nuevos traen el envío como item; solo los anteriores necesitan esta línea.
+  const extraLines: InvoicePrintExtraLine[] = [];
+  if (shippingMethodCode && shippingMethod && !hasShippingItem(items)) {
+    extraLines.push({
+      description: (shippingMethod as any).data?.name || shippingMethodCode,
+      amount: (order.shipping_cost as number).toFixed(2),
+    });
+  }
+  for (const discount of discountOrders.data ?? []) {
+    extraLines.push({ description: discount.name, amount: "-" + discount.discount_amount.toFixed(2) });
+  }
+
+  const taxes = invoice.total_taxes || 0;
+  const data: InvoicePrintData = {
+    company: resolveCompanyHeader(template, establishmentAddress),
+    logo,
+    typeCode,
+    typeName: invTypeRes.data?.name || "",
+    orderId: order?.id ? String(order.id) : "",
+    serie: invoice.tax_serie,
+    number: invoice.invoice_number,
+    issuedAt: formatDateTime(invoice.created_at),
+    currency: "SOLES",
+    customer: {
+      name: invoice.client_name || "",
+      documentTypeName: docTypeRes.data?.name || "",
+      documentNumber: invoice.customer_document_number,
+      showDocument: shouldShowCustomerDocument(template, typeCode, invoice.total_amount),
+      address: invoice.client_address,
+      showAddress: template.show.customerAddress,
+    },
+    modifiedDocument,
+    noteReason: null,
+    items: items.map((item) => ({
+      quantity: item.quantity,
+      unit: item.measurement_unit,
+      description: item.description,
+      unitPrice: item.unit_price,
+      discount: item.discount,
+      total: item.total,
+    })),
+    extraLines,
+    totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
+    taxLines: [
+      ["OP. GRAVADAS", `S/ ${(invoice.total_amount - taxes).toFixed(2)}`],
+      ["IGV 18%", `S/ ${taxes.toFixed(2)}`],
+    ],
+    freeAmount: invoice.total_free || 0,
+    totalAmount: invoice.total_amount,
+    amountInWords: numberToWords(invoice.total_amount),
+    cashierName,
+    qrDataUrl,
+    legends: [],
+    footerMessage: template.footerMessage || DEFAULT_RETURN_POLICY,
+  };
+
+  return { data, template };
+}
+
+/** Ticket térmico de 80 mm. El alto se ajusta al contenido. */
+export function renderInvoiceTicket(data: InvoicePrintData): jsPDF {
   const pageWidth = 80;
   const margin = 3;
   const contentWidth = pageWidth - margin * 2;
   const fontSize = { title: 11, subtitle: 9.5, normal: 8.5, small: 8, tiny: 7.5 };
-
-  let logoImg: { dataUrl: string; width: number; height: number } | null = null;
-  try { logoImg = await loadImage(parametersRes.data?.value || "/images/logo-ticket.png"); } catch {}
-
-  let qrCodeDataUrl: string | null = null;
-  if (invoice.qr_data) {
-    try { qrCodeDataUrl = await QRCode.toDataURL(invoice.qr_data, { width: 200, margin: 1 }); } catch {}
-  }
+  const { company, logo } = data;
+  const printedLegend = printedRepresentationLegend(data.typeCode);
 
   const drawContent = (doc: jsPDF): number => {
     let y = 4;
 
-    if (logoImg) {
+    if (logo) {
       const maxW = 60, maxH = 22;
-      const ratio = Math.min(maxW / logoImg.width, maxH / logoImg.height);
-      const w = logoImg.width * ratio, h = logoImg.height * ratio;
-      const logoX = (pageWidth - maxW) / 2;
-      const offsetX = (maxW - w) / 2, offsetY = (maxH - h) / 2;
-      doc.addImage(logoImg.dataUrl, "PNG", logoX + offsetX, y + offsetY, w, h);
-      y += offsetY + h + 5;
+      y += drawLogoInBox(doc, logo, { x: (pageWidth - maxW) / 2, y, width: maxW, height: maxH }) + 5;
     } else {
       y += 2;
     }
 
-    if (!logoImg) {
+    if (!logo) {
       doc.setFontSize(fontSize.title); doc.setFont("helvetica", "bold");
-      for (const line of doc.splitTextToSize(companyName.toUpperCase(), contentWidth)) {
+      for (const line of doc.splitTextToSize((company.name || "EMPRESA").toUpperCase(), contentWidth)) {
         doc.text(line, pageWidth / 2, y, { align: "center" }); y += 3.5;
       }
     }
     y += 0.5;
 
     doc.setFontSize(fontSize.small); doc.setFont("helvetica", "normal");
-    if (companyAddress) {
-      for (const line of doc.splitTextToSize(companyAddress, contentWidth)) {
+    // Domicilio fiscal (SUNAT), además de la dirección del establecimiento.
+    if (company.fiscalAddress) {
+      for (const line of doc.splitTextToSize(`Domicilio fiscal: ${company.fiscalAddress}`, contentWidth)) {
         doc.text(line, pageWidth / 2, y, { align: "center" }); y += 3;
       }
     }
-    if (companyPhone) { doc.text(`Teléfono: ${companyPhone}`, pageWidth / 2, y, { align: "center" }); y += 3; }
-    if (companyEmail) { doc.text(`E-mail: ${companyEmail}`, pageWidth / 2, y, { align: "center" }); y += 3; }
-    if (companyRuc) {
+    if (company.establishmentAddress) {
+      for (const line of doc.splitTextToSize(company.establishmentAddress, contentWidth)) {
+        doc.text(line, pageWidth / 2, y, { align: "center" }); y += 3;
+      }
+    }
+    if (company.phone) { doc.text(`Teléfono: ${company.phone}`, pageWidth / 2, y, { align: "center" }); y += 3; }
+    if (company.email) { doc.text(`E-mail: ${company.email}`, pageWidth / 2, y, { align: "center" }); y += 3; }
+    if (company.ruc) {
       doc.setFont("helvetica", "bold");
-      doc.text(`R.U.C.: ${companyRuc}`, pageWidth / 2, y, { align: "center" });
+      doc.text(`R.U.C.: ${company.ruc}`, pageWidth / 2, y, { align: "center" });
       doc.setFont("helvetica", "normal"); y += 3.5;
     }
 
     y += 1.5; doc.setLineWidth(0.3); doc.line(margin, y, pageWidth - margin, y); y += 3.5;
 
     doc.setFontSize(fontSize.title); doc.setFont("helvetica", "bold");
-    doc.text((invTypeRes.data?.name || "COMPROBANTE").toUpperCase(), pageWidth / 2, y, { align: "center" }); y += 4;
-    doc.text(("PEDIDO: #" + ((branchRes.data as any)?.orders?.id || "")).toUpperCase(), pageWidth / 2, y, { align: "center" }); y += 4;
+    doc.text((data.typeName || "COMPROBANTE").toUpperCase(), pageWidth / 2, y, { align: "center" }); y += 4;
+    doc.text(("PEDIDO: #" + data.orderId).toUpperCase(), pageWidth / 2, y, { align: "center" }); y += 4;
 
-    const serieNum = [invoice.tax_serie, invoice.invoice_number].filter(Boolean).join(" - ");
+    const serieNum = [data.serie, data.number].filter(Boolean).join(" - ");
     if (serieNum) {
       doc.setFontSize(fontSize.subtitle);
       doc.text(serieNum, pageWidth / 2, y, { align: "center" }); y += 4;
@@ -214,9 +291,11 @@ export async function generateInvoicePdfBlob(invoiceId: number): Promise<Blob> {
 
     doc.setFontSize(fontSize.normal); doc.setFont("helvetica", "normal");
     for (const [label, value] of [
-      ["FECHA DE EMISIÓN:", formatDateTime(invoice.created_at)],
-      ["CLIENTE:", invoice.client_name || "Clientes Varios"],
-      [`${docTypeRes.data?.name || "Doc"}:`, invoice.customer_document_number],
+      ["FECHA DE EMISIÓN:", data.issuedAt],
+      ["CLIENTE:", data.customer.name || "Clientes Varios"],
+      ...(data.customer.showDocument
+        ? [[`${data.customer.documentTypeName || "Doc"}:`, data.customer.documentNumber]]
+        : []),
     ] as [string, string][]) {
       doc.setFont("helvetica", "bold"); doc.text(label, margin, y);
       doc.setFont("helvetica", "normal");
@@ -236,45 +315,34 @@ export async function generateInvoicePdfBlob(invoiceId: number): Promise<Blob> {
     y += 2; doc.setLineWidth(0.1); doc.line(margin, y, pageWidth - margin, y); y += 2.5;
 
     doc.setFont("helvetica", "normal");
-    for (const item of items) {
+    for (const item of data.items) {
       doc.text(item.quantity % 1 === 0 ? String(item.quantity) : item.quantity.toFixed(2), col.cant, y);
       const dw = col.pu - col.desc - 14;
       const dLines = doc.splitTextToSize(item.description, dw > 0 ? dw : 30);
       for (let i = 0; i < dLines.length; i++) doc.text(dLines[i], col.desc, y + i * 2.5);
-      doc.text(item.unit_price.toFixed(2), col.pu, y, { align: "right" });
+      doc.text(item.unitPrice.toFixed(2), col.pu, y, { align: "right" });
       // Descuento de la linea completa (no por unidad): total = cant x P.U. - descuento.
       doc.text(item.discount ? item.discount.toFixed(2) : "—", col.dsct, y, { align: "right" });
       y += Math.max(dLines.length * 2.5, 3) + 0.5;
     }
 
-    // Comprobantes nuevos traen el envío como item; solo los anteriores necesitan esta línea.
-    if (shippingMethodCode && shippingMethod && !hasShippingItem(items)) {
-      const label = (shippingMethod as any).data?.name || shippingMethodCode;
+    // Envío de comprobantes antiguos y descuentos del pedido.
+    for (const line of data.extraLines) {
       const dw = col.pu - col.desc - 14;
-      const sLines = doc.splitTextToSize(label, dw > 0 ? dw : 30);
-      for (let i = 0; i < sLines.length; i++) doc.text(sLines[i], col.desc, y + i * 2.5);
-      doc.text(((branchRes.data as any).orders.shipping_cost as number).toFixed(2), col.pu, y, { align: "right" });
-      y += Math.max(sLines.length * 2.5, 3) + 0.5;
-    }
-
-    for (const discount of discountOrders.data ?? []) {
-      const dw = col.pu - col.desc - 14;
-      const dLines = doc.splitTextToSize(discount.name, dw > 0 ? dw : 30);
-      for (let i = 0; i < dLines.length; i++) doc.text(dLines[i], col.desc, y + i * 2.5);
-      doc.text("-" + discount.discount_amount.toFixed(2), col.pu, y, { align: "right" });
-      y += Math.max(dLines.length * 2.5, 3) + 0.5;
+      const lLines = doc.splitTextToSize(line.description, dw > 0 ? dw : 30);
+      for (let i = 0; i < lLines.length; i++) doc.text(lLines[i], col.desc, y + i * 2.5);
+      doc.text(line.amount, col.pu, y, { align: "right" });
+      y += Math.max(lLines.length * 2.5, 3) + 0.5;
     }
 
     y += 1; doc.setLineWidth(0.2); doc.line(margin, y, pageWidth - margin, y); y += 3;
 
     doc.setFontSize(fontSize.normal);
-    const subtotal = invoice.total_amount - (invoice.total_taxes || 0);
-    const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalQty = data.totalQuantity;
     for (const [label, value] of [
       ["TOTAL CANT.", totalQty % 1 === 0 ? String(totalQty) : totalQty.toFixed(2)],
-      ["OP. GRAVADAS", `S/ ${subtotal.toFixed(2)}`],
-      ["IGV 18%", `S/ ${(invoice.total_taxes || 0).toFixed(2)}`],
-      ["IMPORTE TOTAL:", `S/ ${invoice.total_amount.toFixed(2)}`],
+      ...data.taxLines,
+      ["IMPORTE TOTAL:", `S/ ${data.totalAmount.toFixed(2)}`],
     ] as [string, string][]) {
       const isTotal = label === "IMPORTE TOTAL:";
       doc.setFont("helvetica", isTotal ? "bold" : "normal");
@@ -287,34 +355,41 @@ export async function generateInvoicePdfBlob(invoiceId: number): Promise<Blob> {
     y += 0.5;
     doc.setFont("helvetica", "bold"); doc.text("SON:", margin, y);
     doc.setFont("helvetica", "normal");
-    const wLines = doc.splitTextToSize(numberToWords(invoice.total_amount), contentWidth - 8);
+    const wLines = doc.splitTextToSize(data.amountInWords, contentWidth - 8);
     for (let i = 0; i < wLines.length; i++) doc.text(wLines[i], margin + 8, y + i * 2.5);
     y += wLines.length * 2.5 + 1;
 
-    if (cashierName) {
+    if (data.cashierName) {
       doc.setFont("helvetica", "bold"); doc.text("CAJERO:", margin, y);
-      doc.setFont("helvetica", "normal"); doc.text(cashierName.toUpperCase(), margin + 14, y);
+      doc.setFont("helvetica", "normal"); doc.text(data.cashierName.toUpperCase(), margin + 14, y);
       y += 4;
     }
 
     doc.setLineWidth(0.3); doc.line(margin, y, pageWidth - margin, y); y += 4;
 
     doc.setFontSize(fontSize.subtitle); doc.setFont("helvetica", "bold");
-    doc.text("CAMBIOS Y DEVOLUCIONES", pageWidth / 2, y, { align: "center" }); y += 3;
+    doc.text(FOOTER_TITLE, pageWidth / 2, y, { align: "center" }); y += 3;
 
     doc.setFontSize(fontSize.tiny); doc.setFont("helvetica", "normal");
-    const policy = companyParams["InvoiceFooterMessage"] ||
-      "Recuerda que puedes realizar cambios y devoluciones dentro de los 15 días posteriores a la compra, siempre y cuando el producto esté en su estado original y con el ticket de compra.";
-    for (const line of doc.splitTextToSize(policy, contentWidth)) {
+    for (const line of doc.splitTextToSize(data.footerMessage, contentWidth)) {
       doc.text(line, pageWidth / 2, y, { align: "center" }); y += 2.2;
     }
 
     y += 2; doc.setFontSize(fontSize.normal); doc.setFont("helvetica", "bold");
-    doc.text("Gracias por tu confianza.", pageWidth / 2, y, { align: "center" }); y += 4;
+    doc.text(CLOSING_MESSAGE, pageWidth / 2, y, { align: "center" }); y += 4;
 
-    if (qrCodeDataUrl) {
+    // Representación impresa: solo comprobantes electrónicos (el interno INV no la lleva).
+    if (printedLegend) {
+      doc.setFontSize(fontSize.tiny); doc.setFont("helvetica", "normal");
+      for (const line of doc.splitTextToSize(printedLegend, contentWidth)) {
+        doc.text(line, pageWidth / 2, y, { align: "center" }); y += 2.8;
+      }
+      y += 1;
+    }
+
+    if (data.qrDataUrl) {
       const qrSize = 35;
-      doc.addImage(qrCodeDataUrl, "PNG", (pageWidth - qrSize) / 2, y, qrSize, qrSize);
+      doc.addImage(data.qrDataUrl, "PNG", (pageWidth - qrSize) / 2, y, qrSize, qrSize);
       y += qrSize + 2;
     }
 
@@ -325,22 +400,40 @@ export async function generateInvoicePdfBlob(invoiceId: number): Promise<Blob> {
   const finalY = drawContent(measureDoc);
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [pageWidth, finalY + 4] });
   drawContent(doc);
-
-  return doc.output("blob");
+  return doc;
 }
 
-async function generateInvoicePdf(invoiceId: number): Promise<string> {
-  return URL.createObjectURL(await generateInvoicePdfBlob(invoiceId));
+/**
+ * El PDF del comprobante. Por defecto es el ticket de 80 mm (POS, comprobantes
+ * de la venta y WhatsApp); con { format: "configured" } usa el formato de la
+ * plantilla.
+ */
+export async function generateInvoicePdfBlob(
+  invoiceId: number,
+  options: InvoicePdfOptions = {},
+): Promise<Blob> {
+  const { data, template } = await loadInvoicePrintData(invoiceId);
+  const useA4 = options.format === "configured" && template.format === "A4";
+  return (useA4 ? renderInvoiceA4(data) : renderInvoiceTicket(data)).output("blob");
+}
+
+async function generateInvoicePdf(invoiceId: number, options: InvoicePdfOptions = {}): Promise<string> {
+  return URL.createObjectURL(await generateInvoicePdfBlob(invoiceId, options));
 }
 
 export function useInvoicePrint() {
   const [printingId, setPrintingId] = useState<number | null>(null);
 
-  const printInvoice = async (invoiceId: number) => {
+  /**
+   * Sin opciones imprime el ticket de 80 mm (POS y comprobantes de la venta).
+   * La lista de Comprobantes pasa { format: "configured" } para usar el formato
+   * de la plantilla (InvoicePrintFormat).
+   */
+  const printInvoice = async (invoiceId: number, options?: InvoicePdfOptions) => {
     if (printingId !== null) return;
     setPrintingId(invoiceId);
     try {
-      const pdfUrl = await generateInvoicePdf(invoiceId);
+      const pdfUrl = await generateInvoicePdf(invoiceId, options);
       const iframe = document.createElement("iframe");
       iframe.style.cssText = "position:fixed;top:0;left:0;width:0;height:0;opacity:0;pointer-events:none";
       document.body.appendChild(iframe);

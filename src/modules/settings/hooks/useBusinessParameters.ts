@@ -7,7 +7,7 @@ import {
   uploadInvoiceLogo,
   type ParameterRow,
 } from "../services/Parameters.service";
-import { CURATED_KEYS, READ_ONLY_KEYS } from "../types/BusinessParameters.types";
+import { CURATED_DEFAULTS, CURATED_KEYS, READ_ONLY_KEYS } from "../types/BusinessParameters.types";
 import { toastError } from "@/shared/utils/toastError";
 
 export interface AdvancedRow {
@@ -33,6 +33,12 @@ const useBusinessParameters = () => {
     const values: Record<string, string> = {};
     for (const key of CURATED_KEYS) values[key] = "";
     for (const row of rows) values[row.name] = row.value ?? "";
+    // Sin fila se muestra lo que hace el sistema sin el parámetro (p. ej. las
+    // banderas de documentos: ausente = se imprime). Va también a initialData,
+    // así que guardar sin tocar nada no inserta filas.
+    for (const [key, value] of Object.entries(CURATED_DEFAULTS)) {
+      if (!values[key]) values[key] = value;
+    }
 
     setFormData(values);
     setInitialData(values);

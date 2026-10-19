@@ -17,6 +17,13 @@ export interface BusinessField {
   options?: { label: string; value: string }[];
   /** Se muestra pero no se puede editar ni se envía al guardar. */
   readOnly?: boolean;
+  /**
+   * Valor que muestra el formulario cuando el parámetro no existe en la tabla.
+   * Debe coincidir con lo que hace el sistema sin el parámetro (p. ej. las
+   * banderas de la plantilla de documentos: ausente = se imprime). No se guarda
+   * mientras el usuario no lo cambie.
+   */
+  defaultValue?: string;
 }
 
 export interface BusinessSection {
@@ -80,16 +87,22 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
         key: "InvoiceShowDocumentTypeAndNumber",
         label: "Mostrar tipo y número de documento en el comprobante",
         control: "boolean",
+        defaultValue: "true",
+        help: "Documento del cliente. Solo se oculta en boletas de hasta S/ 700: en facturas, notas y boletas mayores se imprime siempre.",
       },
       {
         key: "InvoiceShowEmail",
         label: "Mostrar correo en el comprobante",
         control: "boolean",
+        defaultValue: "true",
+        help: "Correo de la empresa.",
       },
       {
         key: "InvoiceShowAddress",
         label: "Mostrar dirección en el comprobante",
         control: "boolean",
+        defaultValue: "true",
+        help: "Dirección del cliente. El domicilio fiscal de la empresa se imprime siempre.",
       },
       {
         key: "InvoiceLogoUrl",
@@ -102,6 +115,31 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
         label: "Mensaje de pie de comprobante",
         control: "textarea",
         help: "Texto legal o informativo al final del comprobante.",
+      },
+    ],
+  },
+  {
+    id: "documents",
+    title: "Documentos",
+    description: "Plantilla de impresión de boletas, facturas y notas.",
+    fields: [
+      {
+        key: "InvoicePrintFormat",
+        label: "Formato de impresión de comprobantes",
+        control: "select",
+        defaultValue: "80mm",
+        options: [
+          { label: "Ticket 80 mm", value: "80mm" },
+          { label: "A4", value: "A4" },
+        ],
+        help: "Lo usa el botón Imprimir de la lista de Comprobantes. El punto de venta, los comprobantes de la venta y el envío por WhatsApp usan siempre el ticket de 80 mm.",
+      },
+      {
+        key: "InvoiceShowPhone",
+        label: "Mostrar teléfono en el comprobante",
+        control: "boolean",
+        defaultValue: "true",
+        help: "Teléfono de la empresa. Razón social, RUC y domicilio fiscal se imprimen siempre.",
       },
     ],
   },
@@ -140,6 +178,15 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
 
 export const CURATED_KEYS = BUSINESS_SECTIONS.flatMap((section) =>
   section.fields.map((field) => field.key),
+);
+
+/** Valor por defecto de cada parámetro curado que lo tiene (ver BusinessField.defaultValue). */
+export const CURATED_DEFAULTS: Record<string, string> = Object.fromEntries(
+  BUSINESS_SECTIONS.flatMap((section) =>
+    section.fields
+      .filter((field) => field.defaultValue !== undefined)
+      .map((field) => [field.key, field.defaultValue as string]),
+  ),
 );
 
 /** Parámetros que la página muestra pero nunca escribe. */
