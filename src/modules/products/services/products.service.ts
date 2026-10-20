@@ -39,13 +39,59 @@ export const deleteProductApi = async (productId: number) => {
   });
 };
 
-export const deleteProductsApi = async (productIds: number[]) => {
-  await invokeFunction(
+export interface DeleteProductsResult {
+  requested: number;
+  deleted: number;
+  deletedIds: number[];
+  /** Ya estaban eliminados antes de esta llamada. */
+  alreadyDeletedIds: number[];
+  /** No existen en la base. */
+  notFoundIds: number[];
+}
+
+export const deleteProductsApi = async (
+  productIds: number[],
+): Promise<DeleteProductsResult> => {
+  const data = await invokeFunction(
     "delete-massive-products",
     {
       body: { productIds },
     },
   );
+
+  return data as DeleteProductsResult;
+};
+
+// Resultado de las ediciones masivas que escriben directo en products.
+export interface MassiveUpdateResult {
+  updated: number;
+  /** Productos borrados entre la selección y el guardado; no se tocaron. */
+  skippedProductIds: number[];
+}
+
+// La selección se conserva entre páginas: un producto puede eliminarse
+// (is_active = false) después de marcarlo. Solo se escribe en los activos y se
+// devuelven los demás para avisar, igual que las edge functions de etiquetas y
+// marcas. Si no queda ninguno, es un error: no hay nada que guardar.
+const updateLiveProducts = async (
+  productIds: number[],
+  values: Record<string, string | null>,
+): Promise<MassiveUpdateResult> => {
+  const { data, error } = await supabase
+    .from("products")
+    .update(values)
+    .in("id", productIds)
+    .eq("is_active", true)
+    .select("id");
+  if (error) throw error;
+  const updatedIds = new Set((data ?? []).map((p) => p.id));
+  if (updatedIds.size === 0) {
+    throw new Error("Ninguno de los productos seleccionados sigue activo");
+  }
+  return {
+    updated: updatedIds.size,
+    skippedProductIds: productIds.filter((id) => !updatedIds.has(id)),
+  };
 };
 
 export const updatePromotionalTextApi = async (
@@ -53,33 +99,21 @@ export const updatePromotionalTextApi = async (
   promotionalText: string,
   promotionalBgColor: string,
   promotionalTextColor: string,
-) => {
-  const { error } = await supabase
-    .from("products")
-    .update({
-      promotional_text: promotionalText,
-      promotional_bg_color: promotionalBgColor,
-      promotional_text_color: promotionalTextColor,
-    })
-    .in("id", productIds);
-
-  if (error) throw error;
-};
+): Promise<MassiveUpdateResult> =>
+  updateLiveProducts(productIds, {
+    promotional_text: promotionalText,
+    promotional_bg_color: promotionalBgColor,
+    promotional_text_color: promotionalTextColor,
+  });
 export const updateSizeImagesApi = async (
   productIds: number[],
   sizesImageUrl: string | null,
   sizesRefImageUrl: string | null,
-) => {
-  const { error } = await supabase
-    .from("products")
-    .update({
-      sizes_image_url: sizesImageUrl,
-      sizes_ref_image_url: sizesRefImageUrl,
-    })
-    .in("id", productIds);
-
-  if (error) throw error;
-};
+): Promise<MassiveUpdateResult> =>
+  updateLiveProducts(productIds, {
+    sizes_image_url: sizesImageUrl,
+    sizes_ref_image_url: sizesRefImageUrl,
+  });
 export const categoriesApi = async (): Promise<Categories> => {
   const { data, error } = await supabase
     .from("categories")
@@ -92,13 +126,8 @@ export const categoriesApi = async (): Promise<Categories> => {
 export const updatePromotionalImageApi = async (
   productIds: number[],
   promotionalImgUrl: string | null,
-) => {
-  const { error } = await supabase
-    .from("products")
-    .update({ promotional_img_url: promotionalImgUrl } )
-    .in("id", productIds);
-  if (error) throw error;
-};
+): Promise<MassiveUpdateResult> =>
+  updateLiveProducts(productIds, { promotional_img_url: promotionalImgUrl });
 
 // Una URL vacía cuenta como "sin imagen", igual que en get_products_list.
 export const countProductsWithPromotionalImageApi = async (
@@ -134,43 +163,23 @@ export const removePromotionalImageApi = async (
 export const updateLargeDescriptionApi = async (
   productIds: number[],
   description: string,
-) => {
-  const { error } = await supabase
-    .from("products")
-    .update({ description: description })
-    .in("id", productIds);
-  if (error) throw error;
-};
+): Promise<MassiveUpdateResult> =>
+  updateLiveProducts(productIds, { description: description });
 export const updateShortDescriptionApi = async (
   productIds: number[],
   shortDescription: string,
-) => {
-  const { error } = await supabase
-    .from("products")
-    .update({ short_description: shortDescription })
-    .in("id", productIds);
-  if (error) throw error;
-};
+): Promise<MassiveUpdateResult> =>
+  updateLiveProducts(productIds, { short_description: shortDescription });
 export const updateOtherDescriptionMinApi = async (
   productIds: number[],
   description: string,
-) => {
-  const { error } = await supabase
-    .from("products")
-    .update({ other_description_min: description })
-    .in("id", productIds);
-  if (error) throw error;
-};
+): Promise<MassiveUpdateResult> =>
+  updateLiveProducts(productIds, { other_description_min: description });
 export const updateOtherDescriptionMayApi = async (
   productIds: number[],
   description: string,
-) => {
-  const { error } = await supabase
-    .from("products")
-    .update({ other_description_may: description })
-    .in("id", productIds);
-  if (error) throw error;
-};
+): Promise<MassiveUpdateResult> =>
+  updateLiveProducts(productIds, { other_description_may: description });
 export const getChannelsApi = async (): Promise<
   { id: number; name: string; code: string }[]
 > => {
@@ -185,25 +194,43 @@ export const getChannelsApi = async (): Promise<
 export const updateSalesChannelsApi = async (
   productIds: number[],
   channelIds: number[],
-) => {
+): Promise<MassiveUpdateResult> => {
+  // Solo productos activos: los eliminados después de seleccionarlos se
+  // omiten y se devuelven para avisar (ver updateLiveProducts).
+  const { data: liveRows, error: liveError } = await supabase
+    .from("products")
+    .select("id")
+    .in("id", productIds)
+    .eq("is_active", true);
+  if (liveError) throw liveError;
+  const liveIds = (liveRows ?? []).map((p) => p.id);
+  if (liveIds.length === 0) {
+    throw new Error("Ninguno de los productos seleccionados sigue activo");
+  }
+  const result: MassiveUpdateResult = {
+    updated: liveIds.length,
+    skippedProductIds: productIds.filter((id) => !liveIds.includes(id)),
+  };
+
   // Elimina los canales actuales de los productos seleccionados
   const { error: deleteError } = await supabase
     .from("product_channels")
     .delete()
-    .in("product_id", productIds);
+    .in("product_id", liveIds);
   if (deleteError) throw deleteError;
   // Inserta los nuevos canales para cada producto
-  const rows = productIds.flatMap((productId) =>
+  const rows = liveIds.flatMap((productId) =>
     channelIds.map((channelId) => ({
       product_id: productId,
       channel_id: channelId,
     })),
   );
-  if (rows.length === 0) return;
+  if (rows.length === 0) return result;
   const { error: insertError } = await supabase
     .from("product_channels")
     .insert(rows);
   if (insertError) throw insertError;
+  return result;
 };
 
 // ================= Asignación masiva de etiquetas y marcas =================

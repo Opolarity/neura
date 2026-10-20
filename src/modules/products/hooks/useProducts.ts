@@ -15,6 +15,8 @@ import { productAdapter } from "../adapters/Product.adapter";
 import type { CategoryOption } from "@/shared/components/category-selector";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getTags } from "@/shared/services/service";
+import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 import type { TagsResponse } from "@/shared/types/type";
 
 export const useProducts = () => {
@@ -99,10 +101,38 @@ export const useProducts = () => {
     setLoading(true);
     setError(null);
     try {
-      await deleteProductsApi(productIds);
+      const result = await deleteProductsApi(productIds);
+      const requested = result?.requested ?? productIds.length;
+      const deleted = result?.deleted ?? requested;
+
+      // La selección se conserva entre páginas: algún producto pudo
+      // eliminarse mientras tanto, y el backend lo omite.
+      toast(
+        deleted === 0
+          ? {
+              title: "No se eliminó ningún producto",
+              description:
+                "Los productos seleccionados ya no existen o ya estaban eliminados.",
+              variant: "warning",
+            }
+          : deleted < requested
+            ? {
+                title: `Se eliminaron ${deleted} de ${requested} productos`,
+                description: "El resto ya no existe o ya estaba eliminado.",
+                variant: "warning",
+              }
+            : {
+                title:
+                  deleted === 1
+                    ? "Producto eliminado"
+                    : `${deleted} productos eliminados`,
+                variant: "success",
+              },
+      );
       await loadData();
     } catch (error) {
       setError("Ocurrió un error al eliminar productos");
+      toastError(error, "Ocurrió un error al eliminar productos");
     } finally {
       setLoading(false);
       setSelectedProducts([]);
