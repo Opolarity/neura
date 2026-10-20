@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ActionConfig, ActionType, TargetFilter } from "../../types/priceRule.types";
+import type { ActionConfig, ActionType, BuyXGetYDiscountType, TargetFilter } from "../../types/priceRule.types";
 import {
   ACTION_TYPE_LABELS,
   DEFAULT_INCLUDE_DESCENDANTS,
@@ -343,18 +343,30 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
                 <Label className="text-xs">Tipo de descuento</Label>
                 <Select
                   value={discountType}
-                  onValueChange={(val) => updateField("discount_type", val as "percent" | "fixed")}
+                  onValueChange={(val) => updateField("discount_type", val as BuyXGetYDiscountType)}
                 >
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-[170px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="percent">Porcentaje (%)</SelectItem>
-                    <SelectItem value="fixed">Monto fijo (S/)</SelectItem>
+                    <SelectItem value="fixed">Descuento fijo (S/)</SelectItem>
+                    <SelectItem value="fixed_price">Precio fijo (S/)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              {discountType === "percent" ? (
+              {discountType === "fixed_price" ? (
+                <div className="space-y-1">
+                  <Label className="text-xs">Precio final por unidad (S/)</Label>
+                  <Input
+                    type="number"
+                    className="w-[140px]"
+                    placeholder="Ej: 1.00"
+                    value={action.fixed_price ?? 0}
+                    onChange={(e) => updateField("fixed_price", parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+              ) : discountType === "percent" ? (
                 <div className="space-y-1">
                   <Label className="text-xs">% descuento</Label>
                   <Input
@@ -379,7 +391,7 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Ej: 2x1 = Comprar 2, llevar 1 al 100% dto. | 2da al 50% = Comprar 2, llevar 1 al 50% dto. | Monto fijo: resta S/ X a cada unidad con descuento.
+              Ej: 2x1 = Comprar 2, llevar 1 al 100% dto. | 2da al 50% = Comprar 2, llevar 1 al 50% dto. | Descuento fijo: resta S/ X a cada unidad con descuento. | Precio fijo: cada unidad con descuento queda en S/ X.
             </p>
             <div className="flex items-center gap-2">
               <Switch

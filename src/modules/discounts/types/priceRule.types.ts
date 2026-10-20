@@ -117,6 +117,10 @@ export interface ExclusionFilter {
   include_descendants?: boolean;
 }
 
+// "fixed" = resta S/ X a cada unidad con descuento; "fixed_price" = cada unidad
+// con descuento queda en S/ X.
+export type BuyXGetYDiscountType = "percent" | "fixed" | "fixed_price";
+
 export interface ActionConfig {
   type: ActionType;
   value?: number;
@@ -128,9 +132,10 @@ export interface ActionConfig {
   // buy_x_get_y fields
   buy_qty?: number;
   get_qty?: number;
-  discount_type?: "percent" | "fixed";
+  discount_type?: BuyXGetYDiscountType;
   discount_percent?: number;
   discount_amount?: number;
+  fixed_price?: number;
   apply_to_cheapest?: boolean;
 }
 
