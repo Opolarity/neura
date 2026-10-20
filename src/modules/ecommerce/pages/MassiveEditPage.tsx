@@ -32,6 +32,7 @@ import {
   unassignMassiveTagsApi,
   assignMassiveBrandsApi,
   type MassiveBrandsMode,
+  type MassiveUpdateResult,
 } from "@/modules/products/services/products.service";
 import AssignTagsModal, {
   type TagMassiveMode,
@@ -242,6 +243,29 @@ const PromotionalTextPage = () => {
     });
   };
 
+  // Ediciones que escriben directo en products (textos, imágenes, canales):
+  // solo tocan los productos activos, avisan de los omitidos y el toast cuenta
+  // los que de verdad se guardaron. Si no queda ninguno activo, el service
+  // lanza y aquí se muestra; se relanza para que el modal quede abierto.
+  const saveOnProducts = async (
+    save: () => Promise<MassiveUpdateResult>,
+    describe: (updated: number) => string,
+    fallback: string,
+  ) => {
+    try {
+      const result = await save();
+      warnSkipped(result.skippedProductIds, "producto", "productos");
+      toast({
+        title: "Guardado exitoso",
+        description: describe(result.updated),
+        variant: "success",
+      });
+    } catch (error) {
+      toastError(error, fallback);
+      throw error;
+    }
+  };
+
   const handleSavePromo = async (
     promoText: string,
     bgColor: string,
@@ -251,17 +275,17 @@ const PromotionalTextPage = () => {
       noSelectionToast("aplicar el texto promocional");
       return;
     }
-    await updatePromotionalTextApi(
-      selectedProducts,
-      promoText,
-      bgColor,
-      textColor,
+    await saveOnProducts(
+      () =>
+        updatePromotionalTextApi(
+          selectedProducts,
+          promoText,
+          bgColor,
+          textColor,
+        ),
+      (n) => `Texto promocional aplicado a ${plural(n)}.`,
+      "No se pudo aplicar el texto promocional",
     );
-    toast({
-      title: "Guardado exitoso",
-      description: `Texto promocional aplicado a ${plural(selectedProducts.length)}.`,
-      variant: "success",
-    });
   };
 
   const handleSaveSizeImages = async (
@@ -272,16 +296,12 @@ const PromotionalTextPage = () => {
       noSelectionToast("actualizar las imágenes de tallas");
       return;
     }
-    await updateSizeImagesApi(
-      selectedProducts,
-      sizesImageUrl,
-      sizesRefImageUrl,
+    await saveOnProducts(
+      () =>
+        updateSizeImagesApi(selectedProducts, sizesImageUrl, sizesRefImageUrl),
+      (n) => `Imágenes de tallas actualizadas en ${plural(n)}.`,
+      "No se pudieron actualizar las imágenes de tallas",
     );
-    toast({
-      title: "Guardado exitoso",
-      description: `Imágenes de tallas actualizadas en ${plural(selectedProducts.length)}.`,
-      variant: "success",
-    });
   };
 
   const handleSavePromotionalImage = async (
@@ -291,12 +311,11 @@ const PromotionalTextPage = () => {
       noSelectionToast("actualizar la imagen promocional");
       return;
     }
-    await updatePromotionalImageApi(selectedProducts, promotionalImgUrl);
-    toast({
-      title: "Guardado exitoso",
-      description: `Imagen promocional actualizada en ${plural(selectedProducts.length)}.`,
-      variant: "success",
-    });
+    await saveOnProducts(
+      () => updatePromotionalImageApi(selectedProducts, promotionalImgUrl),
+      (n) => `Imagen promocional actualizada en ${plural(n)}.`,
+      "No se pudo actualizar la imagen promocional",
+    );
     reloadProducts();
   };
 
@@ -347,12 +366,11 @@ const PromotionalTextPage = () => {
       noSelectionToast("No hay productos seleccionados");
       return;
     }
-    await updateShortDescriptionApi(selectedProducts, shortDescription);
-    toast({
-      title: "Guardado exitoso", //7
-      description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
-      variant: "success",
-    });
+    await saveOnProducts(
+      () => updateShortDescriptionApi(selectedProducts, shortDescription),
+      (n) => `Descripción corta actualizada en ${plural(n)}.`,
+      "No se pudo actualizar la descripción corta",
+    );
   };
   const handleSaveShortDescriptionMay = async (shortDescription: string) => {
     //5
@@ -360,12 +378,11 @@ const PromotionalTextPage = () => {
       noSelectionToast("No hay productos seleccionados");
       return;
     }
-    await updateLargeDescriptionApi(selectedProducts, shortDescription);
-    toast({
-      title: "Guardado exitoso", //7
-      description: `Descripción corta actualizada en ${plural(selectedProducts.length)}.`,
-      variant: "success",
-    });
+    await saveOnProducts(
+      () => updateLargeDescriptionApi(selectedProducts, shortDescription),
+      (n) => `Descripción corta actualizada en ${plural(n)}.`,
+      "No se pudo actualizar la descripción corta",
+    );
   };
 
   const handleSaveOtherDescriptionMin = async (description: string) => {
@@ -373,12 +390,11 @@ const PromotionalTextPage = () => {
       noSelectionToast("No hay productos seleccionados");
       return;
     }
-    await updateOtherDescriptionMinApi(selectedProducts, description);
-    toast({
-      title: "Guardado exitoso",
-      description: `Otra descripción min. actualizada en ${plural(selectedProducts.length)}.`,
-      variant: "success",
-    });
+    await saveOnProducts(
+      () => updateOtherDescriptionMinApi(selectedProducts, description),
+      (n) => `Otra descripción min. actualizada en ${plural(n)}.`,
+      "No se pudo actualizar la otra descripción min.",
+    );
   };
 
   const handleSaveOtherDescriptionMay = async (description: string) => {
@@ -386,12 +402,11 @@ const PromotionalTextPage = () => {
       noSelectionToast("No hay productos seleccionados");
       return;
     }
-    await updateOtherDescriptionMayApi(selectedProducts, description);
-    toast({
-      title: "Guardado exitoso",
-      description: `Otra descripción may. actualizada en ${plural(selectedProducts.length)}.`,
-      variant: "success",
-    });
+    await saveOnProducts(
+      () => updateOtherDescriptionMayApi(selectedProducts, description),
+      (n) => `Otra descripción may. actualizada en ${plural(n)}.`,
+      "No se pudo actualizar la otra descripción may.",
+    );
   };
 
 
@@ -490,12 +505,11 @@ const PromotionalTextPage = () => {
       noSelectionToast("actualizar los canales de venta");
       return;
     }
-    await updateSalesChannelsApi(selectedProducts, channelIds);
-    toast({
-      title: "Guardado exitoso",
-      description: `Canales de venta actualizados en ${plural(selectedProducts.length)}.`,
-      variant: "success",
-    });
+    await saveOnProducts(
+      () => updateSalesChannelsApi(selectedProducts, channelIds),
+      (n) => `Canales de venta actualizados en ${plural(n)}.`,
+      "No se pudieron actualizar los canales de venta",
+    );
   };
 
   return (
