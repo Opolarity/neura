@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Check, Trash2 } from "lucide-react";
+import { Copy, Check, Trash } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -82,7 +82,7 @@ const MediaDetailDialog = ({ medio, open, onClose, onDelete }: MediaDetailDialog
                 detalle: comparte code. */}
             <ComponentPermission codeIn={["ecommerce_media.delete"]}>
               <Button variant="destructive" size="sm" onClick={handleDelete}>
-                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                <Trash className="h-3.5 w-3.5 mr-1" />
                 Eliminar
               </Button>
             </ComponentPermission>

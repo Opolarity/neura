@@ -138,7 +138,7 @@ const MassiveEditProductsTable = ({
                       type="button"
                       onClick={() => setPreviewUrl(product.promotionalImage)}
                       title="Ver imagen promocional"
-                      className="text-sm text-primary hover:underline"
+                      className="text-sm font-medium hover:underline"
                     >
                       Con imagen
                     </button>

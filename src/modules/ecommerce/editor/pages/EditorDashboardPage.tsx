@@ -9,17 +9,17 @@ import { useCallback, useMemo, useState } from "react";
 import {
   AppWindow,
   Blocks,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
   FileText,
   Loader2,
   Plus,
-  Trash2,
+  Trash,
   type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toaster } from "@/components/ui/sonner";
 import {
   Select,
@@ -29,17 +29,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ComponentPermission } from "@/shared/components/component-permission";
+import PageLoader from "@/shared/components/page-loader/PageLoader";
+import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { toastError } from "@/shared/utils/toastError";
-import { cn } from "@/shared/utils/utils";
 import { generateSSOToken } from "@/modules/ecommerce/services/sso.service";
 import { usePagedVisualEdits } from "@/modules/ecommerce/editor/hooks/use-paged-visual-edits";
 import {
   useEditorChannel,
   type EditorChannel,
 } from "@/modules/ecommerce/editor/hooks/use-editor-channel";
-import { TAMANOS_DE_PAGINA } from "@/modules/ecommerce/editor/components/list-pagination";
 import { SectionToolbar } from "@/modules/ecommerce/editor/components/dashboard/section-toolbar";
 import { SectionTable } from "@/modules/ecommerce/editor/components/dashboard/section-table";
+import EditorDashboardHeader from "@/modules/ecommerce/editor/components/dashboard/EditorDashboardHeader";
 import {
   NewModalDialog,
   NewPageDialog,
@@ -50,6 +51,9 @@ import "@/modules/ecommerce/editor/editor.css";
 /** Cuántos esqueletos se pintan mientras carga (tope, no el tamaño de página). */
 const FILAS_ESQUELETO = 10;
 
+/** El tamaño de arranque: el primero que ofrece el PageLimit del ERP. */
+const TAMANO_INICIAL = 20;
+
 type SectionKey = "blocks" | "pages" | "modals" | "trash";
 
 interface SectionConfig {
@@ -59,8 +63,6 @@ interface SectionConfig {
   types: VisualEditRecord["type"][];
   /** El prefijo con el que se lee el slug bajo el nombre. */
   slugPrefix: string;
-  /** Cómo se nombran las filas en el pie ("de 6 bloques"). */
-  plural: string;
   searchPlaceholder: string;
   emptyTitle: string;
   emptyText: string;
@@ -75,7 +77,6 @@ const SECTIONS: Record<SectionKey, SectionConfig> = {
     icon: Blocks,
     types: ["block"],
     slugPrefix: "/",
-    plural: "bloques",
     searchPlaceholder: "Buscar por nombre o slug",
     emptyTitle: "Aún no hay bloques",
     emptyText:
@@ -86,7 +87,6 @@ const SECTIONS: Record<SectionKey, SectionConfig> = {
     icon: FileText,
     types: ["page", "home"],
     slugPrefix: "/p/",
-    plural: "páginas",
     searchPlaceholder: "Buscar por nombre o slug",
     emptyTitle: "Aún no hay páginas",
     emptyText:
@@ -98,7 +98,6 @@ const SECTIONS: Record<SectionKey, SectionConfig> = {
     icon: AppWindow,
     types: ["modal"],
     slugPrefix: "/",
-    plural: "modales",
     searchPlaceholder: "Buscar por nombre o slug",
     emptyTitle: "Aún no hay modales",
     emptyText:
@@ -109,10 +108,9 @@ const SECTIONS: Record<SectionKey, SectionConfig> = {
     // La papelera junta lo enviado de páginas y modales; los bloques no van a
     // la papelera.
     label: "Papelera",
-    icon: Trash2,
+    icon: Trash,
     types: ["page", "home", "modal"],
     slugPrefix: "/",
-    plural: "elementos",
     searchPlaceholder: "Buscar en la papelera",
     emptyTitle: "La papelera está vacía",
     emptyText:
@@ -130,10 +128,7 @@ export default function EditorDashboardPage() {
       {/* La tabla y los diálogos avisan con toast de "sonner". */}
       <Toaster position="bottom-right" richColors />
       {estado === "cargando" ? (
-        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Cargando…
-        </div>
+        <PageLoader message="Cargando editor..." />
       ) : estado !== "listo" || !canal ? (
         <div className="flex h-full items-center justify-center">
           <div className="mx-4 max-w-md text-center">
@@ -174,7 +169,7 @@ function EditorDashboard({
 }) {
   const [section, setSection] = useState<SectionKey>("blocks");
   const config = SECTIONS[section];
-  const [size, setSize] = useState(TAMANOS_DE_PAGINA[0]);
+  const [size, setSize] = useState(TAMANO_INICIAL);
 
   // Una sola petición por vista: de ella salen las filas de la sección abierta,
   // los conteos del filtro de estado y los de las pestañas.
@@ -261,7 +256,7 @@ function EditorDashboard({
 
   const botonCrear = config.createLabel ? (
     <ComponentPermission codeIn={["ecommerce_editor.edit"]}>
-      <Button className="h-10 gap-2 px-4 font-semibold" onClick={abrirCreacion}>
+      <Button className="gap-2" onClick={abrirCreacion}>
         <Plus className="h-4 w-4" />
         {config.createLabel}
       </Button>
@@ -269,13 +264,8 @@ function EditorDashboard({
   ) : null;
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-[1240px] flex-col gap-4">
-      {/* Cabecera: título y acciones. */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.01em] text-foreground">
-          Editor de sitio
-        </h1>
-
+    <div className="h-full min-h-0 flex flex-col gap-4">
+      <EditorDashboardHeader>
         <div className="flex flex-wrap items-center gap-2">
           {/* El canal se ve siempre: las páginas, bloques y modales son de un
               canal (visual_edits.channel_id). Con uno solo es una etiqueta; con
@@ -289,7 +279,7 @@ function EditorDashboard({
               onValueChange={(valor) => onCambiarCanal(Number(valor))}
               disabled={list.loading}
             >
-              <SelectTrigger className="h-10 w-auto min-w-[220px] gap-2" aria-label="Canal del ecommerce">
+              <SelectTrigger className="w-auto min-w-[220px] gap-2" aria-label="Canal del ecommerce">
                 <span className="text-muted-foreground">Canal:</span>
                 <SelectValue />
               </SelectTrigger>
@@ -302,7 +292,7 @@ function EditorDashboard({
               </SelectContent>
             </Select>
           ) : (
-            <span className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm">
+            <span className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 text-sm">
               <span className="text-muted-foreground">Canal:</span>
               <span className="font-medium text-foreground">{canal.name}</span>
             </span>
@@ -310,7 +300,7 @@ function EditorDashboard({
 
           <Button
             variant="outline"
-            className="h-10 gap-2 px-3.5 font-semibold"
+            className="gap-2"
             onClick={verSitio}
             disabled={abriendoSitio}
           >
@@ -324,51 +314,33 @@ function EditorDashboard({
 
           {botonCrear}
         </div>
-      </div>
+      </EditorDashboardHeader>
 
-      {/* Secciones: pestañas con su conteo. */}
-      {/* La línea de abajo es una sombra interior y no un border-b: con border,
-          el subrayado de la pestaña activa tenía que bajar 1px (-mb-px) para
-          pisarla, y ese píxel desbordaba en vertical; con overflow-x-auto el
-          navegador sacaba entonces una barra de scroll vertical. */}
-      <nav
-        aria-label="Secciones del editor"
-        className="flex shrink-0 gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_hsl(var(--border))]"
+      {/* Secciones: el mismo conmutador que el filtro de estado de la tabla. */}
+      <Tabs
+        value={section}
+        onValueChange={(valor) => cambiarSeccion(valor as SectionKey)}
+        className="shrink-0 overflow-x-auto"
       >
-        {ORDEN.map((clave) => {
-          const activa = clave === section;
-          const conteo = contadores[clave];
-          return (
-            <button
-              key={clave}
-              type="button"
-              onClick={() => cambiarSeccion(clave)}
-              aria-current={activa ? "page" : undefined}
-              className={cn(
-                "inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-2.5 text-sm transition-colors",
-                activa
-                  ? "border-primary font-semibold text-primary"
-                  : "border-transparent font-medium text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <span>{SECTIONS[clave].label}</span>
-              {conteo !== undefined && (
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-px text-xs font-semibold tabular-nums",
-                    activa ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {conteo}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
+        <TabsList aria-label="Secciones del editor">
+          {ORDEN.map((clave) => {
+            const conteo = contadores[clave];
+            return (
+              <TabsTrigger key={clave} value={clave} className="gap-2">
+                {SECTIONS[clave].label}
+                {conteo !== undefined && (
+                  <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                    {conteo}
+                  </span>
+                )}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+      </Tabs>
 
-      {/* La tarjeta: filtros, tabla y pie. La tabla desplaza sus filas dentro. */}
-      <section className="flex min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-background">
+      {/* La tarjeta: filtros, tabla y paginación. La tabla desplaza sus filas dentro. */}
+      <Card className="flex flex-col min-h-0 overflow-hidden">
         {(list.loading || list.counts.all > 0 || list.isFiltering) && (
           <SectionToolbar
             status={list.status}
@@ -382,7 +354,7 @@ function EditorDashboard({
           />
         )}
 
-        <div className="min-h-0 flex-1 overflow-hidden">
+        <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <SectionTable
             items={list.items}
             icon={config.icon}
@@ -401,99 +373,24 @@ function EditorDashboard({
             emptyAction={list.isFiltering ? undefined : botonCrear}
             trashView={section === "trash"}
           />
-        </div>
+        </CardContent>
 
-        <PieDePaginacion
-          page={list.page}
-          size={list.size}
-          total={list.total}
-          totalPages={list.totalPages}
-          loading={list.loading}
-          plural={config.plural}
-          onPageChange={list.setPage}
-          onSizeChange={cambiarTamano}
-        />
-      </section>
+        {/* Sin resultados el estado vacío de la tabla ya lo explica todo. Mientras
+            carga sí se pinta: si apareciera al llegar las filas, el pie le robaría
+            alto de golpe a la tabla que se acaba de dibujar. */}
+        {(list.total > 0 || list.loading) && (
+          <CardFooter className="!p-0">
+            <PaginationBar
+              pagination={{ p_page: list.page, p_size: list.size, total: list.total }}
+              onPageChange={list.setPage}
+              onPageSizeChange={cambiarTamano}
+            />
+          </CardFooter>
+        )}
+      </Card>
 
       <NewPageDialog open={pageDialogOpen} onOpenChange={setPageDialogOpen} onCreated={trasCrear} />
       <NewModalDialog open={modalDialogOpen} onOpenChange={setModalDialogOpen} onCreated={trasCrear} />
-    </div>
-  );
-}
-
-/** Pie del diseño: "Mostrando 1 a 6 de 6 bloques" y, a la derecha, filas y páginas. */
-function PieDePaginacion({
-  page,
-  size,
-  total,
-  totalPages,
-  loading,
-  plural,
-  onPageChange,
-  onSizeChange,
-}: {
-  page: number;
-  size: number;
-  total: number;
-  totalPages: number;
-  loading: boolean;
-  plural: string;
-  onPageChange: (page: number) => void;
-  onSizeChange: (size: number) => void;
-}) {
-  // Sin resultados el estado vacío de la tabla ya lo explica todo.
-  if (total === 0 && !loading) return null;
-
-  const desde = total === 0 ? 0 : (page - 1) * size + 1;
-  const hasta = Math.min(page * size, total);
-  const puedeRetroceder = page > 1 && !loading;
-  const puedeAvanzar = page < totalPages && !loading;
-
-  return (
-    <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3.5 text-sm text-muted-foreground">
-      <span className="tabular-nums">
-        Mostrando {desde} a {hasta} de {total} {plural}
-      </span>
-      <div className="flex items-center gap-1">
-        <label className="mr-2 inline-flex items-center gap-2">
-          Filas
-          <Select value={String(size)} onValueChange={(valor) => onSizeChange(Number(valor))}>
-            <SelectTrigger className="h-9 w-[72px]" aria-label="Filas por página">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TAMANOS_DE_PAGINA.map((opcion) => (
-                <SelectItem key={opcion} value={String(opcion)}>
-                  {opcion}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9"
-          disabled={!puedeRetroceder}
-          aria-label="Página anterior"
-          onClick={() => onPageChange(page - 1)}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg bg-primary px-2 font-semibold text-primary-foreground tabular-nums">
-          {page}
-        </span>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9"
-          disabled={!puedeAvanzar}
-          aria-label="Página siguiente"
-          onClick={() => onPageChange(page + 1)}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
     </div>
   );
 }

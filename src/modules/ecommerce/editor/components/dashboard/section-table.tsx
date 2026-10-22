@@ -49,8 +49,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
+  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -129,10 +129,6 @@ function textoConfirmacion(c: Confirmacion): { titulo: string; cuerpo: string; b
 /** Las columnas de la tabla, para el colSpan de las filas de estado. */
 const COLUMNAS = 4
 
-const TABLA_NEURA = "border-separate border-spacing-0"
-const CABECERA_NEURA = "sticky top-0 z-10 border-b border-border bg-background"
-const FILA_NEURA = "even:bg-muted/50 hover:bg-muted"
-
 function FilaDeEstado({
   children,
   className,
@@ -151,7 +147,7 @@ function FilaDeEstado({
 
 function FilaEsqueleto() {
   return (
-    <TableRow aria-hidden className={cn(FILA_NEURA, "hover:bg-transparent")}>
+    <TableRow aria-hidden>
       <TableCell>
         <div className="flex items-center gap-3">
           <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />
@@ -335,280 +331,261 @@ export function SectionTable({
 
   return (
     <>
-      <ScrollArea
-        aria-busy={loading}
-        className="h-full"
-        horizontal
-        thumbClassName="bg-muted-foreground/30"
-      >
-        {/* w-max deja que el contenido supere el ancho del viewport: es lo que
-            hace aparecer la barra horizontal cuando la tabla no cabe (en celular
-            o con la ventana estrecha). Con w-full pegado a la tabla no desbordaba.
-            min-w-full lo estira a todo el ancho cuando si cabe. */}
-        <div className="w-max min-w-full">
-          <table
-            className={cn("w-full caption-bottom text-sm", TABLA_NEURA, "min-w-[680px]")}
-          >
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className={CABECERA_NEURA}>Nombre</TableHead>
-                <TableHead className={cn(CABECERA_NEURA, "w-[150px]")}>
-                  Estado
-                </TableHead>
-                <TableHead className={cn(CABECERA_NEURA, "w-[170px]")}>
-                  Cambios
-                </TableHead>
-                <TableHead className={cn(CABECERA_NEURA, "w-[150px] text-right")}>
-                  Acciones
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {error ? (
-                <FilaDeEstado className="bg-destructive/5">
-                  <div className="flex flex-col items-center gap-3.5 px-5 py-14 text-center">
-                    <span className="grid h-12 w-12 place-items-center rounded-xl bg-destructive-soft text-destructive-soft-foreground">
-                      <AlertTriangle className="h-6 w-6" />
-                    </span>
-                    <div>
-                      <p className="font-semibold text-destructive">
-                        No se pudieron cargar los datos
-                      </p>
-                      <p className="mt-1 max-w-[420px] text-sm text-muted-foreground">
-                        Puede ser un corte de conexión o que la sesión haya
-                        caducado. No se ha perdido nada: vuelve a intentarlo.
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm" className="mt-1" onClick={onRetry}>
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Reintentar
-                    </Button>
-                  </div>
-                </FilaDeEstado>
-              ) : loading ? (
-                Array.from({ length: skeletonRows }, (_, i) => (
-                  <FilaEsqueleto key={i} />
-                ))
-              ) : items.length === 0 ? (
-                <FilaDeEstado>
-                  <div className="flex flex-col items-center gap-3.5 px-5 py-14 text-center">
-                    <span className="grid h-14 w-14 place-items-center rounded-xl bg-muted text-muted-foreground">
-                      <Icon className="h-[26px] w-[26px]" />
-                    </span>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {emptyTitle}
-                    </h3>
-                    <p className="max-w-[420px] text-muted-foreground">
-                      {emptyText}
-                    </p>
-                    {emptyAction && <div className="mt-1">{emptyAction}</div>}
-                  </div>
-                </FilaDeEstado>
-              ) : (
-                items.map((item) => {
-                  const estado = resolvePublishState(
-                    { status: item.status, scheduled_at: item.scheduled_at, has_draft: item.has_draft },
-                    ahora
-                  )
-                  const trabajando = ocupada?.slug === item.slug
-                  const abriendo = navegandoA === item.slug
-                  const isBlock = item.type === "block"
-                  const isPage = item.type === "page" || item.type === "home"
-                  const pending = Boolean(item.has_draft)
+      {/* El contenedor de <Table> ya desplaza en las dos direcciones dentro de
+          la Card; min-w-[680px] es lo que hace aparecer la barra horizontal
+          cuando la tabla no cabe (en celular o con la ventana estrecha). */}
+      <Table aria-busy={loading} className="min-w-[680px]">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nombre</TableHead>
+            <TableHead className="w-[150px]">Estado</TableHead>
+            <TableHead className="w-[170px]">Cambios</TableHead>
+            <TableHead className="w-[150px] text-right">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {error ? (
+            <FilaDeEstado className="bg-destructive/5">
+              <div className="flex flex-col items-center gap-3.5 px-5 py-14 text-center">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-destructive-soft text-destructive-soft-foreground">
+                  <AlertTriangle className="h-6 w-6" />
+                </span>
+                <div>
+                  <p className="font-semibold text-destructive">
+                    No se pudieron cargar los datos
+                  </p>
+                  <p className="mt-1 max-w-[420px] text-sm text-muted-foreground">
+                    Puede ser un corte de conexión o que la sesión haya
+                    caducado. No se ha perdido nada: vuelve a intentarlo.
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" className="mt-1" onClick={onRetry}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Reintentar
+                </Button>
+              </div>
+            </FilaDeEstado>
+          ) : loading ? (
+            Array.from({ length: skeletonRows }, (_, i) => (
+              <FilaEsqueleto key={i} />
+            ))
+          ) : items.length === 0 ? (
+            <FilaDeEstado>
+              <div className="flex flex-col items-center gap-3.5 px-5 py-14 text-center">
+                <span className="grid h-14 w-14 place-items-center rounded-xl bg-muted text-muted-foreground">
+                  <Icon className="h-[26px] w-[26px]" />
+                </span>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {emptyTitle}
+                </h3>
+                <p className="max-w-[420px] text-muted-foreground">
+                  {emptyText}
+                </p>
+                {emptyAction && <div className="mt-1">{emptyAction}</div>}
+              </div>
+            </FilaDeEstado>
+          ) : (
+            items.map((item) => {
+              const estado = resolvePublishState(
+                { status: item.status, scheduled_at: item.scheduled_at, has_draft: item.has_draft },
+                ahora
+              )
+              const trabajando = ocupada?.slug === item.slug
+              const abriendo = navegandoA === item.slug
+              const isBlock = item.type === "block"
+              const isPage = item.type === "page" || item.type === "home"
+              const pending = Boolean(item.has_draft)
 
-                  // Que ofrece el menu segun el estado (fuera de la papelera).
-                  const puedePublicar = estado !== "published" || pending
-                  const puedePrivada = isPage && estado !== "private"
-                  const puedeProgramar = isPage && estado !== "scheduled"
-                  const puedeDespublicar =
-                    !isBlock &&
-                    (estado === "published" || estado === "private" || estado === "scheduled")
-                  const puedePapelera = !isBlock
-                  const hayMenu =
-                    puedePublicar ||
-                    puedePrivada ||
-                    puedeProgramar ||
-                    puedeDespublicar ||
-                    puedePapelera
+              // Que ofrece el menu segun el estado (fuera de la papelera).
+              const puedePublicar = estado !== "published" || pending
+              const puedePrivada = isPage && estado !== "private"
+              const puedeProgramar = isPage && estado !== "scheduled"
+              const puedeDespublicar =
+                !isBlock &&
+                (estado === "published" || estado === "private" || estado === "scheduled")
+              const puedePapelera = !isBlock
+              const hayMenu =
+                puedePublicar ||
+                puedePrivada ||
+                puedeProgramar ||
+                puedeDespublicar ||
+                puedePapelera
 
-                  return (
-                    <TableRow key={item.id} className={FILA_NEURA}>
-                      <TableCell>
-                        <div className="flex min-w-0 items-center gap-3">
-                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-                            <Icon className="h-[18px] w-[18px]" />
-                          </span>
-                          <div className="min-w-0">
-                            <div className="truncate font-medium text-foreground">
-                              {item.title}
-                            </div>
-                            <div className="truncate text-xs text-muted-foreground">
-                              {slugPrefix}
-                              {item.slug}
-                            </div>
-                          </div>
+              return (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+                        <Icon className="h-[18px] w-[18px]" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-foreground">
+                          {item.title}
                         </div>
-                      </TableCell>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {slugPrefix}
+                          {item.slug}
+                        </div>
+                      </div>
+                    </div>
+                  </TableCell>
 
-                      <TableCell>
-                        <PublishBadge state={estado} scheduledAt={item.scheduled_at} />
-                      </TableCell>
+                  <TableCell>
+                    <PublishBadge state={estado} scheduledAt={item.scheduled_at} />
+                  </TableCell>
 
-                      {/* Columna aparte: el matiz "tiene cambios sin publicar"
-                          no es el estado de la fila, es si el borrador difiere de
-                          lo publicado. Solo aplica sobre algo vivo. */}
-                      <TableCell>
-                        {pending && (estado === "published" || estado === "private") ? (
-                          <Badge
-                            variant="secondary"
-                            className="border-transparent bg-warning-soft text-warning-soft-foreground hover:bg-warning-soft/70"
-                            title="Hay cambios guardados que el público todavía no ve"
+                  {/* Columna aparte: el matiz "tiene cambios sin publicar"
+                      no es el estado de la fila, es si el borrador difiere de
+                      lo publicado. Solo aplica sobre algo vivo. */}
+                  <TableCell>
+                    {pending && (estado === "published" || estado === "private") ? (
+                      <Badge
+                        variant="warning"
+                        title="Hay cambios guardados que el público todavía no ve"
+                      >
+                        Sin publicar
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      {trashView ? (
+                        <ComponentPermission codeIn={["ecommerce_editor.publish"]}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={trabajando}
+                            onClick={() => restaurar(item)}
                           >
-                            Sin publicar
-                          </Badge>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
+                            {trabajando && ocupada?.accion === "restore" ? (
+                              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                            ) : (
+                              <RotateCcw className="mr-1.5 h-4 w-4" />
+                            )}
+                            Restaurar
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={trabajando}
+                            title={`Eliminar "${item.title}"`}
+                            onClick={() =>
+                              setConfirmacion({ item, accion: "soft_delete" })
+                            }
+                          >
+                            {trabajando && ocupada?.accion === "soft_delete" ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </ComponentPermission>
+                      ) : (
+                        <>
+                          {/* ERP: abrir el editor pide .edit; el menú de
+                              publicar/despublicar/papelera, .publish. */}
+                          <ComponentPermission codeIn={["ecommerce_editor.edit"]}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            title={`Editar "${item.title}"`}
+                            asChild
+                          >
+                            <Link
+                              to={editorPagePath(item.slug)}
+                              onClick={() => setNavegandoA(item.slug)}
+                              aria-busy={abriendo}
+                            >
+                              {abriendo ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <SquarePen className="h-4 w-4" />
+                              )}
+                            </Link>
+                          </Button>
+                          </ComponentPermission>
 
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {trashView ? (
-                            <ComponentPermission codeIn={["ecommerce_editor.publish"]}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={trabajando}
-                                onClick={() => restaurar(item)}
-                              >
-                                {trabajando && ocupada?.accion === "restore" ? (
-                                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                                ) : (
-                                  <RotateCcw className="mr-1.5 h-4 w-4" />
-                                )}
-                                Restaurar
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                disabled={trabajando}
-                                title={`Eliminar "${item.title}"`}
-                                onClick={() =>
-                                  setConfirmacion({ item, accion: "soft_delete" })
-                                }
-                              >
-                                {trabajando && ocupada?.accion === "soft_delete" ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Trash className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </ComponentPermission>
-                          ) : (
-                            <>
-                              {/* ERP: abrir el editor pide .edit; el menú de
-                                  publicar/despublicar/papelera, .publish. */}
-                              <ComponentPermission codeIn={["ecommerce_editor.edit"]}>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                title={`Editar "${item.title}"`}
-                                asChild
-                              >
-                                <Link
-                                  to={editorPagePath(item.slug)}
-                                  onClick={() => setNavegandoA(item.slug)}
-                                  aria-busy={abriendo}
+                          <ComponentPermission codeIn={["ecommerce_editor.publish"]}>
+                          {hayMenu && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={trabajando}
+                                  title="Más acciones"
+                                  aria-label="Más acciones"
                                 >
-                                  {abriendo ? (
+                                  {trabajando ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                   ) : (
-                                    <SquarePen className="h-4 w-4" />
+                                    <MoreHorizontal className="h-4 w-4" />
                                   )}
-                                </Link>
-                              </Button>
-                              </ComponentPermission>
-
-                              <ComponentPermission codeIn={["ecommerce_editor.publish"]}>
-                              {hayMenu && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      disabled={trabajando}
-                                      title="Más acciones"
-                                      aria-label="Más acciones"
-                                    >
-                                      {trabajando ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      )}
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-48">
-                                    {puedePublicar && (
-                                      <DropdownMenuItem onClick={() => publicar(item)}>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        {pending && estado !== "draft"
-                                          ? "Publicar cambios"
-                                          : "Publicar"}
-                                      </DropdownMenuItem>
-                                    )}
-                                    {puedePrivada && (
-                                      <DropdownMenuItem onClick={() => hacerPrivada(item)}>
-                                        <Lock className="mr-2 h-4 w-4" />
-                                        Hacer privada
-                                      </DropdownMenuItem>
-                                    )}
-                                    {puedeProgramar && (
-                                      <DropdownMenuItem onClick={() => abrirProgramar(item)}>
-                                        <CalendarClock className="mr-2 h-4 w-4" />
-                                        Programar…
-                                      </DropdownMenuItem>
-                                    )}
-                                    {(puedeDespublicar || puedePapelera) &&
-                                      (puedePublicar || puedePrivada || puedeProgramar) && (
-                                        <DropdownMenuSeparator />
-                                      )}
-                                    {puedeDespublicar && (
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          setConfirmacion({ item, accion: "unpublish" })
-                                        }
-                                      >
-                                        <EyeOff className="mr-2 h-4 w-4" />
-                                        Despublicar
-                                      </DropdownMenuItem>
-                                    )}
-                                    {puedePapelera && (
-                                      <DropdownMenuItem
-                                        className="text-destructive focus:text-destructive"
-                                        onClick={() =>
-                                          setConfirmacion({ item, accion: "trash" })
-                                        }
-                                      >
-                                        <Trash className="mr-2 h-4 w-4" />
-                                        Enviar a papelera
-                                      </DropdownMenuItem>
-                                    )}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
-                              </ComponentPermission>
-                            </>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                {puedePublicar && (
+                                  <DropdownMenuItem onClick={() => publicar(item)}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    {pending && estado !== "draft"
+                                      ? "Publicar cambios"
+                                      : "Publicar"}
+                                  </DropdownMenuItem>
+                                )}
+                                {puedePrivada && (
+                                  <DropdownMenuItem onClick={() => hacerPrivada(item)}>
+                                    <Lock className="mr-2 h-4 w-4" />
+                                    Hacer privada
+                                  </DropdownMenuItem>
+                                )}
+                                {puedeProgramar && (
+                                  <DropdownMenuItem onClick={() => abrirProgramar(item)}>
+                                    <CalendarClock className="mr-2 h-4 w-4" />
+                                    Programar…
+                                  </DropdownMenuItem>
+                                )}
+                                {(puedeDespublicar || puedePapelera) &&
+                                  (puedePublicar || puedePrivada || puedeProgramar) && (
+                                    <DropdownMenuSeparator />
+                                  )}
+                                {puedeDespublicar && (
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setConfirmacion({ item, accion: "unpublish" })
+                                    }
+                                  >
+                                    <EyeOff className="mr-2 h-4 w-4" />
+                                    Despublicar
+                                  </DropdownMenuItem>
+                                )}
+                                {puedePapelera && (
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() =>
+                                      setConfirmacion({ item, accion: "trash" })
+                                    }
+                                  >
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Enviar a papelera
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
-              )}
-            </TableBody>
-          </table>
-        </div>
-      </ScrollArea>
+                          </ComponentPermission>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            })
+          )}
+        </TableBody>
+      </Table>
 
       <AlertDialog
         open={confirmacion !== null}
