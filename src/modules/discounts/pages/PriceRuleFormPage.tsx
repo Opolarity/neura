@@ -26,7 +26,7 @@ const FormSection = ({
   children: ReactNode;
 }) => (
   <Card>
-    <CardHeader className="space-y-1">
+    <CardHeader>
       <h2 className="flex items-center gap-2 text-base font-semibold">
         {title}
         {optional && <OptionalBadge />}
@@ -72,7 +72,7 @@ const PriceRuleFormPage = () => {
 
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -93,13 +93,12 @@ const PriceRuleFormPage = () => {
 
   return (
     <PriceRuleReferencesProvider value={references}>
-    <div className="p-6">
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="space-y-6 min-w-0">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={goBack}>
-            <ArrowLeft className="w-5 h-5" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={goBack}>
+            <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-2xl font-bold text-foreground">
             {isEditMode ? "Editar regla de precios" : "Nueva regla de precios"}
@@ -158,13 +157,12 @@ const PriceRuleFormPage = () => {
         }
       />
 
-      <div className="flex justify-end gap-2 pb-2">
+      <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={goBack} disabled={saving}>
           Cancelar
         </Button>
         {saveButton}
       </div>
-    </div>
     </div>
     </PriceRuleReferencesProvider>
   );
