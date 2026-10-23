@@ -19,11 +19,18 @@ import {
 import { Search, Plus, Minus, Trash2, ShoppingCart, Loader2, Percent, ChevronDown, ChevronUp, User, X } from "lucide-react";
 import type { POSCartItem } from "../../../types/POS.types";
 import type { PaginatedProductVariation, PaginationMeta, OrderDiscount } from "../../../types";
+import type { OrderDiscountRule } from "../../../rules/applyPriceRules";
+import { shippingRuleName, type ShippingRule } from "../../../rules/shippingRule";
+import { CouponInput } from "../../CouponInput";
 import { formatCurrency } from "../../../adapters/POS.adapter";
 import { useState } from "react";
 import { cn } from "@/shared/utils/utils";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
+
+// Los mensajes de regla pueden traer HTML pensado para el ecommerce: en el POS se
+// muestran como texto plano.
+const stripHtml = (text: string) => text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 interface ProductsStepProps {
   searchQuery: string;
@@ -47,6 +54,13 @@ interface ProductsStepProps {
   orderDiscounts: OrderDiscount[];
   onAddOrderDiscount: (name: string, amount: number) => void;
   onRemoveOrderDiscount: (id: string) => void;
+  appliedRules: { message: string; rule_name: string }[];
+  ruleDiscounts: OrderDiscountRule[];
+  shippingRule: ShippingRule | null;
+  couponCode: string | null;
+  couponError: string | null;
+  onApplyCoupon: (code: string) => void;
+  onRemoveCoupon: () => void;
   customerName?: string;
   customerLastname?: string;
   customerDocumentNumber?: string;
@@ -74,6 +88,13 @@ export default function ProductsStep({
   orderDiscounts,
   onAddOrderDiscount,
   onRemoveOrderDiscount,
+  appliedRules,
+  ruleDiscounts,
+  shippingRule,
+  couponCode,
+  couponError,
+  onApplyCoupon,
+  onRemoveCoupon,
   customerName,
   customerLastname,
   customerDocumentNumber,
@@ -409,6 +430,38 @@ export default function ProductsStep({
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>S/ {formatCurrency(subtotal)}</span>
                   </div>
+
+                  {/* Cupón (T-340): su regla vuelve del motor como cualquier otra */}
+                  <CouponInput
+                    appliedCode={couponCode}
+                    error={couponError}
+                    onApply={onApplyCoupon}
+                    onRemove={onRemoveCoupon}
+                  />
+
+                  {/* Reglas de precio aplicadas por el motor (T-358) */}
+                  {ruleDiscounts.map((r, i) => (
+                    <div key={`${r.code}-${r.name}-${i}`} className="flex justify-between text-xs">
+                      <span className="text-muted-foreground truncate max-w-[140px]">{r.name}</span>
+                      {
+                        // Monto 0 = el descuento ya viene aplicado al precio de cada línea.
+                        r.discount_amount !== 0 ? (
+                          <span className={cn(r.discount_amount >= 0 ? "text-success" : "text-destructive")}>
+                            {r.discount_amount >= 0 ? "+" : "-"}S/ {formatCurrency(Math.abs(r.discount_amount))}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {r.name === shippingRuleName(shippingRule) ? "Inc. en envío" : "Inc. en productos"}
+                          </span>
+                        )
+                      }
+                    </div>
+                  ))}
+                  {appliedRules.map((rule, i) => (
+                    <div key={`msg-${i}`} className="text-xs text-success">
+                      {stripHtml(rule.message)}
+                    </div>
+                  ))}
 
                   {/* Custom order discounts */}
                   {orderDiscounts.map((d) => (

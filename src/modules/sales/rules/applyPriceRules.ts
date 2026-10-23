@@ -4,6 +4,7 @@
 // to get cart items with prices adjusted by rules.
 // =============================================
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
+import type { ShippingRule } from "./shippingRule";
 
 
 interface CartItemForRules {
@@ -35,6 +36,19 @@ export interface DiscountResult {
   note?: string;
 }
 
+// Fila de order_discounts escrita por el motor de reglas (con el código de la regla).
+export interface OrderDiscountRule {
+  name: string;
+  code: string;
+  discount_amount: number;
+}
+
+// Filas escritas por sp_fch_apply_franchise_sale (promos de consignación). Ahí la repetición es
+// legítima —una fila por venta reportada del franquiciado— así que nunca se emparejan ni se
+// pisan con lo que devuelve el motor de reglas del ERP.
+export const isFranchiseRow = (code?: string | null) =>
+  (code ?? "").toUpperCase().startsWith("FCH-PROMO");
+
 export async function applyPriceRules<T extends CartItemForRules>(
   items: T[],
   priceListId: number | string,
@@ -42,9 +56,20 @@ export async function applyPriceRules<T extends CartItemForRules>(
   accountId?: number | null,
   paymentMethodCode?: string | null,
   couponCode?: string | null
-): Promise<{ items: T[]; gifts: GiftItem[]; appliedRules: AppliedRule[]; discounts: DiscountResult[] }> {
+): Promise<{
+  items: T[];
+  gifts: GiftItem[];
+  appliedRules: AppliedRule[];
+  discounts: DiscountResult[];
+  shippingRule: ShippingRule | null;
+  /** T-340: id del cupón válido (para registrar su uso al crear la orden). */
+  couponDiscountId: number | null;
+  /** T-340: motivo por el que el motor rechazó el cupón. */
+  couponError: string | null;
+}> {
+  const empty = { gifts: [], appliedRules: [], discounts: [], shippingRule: null, couponDiscountId: null, couponError: null };
   try {
-    if (items.length === 0) return { items, gifts: [], appliedRules: [], discounts: [] };
+    if (items.length === 0) return { items, ...empty };
 
     // Mapear campos de Neura → formato que espera la EF
     const payloadItems = items.map((item) => ({
@@ -63,6 +88,9 @@ export async function applyPriceRules<T extends CartItemForRules>(
       appliedRules?: unknown[];
       gifts?: unknown[];
       discounts?: unknown[];
+      shippingRule?: { enabled?: boolean; operator?: string | null; value?: number | null; reason?: string };
+      couponDiscountId?: number | null;
+      couponError?: string | null;
     };
     try {
       data = await invokeFunction("process-price-rules", {
@@ -77,7 +105,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       });
     } catch (error) {
       console.error("Error calling process-price-rules:", error);
-      return { items, gifts: [], appliedRules: [], discounts: [] };
+      return { items, ...empty };
     }
 
     const returnedItems = (data?.items || []) as any[];
@@ -113,10 +141,26 @@ export async function applyPriceRules<T extends CartItemForRules>(
       };
     });
 
-    return { items: updatedItems, gifts, appliedRules, discounts };
+    // T-360: regla de envío (envío gratis, descuento o precio fijo). Solo se
+    // devuelve si el motor la habilitó.
+    const sr = data?.shippingRule;
+    const shippingRule: ShippingRule | null =
+      sr?.enabled && sr.operator && sr.value !== null && sr.value !== undefined
+        ? { operator: sr.operator as ShippingRule["operator"], value: Number(sr.value), reason: sr.reason ?? "" }
+        : null;
+
+    return {
+      items: updatedItems,
+      gifts,
+      appliedRules,
+      discounts,
+      shippingRule,
+      couponDiscountId: data?.couponDiscountId ?? null,
+      couponError: data?.couponError ?? null,
+    };
 
   } catch (err) {
     console.error("Error in applyPriceRules:", err);
-    return { items, gifts: [], appliedRules: [], discounts: [] };
+    return { items, ...empty };
   }
 }

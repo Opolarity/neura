@@ -2,6 +2,7 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./routes";
 import { AuthProvider } from "@/modules/auth";
 import { NotificationsProvider } from "@/modules/notifications/context/NotificationsProvider";
+import { SupportUnreadProvider } from "@/modules/support/context/SupportUnreadProvider";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryProvider } from "./providers/QueryProvider";
@@ -20,7 +21,9 @@ const App = () => {
         <Toaster />
         <AuthProvider>
           <NotificationsProvider>
-            <RouterProvider router={router} />
+            <SupportUnreadProvider>
+              <RouterProvider router={router} />
+            </SupportUnreadProvider>
           </NotificationsProvider>
         </AuthProvider>
       </TooltipProvider>

@@ -10,6 +10,7 @@ import type {
   SupportTaskTracking,
 } from "../types/Support.types";
 import { originHostFromUrl, originLabelFromHost } from "../utils/originLabel";
+import { adaptLastMessage } from "./supportRequests.adapter";
 
 /** null cuando no es un número: distinto de 0, que sí es un valor válido. */
 const toNumberOrNull = (value: unknown): number | null => {
@@ -124,5 +125,8 @@ export const adaptSupportRequestDetail = (
     // Independiente de `status`: habla del hilo, no de la tarea
     conversationStatus: item.conversation_status ?? null,
     lastMessageAt: item.last_message_at ?? null,
+    // El detalle no calcula no leídos: abrirlo es justamente leerlo
+    hasUnread: false,
+    lastMessage: adaptLastMessage(item.last_message),
   };
 };

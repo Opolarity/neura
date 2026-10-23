@@ -10,6 +10,7 @@ import MovementRequestsFilterModal from "../components/movement-requests/Movemen
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { MovementRequestView } from "../types/MovementRequestList.types";
 import { ComponentPermission } from "@/shared/components/component-permission";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 const MovementRequests = () => {
   const navigate = useNavigate();
@@ -64,14 +65,12 @@ const MovementRequests = () => {
             </TabsList>
           </Tabs>
 
-          <Button
+          <TooltipIconButton
             onClick={() => setIsFilterOpen(true)}
             variant={hasActiveFilters ? "default" : "outline"}
-            className="gap-2"
-          >
-            <ListFilter className="w-4 h-4" />
-            Filtrar
-          </Button>
+            icon={<ListFilter className="w-4 h-4" />}
+            label="Filtrar"
+          />
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
           <MovementRequestsTable requests={requests} loading={loading} />

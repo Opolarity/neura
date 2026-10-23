@@ -23,6 +23,7 @@ import { ListFilter } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DateRangeFilter, DateRangeValue } from "@/shared/components/date-range";
 import { MultiSelect } from "@/shared/components/MultiSelect";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 interface InvoicesFilterModalProps {
   activeFilters?: ActiveInvoiceFilters | null;
@@ -102,10 +103,7 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={"default"} className="gap-2">
-          <ListFilter className="w-4 h-4" />
-          Filtrar
-        </Button>
+        <TooltipIconButton variant={"default"} icon={<ListFilter className="w-4 h-4" />} label="Filtrar" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>

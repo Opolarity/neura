@@ -1,5 +1,7 @@
 import type { PaginationState } from "@/shared/components/pagination/Pagination";
 import type {
+  SupportLastMessage,
+  SupportLastMessageApi,
   SupportRequestListItem,
   SupportRequestsApiResponse,
   SupportRequestsFacets,
@@ -49,6 +51,8 @@ export const adaptSupportRequestsResponse = (
       attachmentsCount: item.attachments_count ?? 0,
       createdAt: item.created_at,
       updatedAt: item.updated_at,
+      hasUnread: item.has_unread === true,
+      lastMessage: adaptLastMessage(item.last_message),
     };
   });
 
@@ -59,6 +63,16 @@ export const adaptSupportRequestsResponse = (
   };
 
   return { requests, pagination, facets: adaptFacets(response) };
+};
+
+/** Último mensaje del hilo; null si no viene o viene incompleto. */
+export const adaptLastMessage = (
+  message: SupportLastMessageApi | null | undefined,
+): SupportLastMessage | null => {
+  if (!message || typeof message.id !== "string" || typeof message.created_at !== "string") {
+    return null;
+  }
+  return { id: message.id, origin: message.origin ?? null, createdAt: message.created_at };
 };
 
 /** Convierte los facets crudos en opciones de select, sin duplicados ni vacíos raros. */

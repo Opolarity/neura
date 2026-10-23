@@ -9,12 +9,14 @@ import {
 import {
   createSupportRequestMessage,
   getSupportRequest,
+  markSupportRequestRead,
 } from "../services/SupportRequests.service";
 import {
   adaptSupportMessage,
   adaptSupportRequestDetail,
 } from "../adapters/supportRequest.adapter";
 import { toastError } from "@/shared/utils/toastError";
+import { useSupportRealtime } from "../context/SupportRealtimeProvider";
 
 interface SupportDetailErrorState {
   message: string;
@@ -103,7 +105,12 @@ const nextLocalId = () => `local-${Date.now()}-${++localCounter}`;
  * pendiente, la recarga posterior es silenciosa (sin skeleton) y, con el panel
  * abierto, se mira cada 20 s si soporte respondió.
  */
-export function useSupportRequestDetail() {
+interface UseSupportRequestDetailOptions {
+  /** Se marcó como leída en el servidor (T-993): el listado y el menú se actualizan. */
+  onMarkedRead?: (id: string, lastMessageId: string) => void;
+}
+
+export function useSupportRequestDetail({ onMarkedRead }: UseSupportRequestDetailOptions = {}) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<SupportRequestDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -530,6 +537,60 @@ export function useSupportRequestDetail() {
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [fetchDetail, selectedId]);
+
+  // T-997: soporte respondió en tiempo real. Si es la solicitud abierta, se
+  // recarga ya, en silencio y con el mismo control de una petición en vuelo
+  // que el polling (que sigue como respaldo). No marca leído por sí solo:
+  // eso lo decide el efecto de abajo, que exige la pestaña visible.
+  const { subscribe, setOpenRequest } = useSupportRealtime();
+  useEffect(
+    () =>
+      subscribe((ids) => {
+        const id = selectedIdRef.current;
+        if (id && ids.includes(id)) void fetchDetail(id, true);
+      }),
+    [subscribe, fetchDetail],
+  );
+  useEffect(() => {
+    setOpenRequest(selectedId);
+    return () => setOpenRequest(null);
+  }, [selectedId, setOpenRequest]);
+
+  // T-993: marcar como leída. Solo con la pestaña visible y solo cuando cambia
+  // el último mensaje que se tiene a la vista: ni una llamada por cada poll ni
+  // por recargas en segundo plano. Un fallo es silencioso (la marca se
+  // reintenta al próximo cambio o al volver a abrir).
+  const markedRef = useRef<Record<string, string>>({});
+  const onMarkedReadRef = useRef(onMarkedRead);
+  onMarkedReadRef.current = onMarkedRead;
+  const [pageVisible, setPageVisible] = useState(
+    () => typeof document === "undefined" || document.visibilityState === "visible",
+  );
+
+  useEffect(() => {
+    const onVisibility = () => setPageVisible(document.visibilityState === "visible");
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+  const detailId = detail?.id ?? null;
+  const lastMessageId = detail?.lastMessage?.id ?? null;
+  const lastMessageAt = detail?.lastMessage?.createdAt ?? null;
+
+  useEffect(() => {
+    if (!pageVisible || !detailId || !lastMessageId) return;
+    if (selectedIdRef.current !== detailId) return;
+    if (markedRef.current[detailId] === lastMessageId) return;
+    markedRef.current[detailId] = lastMessageId;
+
+    markSupportRequestRead(detailId, lastMessageId, lastMessageAt)
+      .then(() => onMarkedReadRef.current?.(detailId, lastMessageId))
+      .catch((error) => {
+        console.error("Error marking support request as read:", error);
+        // Se olvida para que el próximo cambio o la próxima apertura lo reintente
+        if (markedRef.current[detailId] === lastMessageId) delete markedRef.current[detailId];
+      });
+  }, [pageVisible, detailId, lastMessageId, lastMessageAt]);
 
   /**
    * Hilo que ve la UI: detalle + confirmados del POST que el detalle aún no

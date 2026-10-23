@@ -9,13 +9,16 @@ import { getFirstDayOfMonth, getTodayDate } from "@/shared/utils/date";
 export interface ReportsFilters {
   startDate: string | null; // ISO date string YYYY-MM-DD
   endDate: string | null;
-  branchId: number | null;
+  /** T-560: varias sucursales; null = todas. */
+  branchIds: number[] | null;
   countryId: number | null;
   stateId: number | null;
   cityId: number | null;
   neighborhoodId: number | null;
-  saleTypeId: number | null;
-  paymentMethodId: number | null;
+  /** T-560: varios canales; null = todos. */
+  saleTypeIds: number[] | null;
+  /** T-560: varios métodos de pago; null = todos. */
+  paymentMethodIds: number[] | null;
   /**
    * null = el default del backend, que excluye Cancelado y Reembolsado;
    * un array = exactamente esas situaciones.
@@ -38,10 +41,10 @@ export interface ReportsFilters {
   /** Tipo de retorno (Devolución total / parcial / Cambio). `null` = todos. */
   returnTypeIds: number[] | null;
   /**
-   * Código de la lista de precios (`orders.price_list_code`), no su id: es lo
-   * que persiste la orden. `null` = todas las listas.
+   * Códigos de lista de precios (`orders.price_list_code`), no sus ids: es lo
+   * que persiste la orden. `null` = todas las listas (T-560: varias).
    */
-  priceListCode: string | null;
+  priceListCodes: string[] | null;
   /**
    * Cuenta de `movements.business_account_id`. Solo la usa Financiero: es un
    * campo de la caja, no del pedido, así que no aparece en el resto de las
@@ -65,18 +68,18 @@ export interface ReportsFilters {
 export const createDefaultReportsFilters = (): ReportsFilters => ({
   startDate: getFirstDayOfMonth(),
   endDate: getTodayDate(),
-  branchId: null,
+  branchIds: null,
   countryId: null,
   stateId: null,
   cityId: null,
   neighborhoodId: null,
-  saleTypeId: null,
-  paymentMethodId: null,
+  saleTypeIds: null,
+  paymentMethodIds: null,
   situationIds: null,
   productSituationIds: null,
   returnSituationIds: null,
   returnTypeIds: null,
-  priceListCode: null,
+  priceListCodes: null,
   businessAccountId: null,
   movementClassId: null,
 });
@@ -281,6 +284,9 @@ export interface ProductSearchResult {
 }
 
 export interface ProductDetailData {
+  /** T-560: los productos analizados (id y título). */
+  products?: Array<{ id: number; title: string }>;
+  /** El primero de los elegidos (compatibilidad con la ficha de uno solo). */
   product_info: {
     id: number;
     title: string;

@@ -523,5 +523,9 @@ export const useEditMovementRequest = () => {
     isReadOnly,
     isQuantityReadOnly,
     inWarehouseName,
+    // T-4: guía de remisión del traslado
+    currentSituationCode,
+    outWarehouseId,
+    inWarehouseId,
   };
 };

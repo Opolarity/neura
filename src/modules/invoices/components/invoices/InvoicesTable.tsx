@@ -147,7 +147,7 @@ export default function InvoicesTable({ invoices = [], loading, invoiceTypes = [
                         size="sm"
                         title="Imprimir PDF"
                         disabled={printingId === item.id}
-                        onClick={() => printInvoice(item.id)}
+                        onClick={() => printInvoice(item.id, { format: "configured" })}
                       >
                         {printingId === item.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />

@@ -87,17 +87,28 @@ export const SupportRequestsTable = ({
         {requests.map((request) => (
           <TableRow key={request.id}>
             <TableCell>
-              <div>
-                <p className="font-medium">{request.title}</p>
-                {/* Los códigos por los que se busca la solicitud. Antes aquí
-                    solo salía el de la tarea y en crudo ("219"): sin el
-                    prefijo y sin el S-n, el usuario no tenía de dónde copiar
-                    lo que va a pegar en el buscador. */}
-                {formatSupportCodes(request) !== "" && (
-                  <p className="text-xs text-muted-foreground">
-                    {formatSupportCodes(request)}
+              <div className="flex items-start gap-2">
+                {/* T-993: respuesta de soporte sin leer. Punto + negrita, sin
+                    color nuevo: se va al abrir la solicitud. */}
+                <span
+                  className={`mt-1.5 size-2 shrink-0 rounded-full ${request.hasUnread ? "bg-destructive" : "bg-transparent"}`}
+                  aria-hidden="true"
+                />
+                <div>
+                  <p className={request.hasUnread ? "font-semibold" : "font-medium"}>
+                    {request.title}
+                    {request.hasUnread && <span className="sr-only"> (respuesta sin leer)</span>}
                   </p>
-                )}
+                  {/* Los códigos por los que se busca la solicitud. Antes aquí
+                      solo salía el de la tarea y en crudo ("219"): sin el
+                      prefijo y sin el S-n, el usuario no tenía de dónde copiar
+                      lo que va a pegar en el buscador. */}
+                  {formatSupportCodes(request) !== "" && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatSupportCodes(request)}
+                    </p>
+                  )}
+                </div>
               </div>
             </TableCell>
             <TableCell>

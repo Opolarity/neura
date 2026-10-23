@@ -17,6 +17,13 @@ export interface BusinessField {
   options?: { label: string; value: string }[];
   /** Se muestra pero no se puede editar ni se envía al guardar. */
   readOnly?: boolean;
+  /**
+   * Valor que muestra el formulario cuando el parámetro no existe en la tabla.
+   * Debe coincidir con lo que hace el sistema sin el parámetro (p. ej. las
+   * banderas de la plantilla de documentos: ausente = se imprime). No se guarda
+   * mientras el usuario no lo cambie.
+   */
+  defaultValue?: string;
 }
 
 export interface BusinessSection {
@@ -80,28 +87,79 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
         key: "InvoiceShowDocumentTypeAndNumber",
         label: "Mostrar tipo y número de documento en el comprobante",
         control: "boolean",
+        defaultValue: "true",
+        help: "Documento del cliente. Solo se oculta en boletas de hasta S/ 700: en facturas, notas y boletas mayores se imprime siempre.",
       },
       {
         key: "InvoiceShowEmail",
         label: "Mostrar correo en el comprobante",
         control: "boolean",
+        defaultValue: "true",
+        help: "Correo de la empresa.",
       },
       {
         key: "InvoiceShowAddress",
         label: "Mostrar dirección en el comprobante",
         control: "boolean",
+        defaultValue: "true",
+        help: "Dirección del cliente. El domicilio fiscal de la empresa se imprime siempre.",
       },
       {
         key: "InvoiceLogoUrl",
-        label: "Logo del comprobante",
+        label: "Logo de documentos",
         control: "image",
-        help: "Se imprime en facturas, boletas, tickets de POS y etiquetas de envío.",
+        help: "Se imprime en facturas, boletas, la guía de remisión de ventas, tickets de POS y etiquetas de envío.",
       },
       {
         key: "InvoiceFooterMessage",
         label: "Mensaje de pie de comprobante",
         control: "textarea",
         help: "Texto legal o informativo al final del comprobante.",
+      },
+    ],
+  },
+  {
+    id: "documents",
+    title: "Documentos",
+    description: "Plantilla de impresión de boletas, facturas, notas y guías de remisión de ventas.",
+    fields: [
+      {
+        key: "InvoicePrintFormat",
+        label: "Formato de impresión de comprobantes",
+        control: "select",
+        defaultValue: "80mm",
+        options: [
+          { label: "Ticket 80 mm", value: "80mm" },
+          { label: "A4", value: "A4" },
+        ],
+        help: "El A4 solo aplica a los comprobantes internos (tipo Comprobante), que se imprimen desde la lista de Comprobantes. Boletas, facturas y notas, el punto de venta, los comprobantes de la venta y el envío por WhatsApp usan siempre el ticket de 80 mm.",
+      },
+      {
+        key: "InvoiceShowPhone",
+        label: "Mostrar teléfono en el comprobante",
+        control: "boolean",
+        defaultValue: "true",
+        help: "Teléfono de la empresa. Razón social, RUC y domicilio fiscal se imprimen siempre.",
+      },
+      {
+        key: "RemisionGuideShowPhone",
+        label: "Mostrar teléfono en la guía de remisión",
+        control: "boolean",
+        defaultValue: "true",
+        help: "Teléfono de la empresa en la guía de remisión de ventas.",
+      },
+      {
+        key: "RemisionGuideShowEmail",
+        label: "Mostrar correo en la guía de remisión",
+        control: "boolean",
+        defaultValue: "true",
+        help: "Correo de la empresa en la guía de remisión de ventas.",
+      },
+      {
+        key: "RemisionGuideFooterMessage",
+        label: "Mensaje de pie de la guía de remisión",
+        control: "textarea",
+        help: "Texto al final de la guía de remisión de ventas. Vacío = sin pie.",
       },
     ],
   },
@@ -140,6 +198,15 @@ export const BUSINESS_SECTIONS: BusinessSection[] = [
 
 export const CURATED_KEYS = BUSINESS_SECTIONS.flatMap((section) =>
   section.fields.map((field) => field.key),
+);
+
+/** Valor por defecto de cada parámetro curado que lo tiene (ver BusinessField.defaultValue). */
+export const CURATED_DEFAULTS: Record<string, string> = Object.fromEntries(
+  BUSINESS_SECTIONS.flatMap((section) =>
+    section.fields
+      .filter((field) => field.defaultValue !== undefined)
+      .map((field) => [field.key, field.defaultValue as string]),
+  ),
 );
 
 /** Parámetros que la página muestra pero nunca escribe. */

@@ -261,6 +261,9 @@ export interface CreatePOSOrderRequest {
   initialSituationId: number;
   saleType: string;
 
+  /** T-340: id en `discounts` del cupón canjeado; create-order registra su uso. */
+  couponDiscountId?: number | null;
+
   // Discounts
   discounts?: Array<{
     name: string;

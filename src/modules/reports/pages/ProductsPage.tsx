@@ -5,7 +5,7 @@ import { toast } from '@/shared/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportsFilters } from '../context/ReportsFiltersContext';
-import { filterOptionsService } from '../services/reports.service';
+import { filterOptionsService, multi } from '../services/reports.service';
 import { defaultProductSituationIds, isSameIdSet } from '../types/reports.types';
 import { TabSkeleton } from '../components/shared/TabSkeleton';
 import { ReportsFilterBar } from '../components/shared/ReportsFilterBar';
@@ -46,27 +46,27 @@ export default function ProductsPage() {
   // individual", con su propio Aplicar y Limpiar.
   const extraActiveCount =
     [
-      draft.branchId,
-      draft.saleTypeId,
+      draft.branchIds,
+      draft.saleTypeIds,
       draft.countryId,
       draft.stateId,
       draft.cityId,
       draft.neighborhoodId,
-      draft.paymentMethodId,
-      draft.priceListCode,
+      draft.paymentMethodIds,
+      draft.priceListCodes,
     ].filter((v) => v !== null && v !== undefined).length + (situationIsDefault ? 0 : 1);
 
   function handleClearExtra() {
     applyImmediate({
       ...draft,
-      branchId: null,
-      saleTypeId: null,
+      branchIds: null,
+      saleTypeIds: null,
       countryId: null,
       stateId: null,
       cityId: null,
       neighborhoodId: null,
-      paymentMethodId: null,
-      priceListCode: null,
+      paymentMethodIds: null,
+      priceListCodes: null,
       productSituationIds: null,
     });
   }
@@ -113,14 +113,14 @@ export default function ProductsPage() {
       const scope = {
         p_start_date: filters.startDate,
         p_end_date: filters.endDate,
-        p_branch_id: filters.branchId ?? undefined,
-        p_sale_type_id: filters.saleTypeId ?? undefined,
+        p_branch_ids: multi(filters.branchIds),
+        p_sale_type_ids: multi(filters.saleTypeIds),
         p_country_id: filters.countryId ?? undefined,
         p_state_id: filters.stateId ?? undefined,
         p_city_id: filters.cityId ?? undefined,
         p_neighborhood_id: filters.neighborhoodId ?? undefined,
-        p_payment_method_id: filters.paymentMethodId ?? undefined,
-        p_price_list_code: filters.priceListCode ?? undefined,
+        p_payment_method_ids: multi(filters.paymentMethodIds),
+        p_price_list_codes: multi(filters.priceListCodes),
         p_situation_ids: exportSituationIds,
       };
 

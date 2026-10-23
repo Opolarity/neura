@@ -1,16 +1,16 @@
 import jsPDF from "jspdf";
-import { getParameters } from "@/modules/settings/services/Parameters.service";
+import { toast } from "@/shared/hooks/use-toast";
+import {
+  getRemisionGuideTemplateConfig,
+  MISSING_ISSUER_MESSAGE,
+} from "@/shared/utils/document-templates/documentTemplateConfig";
+import {
+  drawGuideCompanyBlock,
+  drawGuideFooter,
+  loadDocumentLogo,
+  resolveGuideCompanyHeader,
+} from "@/shared/utils/document-templates/pdfHeader";
 import { formatDateDisplay, nowIso } from "@/shared/utils/date";
-
-const EMPRESA = {
-  name: "PERCEPTION ENDLESS COMPANY E.I.R.L.",
-  ruc: "20611215895",
-  phone: "977862202",
-  address: "URB. EL PORVENIR CAL. SEBASTIAN BARRANCA - LA VICTORIA - LIMA.",
-  email: "ariasveramanuel@gmail.com",
-  website: "https://perception.pe",
-  direccionPartida: "GAMARRA GALERIA PARAISO - LA VICTORIA - LIMA",
-};
 
 export interface RemisionGuideData {
   customerName: string;
@@ -35,23 +35,24 @@ export interface RemisionGuideData {
   }>;
 }
 
+/**
+ * Guía de remisión de una venta, con la plantilla de documentos (T-1013): logo,
+ * teléfono y correo según RemisionGuideShowPhone/Email y pie configurable.
+ *
+ * Sin datos de respaldo escritos en el código: antes se completaban con los de
+ * PERCEPTION, y una empresa sin parámetros emitía la guía con el RUC de otra.
+ * Si faltan razón social o RUC, no se genera y se avisa.
+ */
 export async function generateRemisionGuide(data: RemisionGuideData): Promise<void> {
-  const params = await getParameters([
-    "CompanyName",
-    "CompanyDocumentNumber",
-    "CompanyPhoneNumber",
-    "CompanyAddress",
-    "CompanyEmail",
-    "CompanyWebsite",
-    "CompanyDireccionPartida",
-  ]);
-  const companyName = params["CompanyName"] || EMPRESA.name;
-  const companyRuc = params["CompanyDocumentNumber"] || EMPRESA.ruc;
-  const companyPhone = params["CompanyPhoneNumber"] || EMPRESA.phone;
-  const companyAddress = params["CompanyAddress"] || EMPRESA.address;
-  const companyEmail = params["CompanyEmail"] || EMPRESA.email;
-  const companyWebsite = params["CompanyWebsite"] || EMPRESA.website;
-  const companyDireccionPartida = params["CompanyDireccionPartida"] || EMPRESA.direccionPartida;
+  const template = await getRemisionGuideTemplateConfig();
+  if (!template.company.name || !template.company.documentNumber) {
+    toast({ title: MISSING_ISSUER_MESSAGE, variant: "destructive" });
+    return;
+  }
+  const company = resolveGuideCompanyHeader(template);
+  const companyDireccionPartida = template.company.departureAddress;
+  // Sin logo configurado la guía sale sin logo (no usa el de respaldo del ticket).
+  const logo = template.logoUrl ? await loadDocumentLogo(template.logoUrl) : null;
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = 210;
@@ -97,23 +98,14 @@ export async function generateRemisionGuide(data: RemisionGuideData): Promise<vo
   doc.setFontSize(9);
   doc.text(guideNumber, rightBoxX + rightBoxW / 2, y + 20, { align: "center" });
 
-  // Company info
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...dark);
-  doc.text(companyName, margin + 3, y + 8);
-
-  doc.setFontSize(7.5);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...muted);
-  doc.text(companyAddress, margin + 3, y + 14);
-  doc.text(
-    `Email: ${companyEmail}   R.U.C. ${companyRuc}`,
-    margin + 3,
-    y + 20,
+  // Company info (plantilla: logo, teléfono y correo según banderas)
+  drawGuideCompanyBlock(
+    doc,
+    company,
+    logo,
+    { x: margin, y, width: rightBoxX - margin, height: hdrH },
+    { dark, muted },
   );
-  doc.text(`Teléfono: ${companyPhone}`, margin + 3, y + 26);
-  doc.text(`Website: ${companyWebsite}`, margin + 3, y + 32);
 
   y += hdrH + 5;
 
@@ -339,6 +331,9 @@ export async function generateRemisionGuide(data: RemisionGuideData): Promise<vo
   // Bottom table border
   doc.setDrawColor(...gray200);
   doc.line(margin, y, margin + contentW, y);
+
+  // Pie configurable (RemisionGuideFooterMessage)
+  y = drawGuideFooter(doc, template.footerMessage, y, { margin, contentW, bottom: bottomMargin }, muted);
 
   // ── OPEN IN NEW TAB ──────────────────────────────────────────────────────
   const blob = doc.output("blob");

@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { filterOptionsService } from '../../services/reports.service';
 import { useReportsFilters } from '../../context/ReportsFiltersContext';
 import { OrderSituationFilter } from '../shared/OrderSituationFilter';
+import { MultiScopeFilter } from '../shared/MultiScopeFilter';
 import { defaultSituationIds } from '../../types/reports.types';
 
 const ALL_VALUE = '__all__';
@@ -51,23 +52,13 @@ export function FinancialScopeFilters() {
   return (
     <>
       {/* Sucursal */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Sucursal</span>
-        <Select
-          value={draft.branchId?.toString() ?? ALL_VALUE}
-          onValueChange={(v) => setDraft({ branchId: v === ALL_VALUE ? null : Number(v) })}
-        >
-          <SelectTrigger className="h-9 w-[180px]">
-            <SelectValue placeholder="Todas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todas</SelectItem>
-            {branches.data?.map((b) => (
-              <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <MultiScopeFilter
+        label="Sucursal"
+        options={(branches.data ?? []).map((b) => ({ value: b.id.toString(), label: b.name }))}
+        value={draft.branchIds?.map(String) ?? null}
+        onChange={(v) => setDraft({ branchIds: v?.map(Number) ?? null })}
+        placeholder="Todas"
+      />
 
       {/* Cuenta */}
       <div className="flex flex-col gap-1">
@@ -91,23 +82,13 @@ export function FinancialScopeFilters() {
       </div>
 
       {/* Método de pago */}
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-muted-foreground font-medium">Método de pago</span>
-        <Select
-          value={draft.paymentMethodId?.toString() ?? ALL_VALUE}
-          onValueChange={(v) => setDraft({ paymentMethodId: v === ALL_VALUE ? null : Number(v) })}
-        >
-          <SelectTrigger className="h-9 w-[180px]">
-            <SelectValue placeholder="Todos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL_VALUE}>Todos</SelectItem>
-            {paymentMethods.data?.map((pm) => (
-              <SelectItem key={pm.id} value={pm.id.toString()}>{pm.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <MultiScopeFilter
+        label="Método de pago"
+        options={(paymentMethods.data ?? []).map((pm) => ({ value: pm.id.toString(), label: pm.name }))}
+        value={draft.paymentMethodIds?.map(String) ?? null}
+        onChange={(v) => setDraft({ paymentMethodIds: v?.map(Number) ?? null })}
+        placeholder="Todos"
+      />
 
       {/* Motivo del movimiento */}
       <div className="flex flex-col gap-1">

@@ -1,6 +1,7 @@
 import { buildEndpoint } from "@/shared/utils/query";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import {
+  FranchiseStockValue,
   FranchiseeTenant,
   FranchiseStockApiResponse,
   FranchiseStockFilters,
@@ -46,4 +47,16 @@ export const fetchFranchiseStock = async (
 
   const data = await invokeFunction(endpoint, { method: "GET" });
   return data as FranchiseStockApiResponse;
+};
+
+// T-593: stock completo del franquiciado valorizado en personalizado (unidades,
+// categorías, costo, venta, tope y disponible).
+export const fetchFranchiseStockValue = async (
+  tenantReference: string,
+): Promise<FranchiseStockValue> => {
+  const endpoint = buildEndpoint("get-franchise-stock-value", {
+    tenant_reference: tenantReference,
+  });
+  const data = await invokeFunction(endpoint, { method: "GET" });
+  return data as FranchiseStockValue;
 };

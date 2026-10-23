@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { PaginationState } from "@/shared/components/pagination/Pagination";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 import {
@@ -11,6 +11,7 @@ import {
 } from "../types/Support.types";
 import { getSupportRequests } from "../services/SupportRequests.service";
 import { adaptSupportRequestsResponse } from "../adapters/supportRequests.adapter";
+import { useSupportRealtime } from "../context/SupportRealtimeProvider";
 
 const DEFAULT_FILTERS: SupportRequestsFilters = {
   page: 1,
@@ -65,8 +66,13 @@ export function useSupportRequests() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isOpenFilterModal, setIsOpenFilterModal] = useState(false);
 
-  const load = useCallback(async (currentFilters: SupportRequestsFilters) => {
-    setLoading(true);
+  // `silent` (T-997): recarga sin skeleton ni error de pantalla, para cuando
+  // llega una respuesta en tiempo real con el listado ya pintado.
+  /** id → último mensaje ya leído en el detalle (T-993/T-997). */
+  const readOverridesRef = useRef<Record<string, string>>({});
+
+  const load = useCallback(async (currentFilters: SupportRequestsFilters, silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const response = await getSupportRequests(currentFilters);
       const {
@@ -74,7 +80,17 @@ export function useSupportRequests() {
         pagination: pag,
         facets: opts,
       } = adaptSupportRequestsResponse(response);
-      setRequests(items);
+      // Lo que el usuario ya leyó en el detalle gana a una respuesta del
+      // listado pedida antes de marcarlo (carrera con la recarga en tiempo real)
+      setRequests(
+        items.map((item) =>
+          item.hasUnread &&
+          item.lastMessage &&
+          readOverridesRef.current[item.id] === item.lastMessage.id
+            ? { ...item, hasUnread: false }
+            : item,
+        ),
+      );
       setPagination(pag);
       // Los facets vienen del total de solicitudes (no de la página ni del
       // filtro activo), así que las opciones no se recortan al filtrar.
@@ -82,6 +98,8 @@ export function useSupportRequests() {
       setErrorState(null);
     } catch (error) {
       console.error("Error loading support requests:", error);
+      // Una recarga silenciosa que falla conserva lo que ya se veía
+      if (silent) return;
       const err = error as SupportServiceError;
       setRequests([]);
       setPagination({ p_page: 1, p_size: currentFilters.size, total: 0 });
@@ -91,7 +109,7 @@ export function useSupportRequests() {
         code: err?.code ?? "unknown",
       });
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -142,6 +160,24 @@ export function useSupportRequests() {
 
   const refresh = () => load(filters);
 
+  // T-997: soporte respondió (señal en tiempo real) → recarga silenciosa de la
+  // página actual, que trae el has_unread recalculado por el servidor.
+  const { subscribe } = useSupportRealtime();
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+  useEffect(() => subscribe(() => void load(filtersRef.current, true)), [subscribe, load]);
+
+  // T-993: al leer una solicitud en el detalle, su fila deja de marcarse sin
+  // esperar a la próxima carga del listado.
+  const markRowRead = useCallback((id: string, lastMessageId: string | null) => {
+    if (lastMessageId) readOverridesRef.current[id] = lastMessageId;
+    setRequests((prev) =>
+      prev.some((r) => r.id === id && r.hasUnread)
+        ? prev.map((r) => (r.id === id ? { ...r, hasUnread: false } : r))
+        : prev,
+    );
+  }, []);
+
   const openNewRequest = () => setDialogOpen(true);
 
   // El SupportDialog no expone onCreated: se cierra solo tras un envío exitoso
@@ -172,6 +208,7 @@ export function useSupportRequests() {
     onApplyFilter,
     clearFilters,
     refresh,
+    markRowRead,
     openNewRequest,
     onDialogOpenChange,
   };

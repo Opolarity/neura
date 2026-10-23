@@ -4,6 +4,7 @@ import { AppSidebar } from "../components/layout/AppSidebar";
 import Header from "../components/layout/Header";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { usePOSSessionStatus } from "@/modules/pos/hooks/usePOSSessionStatus";
+import { SupportRealtimeProvider } from "@/modules/support/context/SupportRealtimeProvider";
 
 export default function DashboardLayout() {
   // El hook abre un canal realtime por usuario: se consulta una sola vez aquí
@@ -12,21 +13,25 @@ export default function DashboardLayout() {
 
   // El estado abierto/colapsado lo gestiona SidebarProvider; el toggle vive en
   // el header del propio sidebar.
+  // SupportRealtimeProvider (T-997) vive aquí y no en App: el toast de
+  // "soporte respondió" navega a la solicitud, y para eso necesita el router.
   return (
-    <SidebarProvider className="bg-muted h-dvh overflow-hidden">
-      <AppSidebar posSessionOpen={posSession.isOpen} />
+    <SupportRealtimeProvider>
+      <SidebarProvider className="bg-muted h-dvh overflow-hidden">
+        <AppSidebar posSessionOpen={posSession.isOpen} />
 
-      <div className="flex-1 min-w-0 flex flex-col">
-        <Header posSession={posSession} />
+        <div className="flex-1 min-w-0 flex flex-col">
+          <Header posSession={posSession} />
 
-        {/* El scroll vive aquí: las páginas de tabla ocupan el alto disponible
-            y solo desplazan sus filas. `relative` es lo que ancla el PageLoader
-            a esta área: así el loader no tapa el sidebar ni el header. */}
-        <main className="relative flex-1 min-h-0 overflow-y-auto min-w-0 p-4">
-          <RumBoundary>
-            <Outlet />
-          </RumBoundary>
-        </main>
-      </div>
-    </SidebarProvider>);
+          {/* El scroll vive aquí: las páginas de tabla ocupan el alto disponible
+              y solo desplazan sus filas. `relative` es lo que ancla el PageLoader
+              a esta área: así el loader no tapa el sidebar ni el header. */}
+          <main className="relative flex-1 min-h-0 overflow-y-auto min-w-0 p-4">
+            <RumBoundary>
+              <Outlet />
+            </RumBoundary>
+          </main>
+        </div>
+      </SidebarProvider>
+    </SupportRealtimeProvider>);
 };

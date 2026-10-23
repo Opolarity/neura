@@ -5,6 +5,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { APP_PERMISSIONS_CONFIG, getFilterSidebar } from "@/app/data/permissions";
 import { useAuth } from "@/modules/auth";
 import { POSOpenWarningDialog } from "@/modules/pos/components/POSOpenWarningDialog";
+import { useSupportUnread } from "@/modules/support/context/SupportUnreadProvider";
+import { Badge } from "@/components/ui/badge";
 
 import {
   Sidebar,
@@ -256,6 +258,10 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
   const [showPOSWarning, setShowPOSWarning] = useState(false);
   const isAnyPopoverOpen = openPopoverCode !== null;
   const isUserPopoverOpen = openPopoverCode === USER_POPOVER_CODE;
+  // T-993: solicitudes de soporte con respuestas sin leer. Soporte vive dentro
+  // del popover del usuario, así que el aviso se ve también en su avatar.
+  const { count: supportUnread } = useSupportUnread();
+  const supportUnreadLabel = supportUnread > 99 ? "99+" : String(supportUnread);
 
   // Los códigos llegan por RPC: hasta entonces solo se muestra el Dashboard.
   const menuItems = useMemo(
@@ -343,8 +349,14 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
                   isActive={isUserPopoverOpen}
                   className={`h-auto py-1.5 group-data-[collapsible=icon]:px-0 ${MENU_BUTTON_COLORS}`}
                 >
-                  <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                  <div className="relative flex aspect-square size-8 shrink-0 items-center justify-center rounded-full bg-primary text-white">
                     <User className="size-4" />
+                    {supportUnread > 0 && (
+                      <span
+                        className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-sidebar bg-destructive"
+                        aria-label={`${supportUnreadLabel} solicitudes de soporte sin leer`}
+                      />
+                    )}
                   </div>
 
                   <div className="grid flex-1 text-left leading-tight">
@@ -402,6 +414,15 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
                   >
                     <Icon className="size-4" />
                     <span>{label}</span>
+                    {to === "/support" && supportUnread > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="ml-auto h-4 min-w-4 justify-center px-1 text-[10px] leading-none"
+                        aria-label={`${supportUnreadLabel} solicitudes sin leer`}
+                      >
+                        {supportUnreadLabel}
+                      </Badge>
+                    )}
                   </Link>
                 ))}
 

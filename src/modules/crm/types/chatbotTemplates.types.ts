@@ -31,6 +31,9 @@ export interface ChatbotTemplateApi {
   rol: string | null;
   /** T-922: si Jev puede mandarla sin pasar por el modelo. */
   sale_sola: boolean;
+  /** T-921: en observación = el bot no la manda; Jev anota en sombra cuándo la habría elegido. */
+  en_observacion?: boolean;
+  created_at?: string;
   /** Etiquetas extra (nombres); la principal es `topic`. */
   tags: string[];
   placeholders: string[];
@@ -100,6 +103,9 @@ export interface ChatbotTemplate {
   rol: string | null;
   /** T-922: Jev puede mandarla sin pasar por el modelo. */
   saleSola: boolean;
+  /** T-921: en observación (no sale nunca hasta que un admin la active). */
+  enObservacion: boolean;
+  createdAt: string | null;
   /** Datos que el bot sabe rellenar en esta plantilla. */
   placeholders: string[];
   /** Datos que el texto no puede perder. */
@@ -119,4 +125,38 @@ export interface ChatbotTemplateMeta {
 export interface ChatbotTemplateCreateInput extends ChatbotTemplateMeta {
   name: string;
   content: string;
+  /** T-921: nace en observación (default al crear desde el ERP). */
+  enObservacion?: boolean;
+}
+
+/** T-921: qué elige Jev para un mensaje de ejemplo (servicio del bot, /outbound/template-test). */
+export interface TemplateTestChoice {
+  ganadora: string | null;
+  probabilidad: number | null;
+  accion: "jev_manda" | "llm_candidatas" | "sin_cambio";
+  motivo: string | null;
+  tema: string | null;
+  error: string | null;
+}
+
+export interface TemplateTestResult {
+  /** Modo de Jev del bot: en "shadow" u "off" Jev no manda nada solo hoy. */
+  modoTenant: string;
+  resultados: Array<{ ejemplo: string; hoy: TemplateTestChoice; conBorrador: TemplateTestChoice }>;
+  parecidas: Array<{ nombre: string; similitud: number }>;
+}
+
+export interface TemplateTestApi {
+  modo_tenant: string;
+  resultados: Array<{ ejemplo: string; hoy: TemplateTestChoice; con_borrador: TemplateTestChoice }>;
+  parecidas: Array<{ nombre: string; similitud: number }>;
+}
+
+/** T-921: un mensaje real en el que Jev habría elegido la plantilla en observación. */
+export interface ShadowHit {
+  turnId: number;
+  at: string;
+  mensaje: string | null;
+  probabilidad: number | null;
+  accion: string | null;
 }

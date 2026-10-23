@@ -1,4 +1,4 @@
-import { Lock, SquarePen, Trash2 } from "lucide-react";
+import { Eye, Lock, SquarePen, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,9 +20,11 @@ interface ChatbotTemplatesTableProps {
   onEdit: (template: ChatbotTemplate) => void;
   /** T-922: para todas las que no están bloqueadas. */
   onDelete: (template: ChatbotTemplate) => void;
+  /** T-921: ver dónde se habría usado una plantilla en observación (y activarla). */
+  onShadow: (template: ChatbotTemplate) => void;
 }
 
-export default function ChatbotTemplatesTable({ rows, searching, onEdit, onDelete }: ChatbotTemplatesTableProps) {
+export default function ChatbotTemplatesTable({ rows, searching, onEdit, onDelete, onShadow }: ChatbotTemplatesTableProps) {
   return (
     <Table>
       <TableHeader>
@@ -48,6 +50,7 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit, onDelet
                 <div className="flex flex-col items-start gap-1">
                   <span className="font-mono text-xs">{t.name}</span>
                   {t.fromErp && <Badge variant="info">Creada en el ERP</Badge>}
+                  {t.enObservacion && <Badge variant="warning">En observación</Badge>}
                   {t.locked && (
                     <span
                       className="flex items-center gap-1 text-xs text-muted-foreground"
@@ -84,6 +87,17 @@ export default function ChatbotTemplatesTable({ rows, searching, onEdit, onDelet
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
+                  {t.enObservacion && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      title="Dónde se habría usado"
+                      aria-label={`Ver dónde se habría usado ${t.name}`}
+                      onClick={() => onShadow(t)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  )}
                   <Button variant="outline" size="sm" title="Editar plantilla" onClick={() => onEdit(t)}>
                     <SquarePen className="w-4 h-4" />
                   </Button>

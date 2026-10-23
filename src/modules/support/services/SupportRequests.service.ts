@@ -1,10 +1,12 @@
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import type {
   SupportAttachment,
+  SupportMarkReadApiResponse,
   SupportMessageApiResponse,
   SupportRequestDetailApiResponse,
   SupportRequestsApiResponse,
   SupportRequestsFilters,
+  SupportUnreadCountApiResponse,
 } from "../types/Support.types";
 
 /**
@@ -76,4 +78,45 @@ export const createSupportRequestMessage = async (
             }))
           : undefined,
     },
+  });
+
+/**
+ * Marca la solicitud como leída para el usuario de la sesión, hasta el último
+ * mensaje que tiene a la vista (T-991). La marca nunca retrocede.
+ */
+export const markSupportRequestRead = async (
+  suggestionId: string,
+  messageId: string | null,
+  messageAt: string | null,
+): Promise<SupportMarkReadApiResponse> =>
+  invokeFunction<SupportMarkReadApiResponse>("mark-support-request-read", {
+    method: "POST",
+    networkMessage: NETWORK_MESSAGE,
+    body: {
+      id: suggestionId,
+      message_id: messageId ?? undefined,
+      message_at: messageAt ?? undefined,
+    },
+  });
+
+/** Cuántas solicitudes tienen respuestas sin leer: el número del menú "Tickets". */
+export const getSupportUnreadCount = async (): Promise<SupportUnreadCountApiResponse> =>
+  invokeFunction<SupportUnreadCountApiResponse>("get-support-unread-count", {
+    method: "POST",
+    networkMessage: NETWORK_MESSAGE,
+    body: {},
+  });
+
+/**
+ * Solo esas solicitudes, con su has_unread (T-997): el aviso en tiempo real
+ * confirma contra el servidor antes de mostrar nada, porque el evento llega
+ * por un canal público y no se le cree.
+ */
+export const getSupportRequestsByIds = async (
+  ids: string[],
+): Promise<SupportRequestsApiResponse> =>
+  invokeFunction<SupportRequestsApiResponse>("get-support-requests", {
+    method: "POST",
+    networkMessage: NETWORK_MESSAGE,
+    body: { ids, page: 1, page_size: Math.min(Math.max(ids.length, 1), 100) },
   });
