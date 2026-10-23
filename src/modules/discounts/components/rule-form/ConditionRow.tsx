@@ -538,7 +538,7 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
     <div className="flex gap-3 items-start p-3 border rounded-lg bg-muted/30">
       <div className="flex-1 space-y-3">
         <div className="space-y-1">
-          <Label className="text-xs">Tipo de condición</Label>
+          <Label className="text-xs">Condición</Label>
           <Select
             value={condition.type}
             onValueChange={(val) => handleTypeChange(val as ConditionType)}
@@ -548,7 +548,7 @@ export const ConditionRow = ({ condition, onChange, onRemove }: ConditionRowProp
             </SelectTrigger>
             <SelectContent>
               {/* consignment_channel y franchisee_exclusion son marcadores que
-                  se gestionan con los checkboxes de Información Básica, no
+                  se gestionan con las casillas de Opciones avanzadas, no
                   desde acá. */}
               {Object.entries(CONDITION_TYPE_LABELS)
                 .filter(

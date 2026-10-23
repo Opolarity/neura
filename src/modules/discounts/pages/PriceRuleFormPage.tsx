@@ -1,16 +1,43 @@
+import type { ReactNode } from "react";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { usePriceRuleForm } from "../hooks/usePriceRuleForm";
 import { RuleBasicInfoSection } from "../components/rule-form/RuleBasicInfoSection";
 import { RuleValiditySection } from "../components/rule-form/RuleValiditySection";
+import { RuleAdvancedSection } from "../components/rule-form/RuleAdvancedSection";
 import { ConditionBuilder } from "../components/rule-form/ConditionBuilder";
 import { ActionBuilder } from "../components/rule-form/ActionBuilder";
-import { CouponSection } from "../components/rule-form/CouponSection";
-import { ExclusionSection } from "../components/rule-form/ExclusionSection";
 import { PriceRuleReferencesProvider } from "../context/PriceRuleReferencesContext";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { OptionalBadge } from "../components/rule-form/OptionalBadge";
+
+// El orden sigue el de quien arma una promoción: qué es y cómo llega al
+// cliente, qué descuento da, cuándo aplica y hasta cuándo. Lo técnico va al
+// final, plegado.
+const FormSection = ({
+  title,
+  description,
+  optional = false,
+  children,
+}: {
+  title: string;
+  description?: string;
+  optional?: boolean;
+  children: ReactNode;
+}) => (
+  <Card>
+    <CardHeader className="space-y-1">
+      <h2 className="flex items-center gap-2 text-base font-semibold">
+        {title}
+        {optional && <OptionalBadge />}
+      </h2>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
+    </CardHeader>
+    <CardContent>{children}</CardContent>
+  </Card>
+);
 
 const PriceRuleFormPage = () => {
   const {
@@ -51,37 +78,74 @@ const PriceRuleFormPage = () => {
     );
   }
 
+  const goBack = () => navigate("/discounts/price-rules");
+
+  const saveButton = (
+    <Button onClick={handleSubmit} disabled={saving}>
+      {saving ? (
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      ) : (
+        <Save className="w-4 h-4 mr-2" />
+      )}
+      {saving ? "Guardando..." : "Guardar promoción"}
+    </Button>
+  );
+
   return (
     <PriceRuleReferencesProvider value={references}>
-    <div className="p-6 space-y-6">
+    <div className="p-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/discounts/price-rules")}
-          >
+          <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-bold text-foreground">
             {isEditMode ? "Editar regla de precios" : "Nueva regla de precios"}
           </h1>
         </div>
-        <Button onClick={handleSubmit} disabled={saving}>
-          {saving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          {saving ? "Guardando..." : "Guardar"}
-        </Button>
+        {saveButton}
       </div>
 
-      {/* 1. Basic Info */}
-      <RuleBasicInfoSection
+      <FormSection title="Promoción">
+        <RuleBasicInfoSection
+          formData={formData}
+          updateField={updateField}
+          isEditMode={isEditMode}
+        />
+      </FormSection>
+
+      <FormSection title="Descuento">
+        <ActionBuilder
+          actions={formData.actions}
+          addAction={addAction}
+          updateAction={updateAction}
+          removeAction={removeAction}
+        />
+      </FormSection>
+
+      <FormSection title="Condiciones" optional>
+        <ConditionBuilder
+          conditions={formData.conditions}
+          setGroupOperator={setGroupOperator}
+          addGroup={addGroup}
+          removeGroup={removeGroup}
+          updateGroupOperator={updateGroupOperator}
+          addCondition={addCondition}
+          updateCondition={updateCondition}
+          removeCondition={removeCondition}
+        />
+      </FormSection>
+
+      <FormSection title="Vigencia">
+        <RuleValiditySection formData={formData} updateField={updateField} />
+      </FormSection>
+
+      <RuleAdvancedSection
         formData={formData}
         updateField={updateField}
+        updateExclusions={updateExclusions}
         isConsignmentPromo={isConsignmentPromo}
         toggleConsignmentPromo={toggleConsignmentPromo}
         consignmentTenantReferences={consignmentTenantReferences}
@@ -94,93 +158,13 @@ const PriceRuleFormPage = () => {
         }
       />
 
-      {/* 2. Validity */}
-      <RuleValiditySection formData={formData} updateField={updateField} />
-
-      {/* 3. Conditions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Condiciones</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ConditionBuilder
-            conditions={formData.conditions}
-            setGroupOperator={setGroupOperator}
-            addGroup={addGroup}
-            removeGroup={removeGroup}
-            updateGroupOperator={updateGroupOperator}
-            addCondition={addCondition}
-            updateCondition={updateCondition}
-            removeCondition={removeCondition}
-          />
-        </CardContent>
-      </Card>
-
-      {/* 4. Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Acciones</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ActionBuilder
-            actions={formData.actions}
-            addAction={addAction}
-            updateAction={updateAction}
-            removeAction={removeAction}
-          />
-        </CardContent>
-      </Card>
-
-      {/* 5. Exclusiones */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Exclusiones</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ExclusionSection
-            exclusions={formData.exclusions}
-            onChange={updateExclusions}
-          />
-        </CardContent>
-      </Card>
-
-      {/* 6. Stacking */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Apilamiento</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Acumulable con otras reglas</Label>
-              <p className="text-sm text-muted-foreground">
-                Permite que esta regla se combine con otras reglas
-              </p>
-            </div>
-            <Switch
-              checked={formData.is_stackable}
-              onCheckedChange={(val) => updateField("is_stackable", val)}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Detener procesamiento</Label>
-              <p className="text-sm text-muted-foreground">
-                No evaluar reglas de menor prioridad después de esta
-              </p>
-            </div>
-            <Switch
-              checked={formData.stop_processing}
-              onCheckedChange={(val) => updateField("stop_processing", val)}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 6. Coupon (only for coupon type) */}
-      {formData.rule_type === "coupon" && (
-        <CouponSection formData={formData} updateField={updateField} />
-      )}
+      <div className="flex justify-end gap-2 pb-2">
+        <Button variant="outline" onClick={goBack} disabled={saving}>
+          Cancelar
+        </Button>
+        {saveButton}
+      </div>
+    </div>
     </div>
     </PriceRuleReferencesProvider>
   );
