@@ -34,13 +34,10 @@ export const ExclusionSection = ({ exclusions, onChange }: ExclusionSectionProps
     onChange(hasAny(next) ? next : null);
   };
 
-  const hasExclusions = hasAny(current);
-
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Los productos que coincidan con cualquiera de los criterios a continuación
-        quedarán fuera de esta promoción (no recibirán ningún descuento de esta regla).
+      <p className="text-xs text-muted-foreground">
+        Lo que se elija aquí no recibe el descuento.
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -91,12 +88,6 @@ export const ExclusionSection = ({ exclusions, onChange }: ExclusionSectionProps
           onChangeIds={(ids) => update({ tag_ids: ids })}
         />
       </div>
-
-      {!hasExclusions && (
-        <p className="text-xs text-muted-foreground italic">
-          Sin exclusiones configuradas — la promoción aplica a todos los productos según las condiciones.
-        </p>
-      )}
     </div>
   );
 };

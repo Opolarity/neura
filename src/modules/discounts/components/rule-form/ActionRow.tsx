@@ -18,6 +18,7 @@ import {
 import { ProductReferenceField } from "./ProductReferenceField";
 import { CategoryReferenceField } from "./CategoryReferenceField";
 import { TagReferenceField } from "./TagReferenceField";
+import { LabelRow, OptionalBadge } from "./OptionalBadge";
 
 interface ActionRowProps {
   action: ActionConfig;
@@ -231,7 +232,10 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
             </div>
             {action.type === "set_fixed_price" && (
               <div className="space-y-1">
-                <Label className="text-xs">Cantidad máxima con precio fijo</Label>
+                <LabelRow>
+                  <Label className="text-xs">Cantidad máxima con precio fijo</Label>
+                  <OptionalBadge />
+                </LabelRow>
                 <Input
                   type="number"
                   className="w-[140px]"
@@ -242,9 +246,6 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
                     updateField("max_qty", val);
                   }}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Dejar vacío para aplicar a todas las unidades
-                </p>
               </div>
             )}
             <TargetFilterEditor
@@ -494,7 +495,7 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
     <div className="flex gap-3 items-start p-3 border rounded-lg bg-muted/30">
       <div className="flex-1 space-y-3">
         <div className="space-y-1">
-          <Label className="text-xs">Tipo de acción</Label>
+          <Label className="text-xs">Tipo de descuento</Label>
           <Select
             value={action.type}
             onValueChange={(val) => handleTypeChange(val as ActionType)}

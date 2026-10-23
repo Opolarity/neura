@@ -31,15 +31,16 @@ export const ActionBuilder = ({
         />
       ))}
 
-      <Button variant="outline" onClick={handleAdd}>
-        <Plus className="w-4 h-4 mr-2" />
-        Agregar Acción
-      </Button>
-
-      {actions.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Debe agregar al menos una acción
-        </p>
+      {actions.length === 0 ? (
+        <Button onClick={handleAdd}>
+          <Plus className="w-4 h-4 mr-2" />
+          Elegir descuento
+        </Button>
+      ) : (
+        <Button variant="outline" size="sm" onClick={handleAdd}>
+          <Plus className="w-3 h-3 mr-1" />
+          Agregar otro descuento
+        </Button>
       )}
     </div>
   );

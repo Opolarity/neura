@@ -1,12 +1,12 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import type { ConditionsConfig, Condition } from "../../types/priceRule.types";
 import {
   isConsignmentMarkerGroup,
   isFranchiseeExclusionMarkerGroup,
 } from "../../adapters/priceRule.adapter";
 import { ConditionGroup } from "./ConditionGroup";
+import { OperatorToggle, OPERATOR_CONNECTOR } from "./OperatorToggle";
 
 interface ConditionBuilderProps {
   conditions: ConditionsConfig;
@@ -30,7 +30,7 @@ export const ConditionBuilder = ({
   removeCondition,
 }: ConditionBuilderProps) => {
   // El grupo marcador de "promoción de consignación" no se edita a mano:
-  // se gestiona con el checkbox de Información Básica y acá se esconde.
+  // se gestiona con su casilla en Opciones avanzadas y acá se esconde.
   const visibleGroups = conditions.groups
     .map((group, originalIndex) => ({ group, originalIndex }))
     .filter(
@@ -38,29 +38,28 @@ export const ConditionBuilder = ({
         !isConsignmentMarkerGroup(group) &&
         !isFranchiseeExclusionMarkerGroup(group),
     );
+  const isOnlyGroup = visibleGroups.length === 1;
+  const hasConditions = visibleGroups.some(
+    ({ group }) => group.conditions.length > 0,
+  );
 
   return (
     <div className="space-y-4">
+      {!hasConditions && (
+        <p className="text-sm text-muted-foreground">
+          Sin condiciones, el descuento se aplica en todas las ventas.
+        </p>
+      )}
+
       {/* Operator between groups */}
       {visibleGroups.length > 1 && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Operador entre grupos:</span>
-          <div className="flex gap-1">
-            <Badge
-              variant={conditions.operator === "AND" ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => setGroupOperator("AND")}
-            >
-              AND
-            </Badge>
-            <Badge
-              variant={conditions.operator === "OR" ? "default" : "outline"}
-              className="cursor-pointer"
-              onClick={() => setGroupOperator("OR")}
-            >
-              OR
-            </Badge>
-          </div>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Grupos que deben cumplirse:</span>
+          <OperatorToggle
+            value={conditions.operator}
+            onChange={setGroupOperator}
+            labels={{ AND: "todos", OR: "al menos uno" }}
+          />
         </div>
       )}
 
@@ -70,13 +69,15 @@ export const ConditionBuilder = ({
           <div key={originalIndex}>
             {visibleIdx > 0 && (
               <div className="flex justify-center py-2">
-                <Badge variant="secondary">{conditions.operator}</Badge>
+                <span className="text-xs font-medium uppercase text-muted-foreground">
+                  {OPERATOR_CONNECTOR[conditions.operator]}
+                </span>
               </div>
             )}
             <ConditionGroup
               group={group}
-              groupIndex={originalIndex}
-              canRemove={visibleGroups.length > 1}
+              groupIndex={visibleIdx}
+              isOnlyGroup={isOnlyGroup}
               onUpdateOperator={(op) => updateGroupOperator(originalIndex, op)}
               onAddCondition={(c) => addCondition(originalIndex, c)}
               onUpdateCondition={(cIdx, c) =>
@@ -89,15 +90,25 @@ export const ConditionBuilder = ({
         ))}
       </div>
 
-      <Button variant="outline" onClick={addGroup}>
-        <Plus className="w-4 h-4 mr-2" />
-        Agregar Grupo de Condiciones
-      </Button>
-
       {visibleGroups.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Sin condiciones: la regla se aplicará siempre
-        </p>
+        <Button variant="outline" size="sm" onClick={addGroup}>
+          <Plus className="w-3 h-3 mr-1" />
+          Agregar condición
+        </Button>
+      )}
+
+      {/* Los grupos son para combinaciones del tipo "(A y B) o C": se dejan a
+          mano pero discretos, y solo cuando ya hay alguna condición. */}
+      {hasConditions && (
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto px-0 text-muted-foreground"
+          onClick={addGroup}
+        >
+          <Plus className="w-3 h-3 mr-1" />
+          Agregar grupo de condiciones
+        </Button>
       )}
     </div>
   );
