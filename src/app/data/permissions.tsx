@@ -86,6 +86,7 @@ import CrmBoardPage from "@/modules/crm/pages/BoardPage";
 import CrmChannelsPage from "@/modules/crm/pages/ChannelsPage";
 import CrmCostsPage from "@/modules/crm/pages/CostsPage";
 import CrmChatbotTemplatesPage from "@/modules/crm/pages/ChatbotTemplatesPage";
+import CrmChatbotBehaviorPage from "@/modules/crm/pages/ChatbotBehaviorPage";
 // Modulo Produccion. El `code` del grupo se queda en "suppliers" igual que en
 // el origen: es estructural --no se compara contra los permisos-- y cambiarlo
 // solo seria ruido.
@@ -457,6 +458,8 @@ export const APP_PERMISSIONS_CONFIG = [
               // T-902: los textos fijos que manda el bot. La pantalla y los SP
               // exigen ademas rol admin (no basta con tener el permiso).
               { name: "Plantillas", path: "/crm/chatbot/templates", code: "crm_chatbot_templates.list", element: <CrmChatbotTemplatesPage />, showSidebar: true, node: [] },
+              // Ajustes del prompt que edita el cliente (chatbot_prompt_settings). Solo admin, como Plantillas.
+              { name: "Comportamiento", path: "/crm/chatbot/behavior", code: "crm_chatbot_behavior.list", element: <CrmChatbotBehaviorPage />, showSidebar: true, node: [] },
             ]
           },
 
