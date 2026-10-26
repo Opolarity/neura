@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { currentValue, fromMultiValue, toMultiValue } from "../../adapters/chatbotBehavior.adapter";
+import { currentValue, fromMultiValue, sameValue, toMultiValue } from "../../adapters/chatbotBehavior.adapter";
 import type { ChatbotPromptSetting } from "../../types/chatbotBehavior.types";
+import StoreLocationsEditor from "./StoreLocationsEditor";
 
 interface PromptSettingFieldProps {
   setting: ChatbotPromptSetting;
@@ -20,7 +21,7 @@ interface PromptSettingFieldProps {
 /** Un ajuste del prompt: el campo según su tipo, su estado (sin guardar / sin publicar) y el historial. */
 export default function PromptSettingField({ setting, value, disabled, onChange, onHistory }: PromptSettingFieldProps) {
   const id = `setting-${setting.code}`;
-  const unsaved = value !== currentValue(setting);
+  const unsaved = !sameValue(setting, value, currentValue(setting));
   const unpublished = !unsaved && setting.draft !== null;
 
   return (
@@ -49,6 +50,41 @@ export default function PromptSettingField({ setting, value, disabled, onChange,
           onChange={(e) => onChange(e.target.value)}
           className="max-w-sm"
         />
+      )}
+
+      {setting.type === "phone" && (
+        <Input
+          id={id}
+          type="tel"
+          inputMode="numeric"
+          value={value}
+          maxLength={20}
+          placeholder="51903333409"
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          className="max-w-xs"
+        />
+      )}
+
+      {setting.type === "short_text" && (
+        <div className="space-y-1">
+          <Input
+            id={id}
+            value={value}
+            maxLength={setting.maxCharacters ?? undefined}
+            disabled={disabled}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          {setting.maxCharacters && (
+            <p className="text-right text-xs text-muted-foreground">
+              {value.length} / {setting.maxCharacters}
+            </p>
+          )}
+        </div>
+      )}
+
+      {setting.type === "store_list" && (
+        <StoreLocationsEditor id={id} value={value} disabled={disabled} onChange={onChange} />
       )}
 
       {setting.type === "flow_option" && !setting.multiple && (

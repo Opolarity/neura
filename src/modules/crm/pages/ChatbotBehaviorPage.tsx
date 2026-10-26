@@ -11,24 +11,60 @@ import PromptSettingHistoryDialog from "../components/chatbot-behavior/PromptSet
 import { useChatbotBehavior } from "../hooks/useChatbotBehavior";
 import type { ChatbotPromptSetting, ChatbotPromptSettingType } from "../types/chatbotBehavior.types";
 
-const SECTIONS: Array<{ type: ChatbotPromptSettingType; title: string; description: string }> = [
+type SectionKey = "business_data" | "tone" | "flow" | "instructions";
+
+/** Las secciones de la pantalla, en el orden de la presentación al cliente. */
+const SECTIONS: Array<{ key: SectionKey; title: string; description: string }> = [
   {
-    type: "vocabulary",
-    title: "Vocabulario de la marca",
-    description: "Las palabras que usa el bot cuando escribe con las suyas. Las plantillas no cambian.",
+    key: "business_data",
+    title: "Datos del negocio",
+    description: "Sedes, números de contacto y despacho. El bot los usa tal cual en sus respuestas.",
   },
   {
-    type: "flow_option",
+    key: "tone",
+    title: "Tono y estilo",
+    description:
+      "Cómo escribe el bot cuando redacta con sus palabras. Las plantillas y los mensajes que arma el sistema no cambian: se editan en Plantillas.",
+  },
+  {
+    key: "flow",
     title: "Opciones de la compra",
     description: "Decisiones del flujo de venta. Cada opción ya está probada con el bot.",
   },
   {
-    type: "business_instructions",
+    key: "instructions",
     title: "Indicaciones del negocio",
     description:
-      "Tono, qué destacar, qué no ofrecer, avisos de temporada. Si una indicación choca con una regla del sistema, gana la regla.",
+      "Lo que no entra en un control: qué destacar, qué no ofrecer, avisos de temporada. Si una indicación choca con una regla del sistema, gana la regla.",
   },
 ];
+
+/** En qué sección va cada ajuste. Uno que no esté acá cae por su tipo. */
+const SECTION_OF: Record<string, SectionKey> = {
+  store_locations: "business_data",
+  sales_whatsapp: "business_data",
+  marketing_whatsapp: "business_data",
+  dispatch_time: "business_data",
+  vocabulary_store: "tone",
+  vocabulary_products: "tone",
+  treatment: "tone",
+  emoji_level: "tone",
+  reply_length: "tone",
+  closing_question: "tone",
+  avoided_words: "tone",
+  pickup_outside_lima: "flow",
+  price_reply_shows: "flow",
+  customer_prefers_store: "flow",
+  receipt_question: "flow",
+  business_instructions: "instructions",
+};
+
+const sectionOf = (s: ChatbotPromptSetting): SectionKey =>
+  SECTION_OF[s.code] ??
+  (s.type === "flow_option" ? "flow" : s.type === "business_instructions" ? "instructions" : s.type === "vocabulary" ? "tone" : "business_data");
+
+/** Los que ocupan las dos columnas. */
+const WIDE: ReadonlySet<ChatbotPromptSettingType> = new Set(["business_instructions", "store_list"]);
 
 /**
  * Comportamiento del chatbot: los ajustes del prompt que edita el cliente
@@ -94,17 +130,17 @@ export default function ChatbotBehaviorPage() {
       )}
 
       {SECTIONS.map((section) => {
-        const rows = settings.filter((s) => s.type === section.type);
+        const rows = settings.filter((s) => sectionOf(s) === section.key);
         if (!rows.length) return null;
         return (
-          <Card key={section.type}>
+          <Card key={section.key}>
             <CardHeader className="!p-4 !pb-2">
               <CardTitle className="text-base">{section.title}</CardTitle>
               <CardDescription>{section.description}</CardDescription>
             </CardHeader>
             <CardContent className="!p-4 !pt-2 grid gap-6 md:grid-cols-2">
               {rows.map((s) => (
-                <div key={s.code} className={s.type === "business_instructions" ? "md:col-span-2" : undefined}>
+                <div key={s.code} className={WIDE.has(s.type) ? "md:col-span-2" : undefined}>
                   <PromptSettingField
                     setting={s}
                     value={values[s.code] ?? ""}
