@@ -1,4 +1,33 @@
-import type { ChatbotPromptSetting, ChatbotPromptSettingApi } from "../types/chatbotBehavior.types";
+import type { ChatbotPromptSetting, ChatbotPromptSettingApi, ChatbotStoreLocation } from "../types/chatbotBehavior.types";
+
+/** Las sedes de un valor de `store_locations`; [] si no se puede leer. */
+export const toStoreLocations = (value: string): ChatbotStoreLocation[] => {
+  try {
+    const list = JSON.parse(value || "[]") as unknown;
+    if (!Array.isArray(list)) return [];
+    return list.map((o: Record<string, unknown>) => ({
+      ciudad: String(o?.ciudad ?? ""),
+      nombre: String(o?.nombre ?? ""),
+      direccion: String(o?.direccion ?? ""),
+      horario: String(o?.horario ?? ""),
+      whatsapp: String(o?.whatsapp ?? ""),
+      propia: o?.propia === true,
+    }));
+  } catch {
+    return [];
+  }
+};
+
+/** Siempre con las mismas claves y en el mismo orden, para comparar con lo guardado. */
+export const fromStoreLocations = (stores: ChatbotStoreLocation[]): string =>
+  JSON.stringify(stores.map(({ ciudad, nombre, direccion, horario, whatsapp, propia }) => ({ ciudad, nombre, direccion, horario, whatsapp, propia })));
+
+/**
+ * ¿Dos valores del ajuste son el mismo? Las sedes se comparan por contenido:
+ * el ERP guarda el JSON con otro orden de claves que el formulario.
+ */
+export const sameValue = (s: ChatbotPromptSetting, a: string, b: string): boolean =>
+  s.type === "store_list" ? fromStoreLocations(toStoreLocations(a)) === fromStoreLocations(toStoreLocations(b)) : a === b;
 
 export const toChatbotPromptSetting = (row: ChatbotPromptSettingApi): ChatbotPromptSetting => ({
   code: row.setting_code,
@@ -29,6 +58,10 @@ export const fromMultiValue = (value: string): string[] =>
 
 /** Cómo se ve un valor guardado en el historial (las opciones con su texto). */
 export const describeValue = (s: ChatbotPromptSetting, value: string): string => {
+  if (s.type === "store_list") {
+    const stores = toStoreLocations(value);
+    return `${stores.length} ${stores.length === 1 ? "sede" : "sedes"}: ${stores.map((x) => `${x.nombre} (${x.ciudad})`).join(", ")}`;
+  }
   if (s.type !== "flow_option") return value || "(vacío)";
   const parts = fromMultiValue(value).map((v) => s.optionLabels[v] ?? v);
   return parts.length ? parts.join(", ") : "Nada más";
