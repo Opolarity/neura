@@ -1,5 +1,5 @@
 import { ListFilter, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 import { Input } from "@/components/ui/input";
 
 interface SupportRequestsFilterBarProps {
@@ -43,14 +43,12 @@ export const SupportRequestsFilterBar = ({
         />
       </div>
 
-      <Button
+      <TooltipIconButton
         onClick={onOpen}
         variant={hasActiveFilters ? "default" : "outline"}
-        className="gap-2"
-      >
-        <ListFilter className="w-4 h-4" />
-        Filtrar
-      </Button>
+        icon={<ListFilter className="w-4 h-4" />}
+        label="Filtrar"
+      />
     </div>
   );
 };

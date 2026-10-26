@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Download, Loader2, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { TooltipIconButton } from '@/shared/components/tooltip-icon-button/TooltipIconButton';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -88,19 +89,20 @@ export function LowStockProductsTable({ dash }: { dash: InventoryDashboardState 
               className="h-9 w-[220px] pl-8"
             />
           </div>
-          <Button
+          <TooltipIconButton
             variant="outline"
-            size="sm"
+            className="h-9 w-9"
             onClick={handleExport}
             disabled={exporting || dash.threshold === null || total === 0}
-          >
-            {exporting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            Exportar
-          </Button>
+            icon={
+              exporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )
+            }
+            label="Exportar"
+          />
         </div>
       }
     >

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 import {
   Select,
   SelectContent,
@@ -68,15 +68,13 @@ export default function FranchiseStockFilterBar({
         />
       </div>
 
-      <Button
+      <TooltipIconButton
         onClick={onOpen}
         variant={hasActiveFilters ? "default" : "outline"}
-        className="gap-2"
         disabled={disabled}
-      >
-        <ListFilter className="w-4 h-4" />
-        Filtrar
-      </Button>
+        icon={<ListFilter className="w-4 h-4" />}
+        label="Filtrar"
+      />
 
       <Select
         value={order || "none"}

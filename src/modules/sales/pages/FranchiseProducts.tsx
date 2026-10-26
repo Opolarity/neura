@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Boxes, Download, Filter, Loader2, RefreshCw, Search } from "lucide-react";
+import { Boxes, Download, ListFilter, Loader2, RefreshCw, Search } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
 import { FRANCHISE_MODAL_PARAM, type FranchiseModal } from "../utils/salesDeepLinks";
@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -538,26 +539,26 @@ const FranchiseProducts = () => {
                 className="pl-9"
               />
             </div>
-            <Button
+            <TooltipIconButton
               variant="outline"
               onClick={() => setFilterModalOpen(true)}
               className={hasActiveFilters ? "border-primary text-primary" : ""}
-            >
-              <Filter className="mr-2 h-4 w-4" />
-              Filtrar
-            </Button>
-            <Button
+              icon={<ListFilter className="h-4 w-4" />}
+              label="Filtrar"
+            />
+            <TooltipIconButton
               variant="outline"
               onClick={handleExportExcel}
               disabled={loading || exporting}
-            >
-              {exporting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Download className="mr-2 h-4 w-4" />
-              )}
-              {exporting ? "Generando..." : "Descargar Excel"}
-            </Button>
+              icon={
+                exporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )
+              }
+              label={exporting ? "Generando..." : "Descargar Excel"}
+            />
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
