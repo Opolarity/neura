@@ -23,6 +23,13 @@ import type {
   ChatbotTemplatesListResponse,
   ChatbotTemplateUpdateResponse,
 } from "../types/chatbotTemplates.types";
+import type {
+  ChatbotPromptSettingHistoryResponse,
+  ChatbotPromptSettingSaveResponse,
+  ChatbotPromptSettingsDiscardResponse,
+  ChatbotPromptSettingsListResponse,
+  ChatbotPromptSettingsPublishResponse,
+} from "../types/chatbotBehavior.types";
 
 // Canal por defecto. Hoy la bandeja comparte número con el chatbot, así que lee
 // el mismo canal en el que el bot ya registra todos los mensajes. Cuando el ERP
@@ -571,4 +578,50 @@ export const chatbotTemplateShadowHitsApi = async (name: string): Promise<Shadow
     body: { action: "shadow_hits", name, days: 30 },
   });
   return data.data?.hits ?? [];
+};
+
+// ---------------------------------------------------------------------------
+// Comportamiento del chatbot: ajustes del prompt que edita el cliente
+// (chatbot_prompt_settings). Solo admin (lo exigen los SP). El bot lee solo lo
+// publicado; lo que se guarda acá queda como borrador hasta publicar.
+// ---------------------------------------------------------------------------
+
+export const getChatbotPromptSettingsApi = async (): Promise<ChatbotPromptSettingsListResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_settings_list");
+  return unwrap(
+    data as ChatbotPromptSettingsListResponse | null,
+    error,
+    "No se pudo cargar el comportamiento del chatbot."
+  );
+};
+
+/** Guarda el borrador de un ajuste. `expectedUpdatedAt` evita pisar lo que otro admin guardó. */
+export const saveChatbotPromptSettingDraftApi = async (
+  code: string,
+  value: string,
+  expectedUpdatedAt: string
+): Promise<ChatbotPromptSettingSaveResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_setting_save_draft", {
+    p_setting_code: code,
+    p_value: value,
+    p_expected_updated_at: expectedUpdatedAt,
+  });
+  return unwrap(data as ChatbotPromptSettingSaveResponse | null, error, "No se pudo guardar el borrador.");
+};
+
+/** Todos los borradores pasan a lo publicado juntos: o se publican todos, o ninguno. */
+export const publishChatbotPromptSettingsApi = async (): Promise<ChatbotPromptSettingsPublishResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_settings_publish");
+  return unwrap(data as ChatbotPromptSettingsPublishResponse | null, error, "No se pudo publicar.");
+};
+
+export const discardChatbotPromptSettingsApi = async (): Promise<ChatbotPromptSettingsDiscardResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_settings_discard", {});
+  return unwrap(data as ChatbotPromptSettingsDiscardResponse | null, error, "No se pudieron descartar los cambios.");
+};
+
+/** Lo que se publicó de un ajuste, del más nuevo al más viejo (audit_log). */
+export const getChatbotPromptSettingHistoryApi = async (code: string): Promise<ChatbotPromptSettingHistoryResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_setting_history", { p_setting_code: code });
+  return unwrap(data as ChatbotPromptSettingHistoryResponse | null, error, "No se pudo cargar el historial.");
 };
