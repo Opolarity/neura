@@ -43,6 +43,14 @@ export default function PromptSettingHistoryDialog({ setting, onClose, onUse }: 
     };
   }, [setting]);
 
+  // El valor con el que se instaló el ajuste no queda en audit_log (las filas se
+  // cargan antes del disparador): es el "antes" de la publicación más vieja.
+  const oldest = items[items.length - 1];
+  const entries: Array<ChatbotPromptSettingHistoryItem & { initial?: boolean }> =
+    oldest && oldest.previous_value !== null
+      ? [...items, { value: oldest.previous_value, previous_value: null, published_at: "", published_by_name: null, initial: true }]
+      : items;
+
   return (
     <Dialog open={!!setting} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
@@ -62,11 +70,11 @@ export default function PromptSettingHistoryDialog({ setting, onClose, onUse }: 
             <p className="text-sm text-muted-foreground">Todavía no hay publicaciones de este ajuste.</p>
           )}
           {setting &&
-            items.map((item, i) => (
+            entries.map((item, i) => (
               <div key={`${item.published_at}-${i}`} className="rounded-md border p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                   <span>
-                    {formatDateTime(item.published_at)}
+                    {item.initial ? "Valor inicial" : formatDateTime(item.published_at)}
                     {item.published_by_name ? ` · ${item.published_by_name}` : ""}
                     {i === 0 ? " · vigente" : ""}
                   </span>
