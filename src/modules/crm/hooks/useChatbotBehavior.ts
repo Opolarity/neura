@@ -7,7 +7,7 @@ import {
   publishChatbotPromptSettingsApi,
   saveChatbotPromptSettingDraftApi,
 } from "../services/crm.service";
-import { currentValue, toChatbotPromptSetting } from "../adapters/chatbotBehavior.adapter";
+import { currentValue, sameValue, toChatbotPromptSetting } from "../adapters/chatbotBehavior.adapter";
 import type { ChatbotPromptSetting } from "../types/chatbotBehavior.types";
 
 /**
@@ -53,7 +53,7 @@ export const useChatbotBehavior = (enabled: boolean) => {
 
   /** Cambios del formulario que todavía no se guardaron como borrador. */
   const unsaved = useMemo(
-    () => settings.filter((s) => (values[s.code] ?? "") !== currentValue(s)),
+    () => settings.filter((s) => !sameValue(s, values[s.code] ?? "", currentValue(s))),
     [settings, values]
   );
 

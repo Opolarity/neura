@@ -3,7 +3,23 @@
  * Comportamiento). Tabla `chatbot_prompt_settings` del backend: cada ajuste
  * tiene lo publicado (lo que usa el bot) y un borrador.
  */
-export type ChatbotPromptSettingType = "vocabulary" | "flow_option" | "business_instructions";
+export type ChatbotPromptSettingType =
+  | "vocabulary"
+  | "flow_option"
+  | "business_instructions"
+  | "phone"
+  | "short_text"
+  | "store_list";
+
+/** Una sede de `store_locations` (el valor del ajuste es la lista en JSON). */
+export interface ChatbotStoreLocation {
+  ciudad: string;
+  nombre: string;
+  direccion: string;
+  horario: string;
+  whatsapp: string;
+  propia: boolean;
+}
 
 /** Fila tal como la devuelve `sp_crm_chatbot_prompt_settings_list`. */
 export interface ChatbotPromptSettingApi {
