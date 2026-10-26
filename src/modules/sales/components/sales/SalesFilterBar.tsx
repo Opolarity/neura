@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 import {
   Select,
   SelectContent,
@@ -38,10 +38,12 @@ const SalesFilterBar = ({
         />
       </div>
       {/*comentario para hacer pull*/}
-      <Button variant={hasActiveFilters ? "default" : "outline"} onClick={onOpen} className="gap-2">
-        <ListFilter className="w-4 h-4" />
-        Filtrar
-      </Button>
+      <TooltipIconButton
+        variant={hasActiveFilters ? "default" : "outline"}
+        onClick={onOpen}
+        icon={<ListFilter className="w-4 h-4" />}
+        label="Filtrar"
+      />
 
       <Select
         value={order || "none"}

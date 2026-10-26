@@ -1,5 +1,5 @@
 import { Download, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 
 interface ProductionPlanHeaderProps {
   total: number;
@@ -28,19 +28,19 @@ const ProductionPlanHeader = ({
       <span className="text-muted-foreground text-sm">
         {total} {total === 1 ? "variación" : "variaciones"}
       </span>
-      <Button
+      <TooltipIconButton
         variant="outline"
-        size="sm"
         onClick={onExport}
         disabled={exporting || total === 0}
-      >
-        {exporting ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Download className="mr-2 h-4 w-4" />
-        )}
-        Descargar Excel
-      </Button>
+        icon={
+          exporting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )
+        }
+        label="Descargar Excel"
+      />
     </div>
   </div>
 );

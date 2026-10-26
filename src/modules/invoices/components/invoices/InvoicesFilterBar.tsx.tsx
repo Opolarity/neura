@@ -1,5 +1,5 @@
 import { Download, Loader2, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 import InvoicesFilterModal from "./InvoicesFilterModal";
 import type { ActiveInvoiceFilters } from "@/modules/invoices/hooks/useInvoices";
 import type { InvoiceType } from "@/modules/invoices/types/Invoices.types";
@@ -43,19 +43,19 @@ const InvoicesFilterBar = ({
 
         <InvoicesFilterModal activeFilters={activeFilters} onApply={onApply} onClear={onClear} invoiceTypes={invoiceTypes} />
 
-        <Button
+        <TooltipIconButton
           variant="outline"
           onClick={onExport}
           disabled={exportLoading || exportDisabled}
-          className="gap-2"
-        >
-          {exportLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Download className="w-4 h-4" />
-          )}
-          {exportLoading ? "Generando..." : "Descargar Excel"}
-        </Button>
+          icon={
+            exportLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )
+          }
+          label={exportLoading ? "Generando..." : "Descargar Excel"}
+        />
       </div>
     </div>
   );

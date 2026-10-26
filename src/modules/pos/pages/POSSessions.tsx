@@ -25,6 +25,7 @@ import {
 "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 import { Loader2, Search, Eye, ListFilter } from "lucide-react";
 import { formatDateTime } from "@/shared/utils/date";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
@@ -82,19 +83,18 @@ const POSSessions = () => {
 
             </div>
 
-            <Button
+            <TooltipIconButton
               variant={activeFilterCount > 0 ? "default" : "outline"}
-              className="gap-2"
-              onClick={() => setFiltersOpen(true)}>
+              onClick={() => setFiltersOpen(true)}
+              icon={<ListFilter className="w-4 h-4" />}
+              label="Filtros">
 
-              <ListFilter className="w-4 h-4" />
-              Filtros
               {activeFilterCount > 0 &&
-              <Badge variant="secondary" className="ml-1 px-1.5 py-0.5 text-xs">
+              <Badge variant="secondary" className="absolute -right-2 -top-2 px-1.5 py-0 text-xs">
                   {activeFilterCount}
                 </Badge>
               }
-            </Button>
+            </TooltipIconButton>
 
             <Select value={filters.orderBy} onValueChange={onOrderChange}>
               <SelectTrigger className="w-auto min-w-[200px]">
