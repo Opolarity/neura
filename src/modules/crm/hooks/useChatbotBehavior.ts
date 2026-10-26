@@ -21,13 +21,19 @@ export const useChatbotBehavior = (enabled: boolean) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  /**
+   * `keepEdits`: después de un error se recarga (algún borrador pudo guardarse y
+   * cambió su bloqueo optimista) pero sin borrar lo que el usuario escribió.
+   */
+  const load = useCallback(async (keepEdits = false) => {
+    if (!keepEdits) setLoading(true);
     try {
       const res = await getChatbotPromptSettingsApi();
       const rows = (res.data ?? []).map(toChatbotPromptSetting);
       setSettings(rows);
-      setValues(Object.fromEntries(rows.map((s) => [s.code, currentValue(s)])));
+      setValues((prev) =>
+        Object.fromEntries(rows.map((s) => [s.code, keepEdits && s.code in prev ? prev[s.code] : currentValue(s)]))
+      );
     } catch (error) {
       console.error(error);
       toastError(error, undefined, "Error al cargar el comportamiento del chatbot");
@@ -69,7 +75,7 @@ export const useChatbotBehavior = (enabled: boolean) => {
       return true;
     } catch (error) {
       toastError(error, undefined, "No se pudo guardar el borrador");
-      await load();
+      await load(true);
       return false;
     } finally {
       setSaving(false);
@@ -91,7 +97,7 @@ export const useChatbotBehavior = (enabled: boolean) => {
       return true;
     } catch (error) {
       toastError(error, undefined, "No se pudo publicar");
-      await load();
+      await load(true);
       return false;
     } finally {
       setSaving(false);

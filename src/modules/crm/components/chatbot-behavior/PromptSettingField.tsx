@@ -25,15 +25,15 @@ export default function PromptSettingField({ setting, value, disabled, onChange,
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Label htmlFor={id} className="text-sm font-semibold">
             {setting.name}
           </Label>
           {unsaved && <Badge variant="warning">Sin guardar</Badge>}
           {unpublished && <Badge variant="info">Sin publicar</Badge>}
         </div>
-        <Button variant="ghost" size="sm" onClick={onHistory} className="h-7 px-2 text-muted-foreground">
+        <Button variant="ghost" size="sm" onClick={onHistory} className="h-7 shrink-0 px-2 text-muted-foreground">
           <History className="w-4 h-4 mr-1" />
           Historial
         </Button>
