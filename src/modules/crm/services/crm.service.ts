@@ -34,6 +34,12 @@ import type {
   ChatbotPromptSettingsListResponse,
   ChatbotPromptSettingsPublishResponse,
 } from "../types/chatbotBehavior.types";
+import type {
+  PromptBlockCreateInput,
+  PromptBlockHistoryResponse,
+  PromptBlockMutationResponse,
+  PromptBlocksListResponse,
+} from "../types/chatbotConsiderations.types";
 
 // Canal por defecto. Hoy la bandeja comparte número con el chatbot, así que lee
 // el mismo canal en el que el bot ya registra todos los mensajes. Los SPs de
@@ -669,4 +675,60 @@ export const discardChatbotPromptSettingsApi = async (): Promise<ChatbotPromptSe
 export const getChatbotPromptSettingHistoryApi = async (code: string): Promise<ChatbotPromptSettingHistoryResponse> => {
   const { data, error } = await db.rpc("sp_crm_chatbot_prompt_setting_history", { p_setting_code: code });
   return unwrap(data as ChatbotPromptSettingHistoryResponse | null, error, "No se pudo cargar el historial.");
+};
+
+// ---------------------------------------------------------------------------
+// Consideraciones: el prompt del bot en párrafos (chatbot_prompt_blocks). Solo
+// admin. Lo que se guarda el bot lo usa en menos de un minuto.
+// ---------------------------------------------------------------------------
+
+export const getPromptBlocksApi = async (): Promise<PromptBlocksListResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_blocks_list");
+  return unwrap(data as PromptBlocksListResponse | null, error, "No se pudieron cargar las consideraciones del chatbot.");
+};
+
+export const savePromptBlockApi = async (
+  id: number,
+  content: string,
+  expectedUpdatedAt: string,
+  meta?: { title?: string; tags?: string[] }
+): Promise<PromptBlockMutationResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_block_save", {
+    p_id: id,
+    p_content: content,
+    p_expected_updated_at: expectedUpdatedAt,
+    ...(meta?.title !== undefined ? { p_title: meta.title } : {}),
+    ...(meta?.tags !== undefined ? { p_tags: meta.tags } : {}),
+  });
+  return unwrap(data as PromptBlockMutationResponse | null, error, "No se pudo guardar.");
+};
+
+export const createPromptBlockApi = async (input: PromptBlockCreateInput): Promise<PromptBlockMutationResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_block_create", {
+    p_heading_key: input.headingKey,
+    p_title: input.title,
+    p_content: input.content,
+    p_tags: input.tags,
+  });
+  return unwrap(data as PromptBlockMutationResponse | null, error, "No se pudo agregar.");
+};
+
+export const setPromptBlockActiveApi = async (id: number, active: boolean): Promise<PromptBlockMutationResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_block_set_active", { p_id: id, p_active: active });
+  return unwrap(data as PromptBlockMutationResponse | null, error, "No se pudo cambiar.");
+};
+
+export const restorePromptBlockApi = async (id: number): Promise<PromptBlockMutationResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_block_restore", { p_id: id });
+  return unwrap(data as PromptBlockMutationResponse | null, error, "No se pudo volver al texto del equipo.");
+};
+
+export const deletePromptBlockApi = async (id: number): Promise<PromptBlockMutationResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_block_delete", { p_id: id });
+  return unwrap(data as PromptBlockMutationResponse | null, error, "No se pudo borrar.");
+};
+
+export const getPromptBlockHistoryApi = async (id: number): Promise<PromptBlockHistoryResponse> => {
+  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_block_history", { p_id: id });
+  return unwrap(data as PromptBlockHistoryResponse | null, error, "No se pudo cargar el historial.");
 };

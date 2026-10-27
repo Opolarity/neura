@@ -65,7 +65,13 @@ export function NotificationPanel() {
           // Altura FIJA (no max-h): el viewport h-full de Radix necesita una
           // caja de referencia para producir scroll real; sin eso no hay
           // scroll infinito posible.
-          <ScrollArea ref={scrollAreaRef} className="h-[400px]">
+          // Radix envuelve el contenido en un div display:table que crece al
+          // ancho del texto; en block el ancho queda fijo y el truncate aplica.
+          <ScrollArea
+            ref={scrollAreaRef}
+            className="h-[400px]"
+            viewportClassName="[&>div]:!block"
+          >
             {notifications.map((notification) => (
               <NotificationItem
                 key={notification.id}
