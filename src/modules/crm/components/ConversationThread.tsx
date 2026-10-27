@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { formatDateLong, formatTime } from "@/shared/utils/date";
 import { AlertCircle, Bot, MessageSquare } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import type { ConversationMessage } from "../types/crm.types";
+import { isMediaMarker } from "../utils/attachments";
+import { ChatImage, MessageMedia } from "./MessageMedia";
 
 interface Props {
   messages: ConversationMessage[];
@@ -10,9 +12,9 @@ interface Props {
 }
 
 /**
- * Las imágenes viajan dentro del texto, con la convención que ya usa el bot:
- * `[El cliente envió una imagen ... URL: https://...]`. Se extrae para poder
- * mostrarla dentro de la burbuja en vez de volcar la URL cruda.
+ * Formato viejo, anterior a las columnas media_*: la imagen viajaba dentro del
+ * texto con la convención del bot `[El cliente envió una imagen ... URL:
+ * https://...]`. Se sigue entendiendo para los mensajes que quedaron así.
  */
 const IMAGE_BLOCK = /\[[^\]]*URL:\s*https?:\/\/[^\]]*\]/gi;
 
@@ -24,35 +26,6 @@ const extractImageUrl = (message: string): string | null => {
 /** El bloque `[... URL: ...]` es metadata del bot: no debe verse en el chat. */
 const stripImageBlock = (message: string): string =>
   message.replace(IMAGE_BLOCK, "").replace(/\n{3,}/g, "\n\n").trim();
-
-const ChatImage = ({ url }: { url: string }) => {
-  const [failed, setFailed] = useState(false);
-
-  if (failed) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noreferrer noopener"
-        className="mt-1 inline-block text-xs font-medium underline underline-offset-2"
-      >
-        Ver imagen
-      </a>
-    );
-  }
-
-  return (
-    <a href={url} target="_blank" rel="noreferrer noopener" className="mt-1 block">
-      <img
-        src={url}
-        alt="Imagen enviada en la conversación"
-        loading="lazy"
-        onError={() => setFailed(true)}
-        className="max-h-64 w-auto max-w-full cursor-zoom-in rounded-lg object-contain"
-      />
-    </a>
-  );
-};
 
 // El separador de dia y la hora de cada mensaje se resuelven en Lima con los
 // helpers de shared/utils/date. Con `format()` de date-fns pelado se pintaban
@@ -73,9 +46,12 @@ export const ConversationThread = ({ messages, loading }: Props) => {
 
   if (!loading && messages.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
-        <MessageSquare className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Esta conversación no tiene mensajes.</p>
+      <div className="flex h-full items-center justify-center p-6">
+        {/* En tarjeta: sobre el patrón del fondo, el texto suelto se pierde. */}
+        <div className="flex flex-col items-center gap-2 rounded-xl border bg-background px-6 py-5 text-center shadow-sm">
+          <MessageSquare className="h-7 w-7 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Esta conversación no tiene mensajes.</p>
+        </div>
       </div>
     );
   }
@@ -84,7 +60,7 @@ export const ConversationThread = ({ messages, loading }: Props) => {
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden">
-      <div className="flex flex-col gap-4 px-6 py-6">
+      <div className="flex flex-col gap-2 px-6 py-5">
         {messages.map((m) => {
           const mine = m.author === "business";
           const isBot = m.author === "bot";
@@ -92,16 +68,21 @@ export const ConversationThread = ({ messages, loading }: Props) => {
           const showDay = day !== lastDay;
           lastDay = day;
 
-          const imageUrl = extractImageUrl(m.message);
-          const text = imageUrl ? stripImageBlock(m.message) : m.message;
+          // Con el archivo en media, el bloque viejo y el marcador "[imagen]"
+          // que se guarda cuando va sin texto sobran: solo queda el pie.
+          const imageUrl = m.media ? null : extractImageUrl(m.message);
+          const clean = m.media || imageUrl ? stripImageBlock(m.message) : m.message;
+          const text = m.media && isMediaMarker(clean) ? "" : clean;
 
           return (
-            <div key={m.id} className="flex flex-col gap-4">
+            <div key={m.id} className="flex flex-col gap-2">
+              {/* El día va en una píldora, como el "Hoy" de WhatsApp: una línea
+                  y texto gris sueltos se pierden sobre el patrón del fondo. */}
               {showDay && (
-                <div className="flex items-center gap-3 py-2">
-                  <div className="h-px flex-1 bg-border/60" />
-                  <span className="text-xs text-muted-foreground">{day}</span>
-                  <div className="h-px flex-1 bg-border/60" />
+                <div className="flex justify-center py-2">
+                  <span className="rounded-full border bg-background px-3 py-1 text-[11px] text-muted-foreground shadow-sm">
+                    {day}
+                  </span>
                 </div>
               )}
 
@@ -113,28 +94,37 @@ export const ConversationThread = ({ messages, loading }: Props) => {
               >
                 <div
                   className={cn(
-                    "min-w-0 max-w-[68%] rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed",
-                    // El asesor y el bot van del mismo lado —los dos son "el
-                    // negocio"— pero con distinto color: al revisar un hilo hay
-                    // que poder distinguir de un vistazo qué contestó una
-                    // persona y qué contestó el bot.
-                    mine && "bg-primary text-primary-foreground",
-                    isBot && "bg-secondary text-secondary-foreground",
-                    !mine && !isBot && "bg-muted text-foreground"
+                    "min-w-0 max-w-[68%] rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed shadow-sm",
+                    // El asesor y el bot son "el negocio": mismo lado y mismo
+                    // morado de marca. Lo que contestó el bot se distingue por
+                    // su etiqueta. El cliente va en blanco con el borde de las
+                    // tablas, que es lo que se lee sobre el fondo plomo.
+                    (mine || isBot) && "bg-primary text-primary-foreground",
+                    !mine && !isBot && "border border-border bg-background text-foreground"
                   )}
                 >
                   {isBot && (
-                    <span className="mb-1 flex items-center gap-1 text-[10.5px] opacity-70">
+                    <span className="mb-1 flex items-center gap-1 text-[10.5px] text-primary-foreground/80">
                       <Bot className="h-3 w-3" />
                       Bot
                     </span>
                   )}
 
-                  {text && <p className="whitespace-pre-wrap break-words">{text}</p>}
+                  {/* El archivo arriba y su texto debajo, como el pie de foto de WhatsApp. */}
+                  {m.media && <MessageMedia media={m.media} onPrimary={mine || isBot} />}
+
+                  {text && <p className={cn("whitespace-pre-wrap break-words", m.media && "mt-1")}>{text}</p>}
 
                   {imageUrl && <ChatImage url={imageUrl} />}
 
-                  <div className="mt-1 flex items-center gap-2 text-[10px] opacity-70">
+                  {/* Hora y acuse abajo a la derecha, como en WhatsApp, con el
+                      tono suave que corresponde a cada burbuja. */}
+                  <div
+                    className={cn(
+                      "mt-0.5 flex items-center justify-end gap-2 text-[10px]",
+                      mine || isBot ? "text-primary-foreground/80" : "text-muted-foreground"
+                    )}
+                  >
                     <span className="tabular-nums">{timeLabel(m.createdAt)}</span>
 
                     {m.deliveryStatus === "failed" && (

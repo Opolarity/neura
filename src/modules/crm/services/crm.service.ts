@@ -1,16 +1,20 @@
 import { supabase } from "@/integrations/supabase/client";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { errorMessageOf, FunctionError } from "@/shared/utils/functionError";
+import { getTodayDate } from "@/shared/utils/date";
+import { extensionOf, mediaTypeOf } from "../utils/attachments";
 import type {
-  BoardApiResponse,
+  ConversationChannel,
+  OutgoingMedia,
   ConversationsApiResponse,
   ThreadApiResponse,
   CrmWriteResponse,
+  BotPauseApi,
   ChannelMetricsResponse,
   ChannelOverTimeResponse,
   ChannelProductsResponse,
   ChannelCostsResponse,
-  BotPauseApi,
+  BoardApiResponse,
 } from "../types/crm.types";
 import type {
   ChatbotTemplateCreateInput,
@@ -32,8 +36,8 @@ import type {
 } from "../types/chatbotBehavior.types";
 
 // Canal por defecto. Hoy la bandeja comparte número con el chatbot, así que lee
-// el mismo canal en el que el bot ya registra todos los mensajes. Cuando el ERP
-// tenga número propio pasará a CRMWA, que ya está sembrado.
+// el mismo canal en el que el bot ya registra todos los mensajes. Los SPs de
+// personalizado lo toman por defecto y un NULL los rompe: se manda siempre.
 export const DEFAULT_CHANNEL_CODE = "CHBOTW";
 
 /**
@@ -74,10 +78,18 @@ export interface ListParams {
   assignedTo?: string | null;
   unassigned?: boolean;
   taken?: boolean | null;
+  /** false = solo las de ventana vencida. */
+  windowOpen?: boolean | null;
+  /** Red de los chats; null = todas. */
+  network?: ConversationChannel | null;
   page: number;
   size: number;
 }
 
+/**
+ * El SP devuelve el id del canal en `channel_id`, que es el que piden los SPs
+ * de escritura.
+ */
 export const getConversationsApi = async (
   params: ListParams
 ): Promise<ConversationsApiResponse> => {
@@ -88,6 +100,8 @@ export const getConversationsApi = async (
     p_assigned_to: params.assignedTo ?? null,
     p_unassigned: params.unassigned ?? false,
     p_taken: params.taken ?? null,
+    p_window_open: params.windowOpen ?? null,
+    p_network: params.network ?? null,
     p_page: params.page,
     p_size: params.size,
   });
@@ -225,9 +239,7 @@ export interface ErpUser {
  * Colaboradores del ERP, para el selector de "asignar a otro asesor".
  *
  * Se usa sp_get_users y no una consulta a `accounts`: ese SP ya filtra por
- * colaborador activo y —lo que importa acá— devuelve `profiles_id`, que es el
- * uuid de auth. Consultar `accounts` directo mezcla clientes con colaboradores
- * y devuelve el id de la cuenta, que no sirve como responsable.
+ * colaborador activo y devuelve `profiles_id`, que es el uuid de auth.
  */
 export const getErpUsersApi = async (search?: string): Promise<ErpUser[]> => {
   const { data, error } = await db.rpc("sp_get_users", {
@@ -293,7 +305,11 @@ export type SendRejectReason =
   | "not_found"
   | "no_auth"
   | "no_identity"
-  | "not_allowed";
+  | "not_allowed"
+  | "caption_not_allowed"
+  | "unsupported_media"
+  | "media_too_large"
+  | "media_unreachable";
 
 export interface SendMessageResult {
   success: boolean;
@@ -307,15 +323,16 @@ export interface SendMessageResult {
 
 /**
  * El envío pasa SIEMPRE por la edge function: el token de Meta vive en el
- * backend y no puede llegar al navegador. La function valida el control del
- * lado del servidor, así que este llamado no es la defensa — la pantalla
- * bloquea antes solo para no hacer perder el tiempo.
+ * servicio del bot y no puede llegar al navegador. La function valida el
+ * control del lado del servidor; la pantalla bloquea antes solo para no hacer
+ * perder el tiempo.
  */
 export const sendMessageApi = async (
   channelId: number,
   phoneNumber: number | null,
   whatsappUserId: string | null,
-  message: string
+  message: string,
+  media: OutgoingMedia | null = null
 ): Promise<SendMessageResult> => {
   // A diferencia del resto del ERP, aquí el rechazo NO se propaga: la pantalla
   // lo pinta dentro de la conversación, así que se devuelve como resultado.
@@ -326,6 +343,7 @@ export const sendMessageApi = async (
         phoneNumber,
         whatsappUserId,
         message,
+        media,
       },
     });
 
@@ -334,9 +352,9 @@ export const sendMessageApi = async (
       error: "No se pudo enviar el mensaje.",
     }) as SendMessageResult;
   } catch (error) {
-    // Los rechazos de negocio (409/502/503) traen `reason` y `takenByName`:
-    // sin ellos la pantalla no puede distinguir "no se pudo enviar" de "la
-    // conversación la tomó otro". `invokeFunction` los deja en `error.body`.
+    // Los rechazos de negocio (409/502/503) traen `reason` y `takenByName` en
+    // `error.body`: sin ellos no se distingue "no se pudo enviar" de "la
+    // conversación la tomó otro".
     if (error instanceof FunctionError && error.body) {
       return { ...(error.body as SendMessageResult), success: false };
     }
@@ -348,11 +366,88 @@ export const sendMessageApi = async (
   }
 };
 
+/**
+ * Sube el adjunto al bucket `crm` antes de mandarlo: crm-send-message recibe
+ * solo la URL y el bot la descarga para reenviarla a Meta.
+ *
+ * Ruta: outgoing/<canal>/<día Lima>/<uuid>.<ext>. La policy del bucket exige
+ * que la primera carpeta sea `outgoing` (personalizado no tiene tenant), y el
+ * nombre es un UUID porque el bucket es público. Si el envío se rechaza, la
+ * edge function borra el archivo.
+ */
+export const uploadAttachmentApi = async (
+  channelId: number,
+  file: File
+): Promise<OutgoingMedia> => {
+  const storagePath = `outgoing/${channelId}/${getTodayDate()}/${crypto.randomUUID()}.${extensionOf(file)}`;
+  const mimeType = file.type || "application/octet-stream";
+
+  const { error } = await supabase.storage
+    .from("crm")
+    .upload(storagePath, file, { contentType: mimeType, upsert: false });
+  if (error) throw new Error(`No se pudo subir el archivo: ${error.message}`);
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("crm").getPublicUrl(storagePath);
+
+  return {
+    type: mediaTypeOf(file),
+    url: publicUrl,
+    storagePath,
+    mimeType,
+    fileName: file.name,
+    sizeBytes: file.size,
+  };
+};
+
 // ---------------------------------------------------------------------------
-// Rendimiento por canal
+// Pausa del bot
 // ---------------------------------------------------------------------------
 
-/** KPIs de los tres canales, con su comparativa contra el periodo anterior. */
+/**
+ * Estado, pausa y reactivación del bot en una conversación. Todo pasa por
+ * crm-bot-pause, que valida el permiso (crm_conversations.take) y habla con el
+ * servicio del chatbot; el navegador nunca ve su secreto.
+ */
+const botPauseCall = async (
+  action: "status" | "pause" | "resume",
+  channelId: number,
+  phoneNumber: number | null,
+  whatsappUserId: string | null,
+  until?: string | null
+): Promise<BotPauseApi> => {
+  const data = await invokeFunction<{ success: boolean; data: BotPauseApi }>("crm-bot-pause", {
+    body: {
+      action,
+      channelId,
+      phoneNumber,
+      whatsappUserId,
+      ...(action === "pause" ? { until: until ?? null } : {}),
+    },
+  });
+  return data.data;
+};
+
+export const getBotPauseApi = (channelId: number, phoneNumber: number | null, whatsappUserId: string | null) =>
+  botPauseCall("status", channelId, phoneNumber, whatsappUserId);
+
+/** `until` = ISO con zona, o null para "hasta que lo reactive". */
+export const pauseBotApi = (
+  channelId: number,
+  phoneNumber: number | null,
+  whatsappUserId: string | null,
+  until: string | null
+) => botPauseCall("pause", channelId, phoneNumber, whatsappUserId, until);
+
+export const resumeBotApi = (channelId: number, phoneNumber: number | null, whatsappUserId: string | null) =>
+  botPauseCall("resume", channelId, phoneNumber, whatsappUserId);
+
+// ---------------------------------------------------------------------------
+// Rendimiento y costos por canal
+// ---------------------------------------------------------------------------
+
+/** KPIs de los tres canales, con su comparativa contra el período anterior. */
 export const getChannelMetricsApi = async (
   startDate: string,
   endDate: string
@@ -362,14 +457,10 @@ export const getChannelMetricsApi = async (
     p_end_date: endDate,
   });
 
-  return unwrap(
-    data as ChannelMetricsResponse | null,
-    error,
-    "No se pudieron cargar las metricas por canal."
-  );
+  return unwrap(data as ChannelMetricsResponse | null, error, "No se pudieron cargar las métricas por canal.");
 };
 
-/** Serie para el grafico de evolucion. */
+/** Serie para el gráfico de evolución. */
 export const getChannelOverTimeApi = async (
   startDate: string,
   endDate: string,
@@ -381,14 +472,10 @@ export const getChannelOverTimeApi = async (
     p_granularity: granularity,
   });
 
-  return unwrap(
-    data as ChannelOverTimeResponse | null,
-    error,
-    "No se pudo cargar la evolucion por canal."
-  );
+  return unwrap(data as ChannelOverTimeResponse | null, error, "No se pudo cargar la evolución por canal.");
 };
 
-/** Top de productos. Sin code, trae el top de cada canal. */
+/** Top de productos. Sin canal, trae el top de cada uno. */
 export const getChannelTopProductsApi = async (
   startDate: string,
   endDate: string,
@@ -402,14 +489,10 @@ export const getChannelTopProductsApi = async (
     p_limit: limit,
   });
 
-  return unwrap(
-    data as ChannelProductsResponse | null,
-    error,
-    "No se pudieron cargar los productos del canal."
-  );
+  return unwrap(data as ChannelProductsResponse | null, error, "No se pudieron cargar los productos del canal.");
 };
 
-/** Costos por canal cruzados con los ingresos del mismo periodo. */
+/** Costos por canal cruzados con los ingresos del mismo período. */
 export const getChannelCostsApi = async (
   startDate: string,
   endDate: string
@@ -419,12 +502,12 @@ export const getChannelCostsApi = async (
     p_end_date: endDate,
   });
 
-  return unwrap(
-    data as ChannelCostsResponse | null,
-    error,
-    "No se pudieron cargar los costos por canal."
-  );
+  return unwrap(data as ChannelCostsResponse | null, error, "No se pudieron cargar los costos por canal.");
 };
+
+// ---------------------------------------------------------------------------
+// Chatbot: plantillas y comportamiento (solo personalizado)
+// ---------------------------------------------------------------------------
 
 /** T-902: plantillas de texto del chatbot. Solo admin (lo exige el SP). */
 export const getChatbotTemplatesApi = async (): Promise<ChatbotTemplatesListResponse> => {
@@ -514,44 +597,6 @@ export const deleteChatbotTemplateApi = async (id: number): Promise<ChatbotTempl
     "No se pudo eliminar la plantilla."
   );
 };
-
-/**
- * T-983: estado, pausa y reactivación del bot en una conversación. Todo pasa
- * por crm-bot-pause, que valida el permiso (crm_conversations.take) y habla
- * con el servicio del chatbot; el navegador nunca ve su secreto.
- */
-const botPauseCall = async (
-  action: "status" | "pause" | "resume",
-  channelId: number,
-  phoneNumber: number | null,
-  whatsappUserId: string | null,
-  until?: string | null
-): Promise<BotPauseApi> => {
-  const data = await invokeFunction<{ success: boolean; data: BotPauseApi }>("crm-bot-pause", {
-    body: {
-      action,
-      channelId,
-      phoneNumber,
-      whatsappUserId,
-      ...(action === "pause" ? { until: until ?? null } : {}),
-    },
-  });
-  return data.data;
-};
-
-export const getBotPauseApi = (channelId: number, phoneNumber: number | null, whatsappUserId: string | null) =>
-  botPauseCall("status", channelId, phoneNumber, whatsappUserId);
-
-/** `until` = ISO con zona, o null para "hasta que lo reactive". */
-export const pauseBotApi = (
-  channelId: number,
-  phoneNumber: number | null,
-  whatsappUserId: string | null,
-  until: string | null
-) => botPauseCall("pause", channelId, phoneNumber, whatsappUserId, until);
-
-export const resumeBotApi = (channelId: number, phoneNumber: number | null, whatsappUserId: string | null) =>
-  botPauseCall("resume", channelId, phoneNumber, whatsappUserId);
 
 /** T-921: activar una plantilla en observación (o devolverla a observación). Solo admin. */
 export const setChatbotTemplateObservacionApi = async (id: number, enObservacion: boolean): Promise<ChatbotTemplateUpdateResponse> => {
