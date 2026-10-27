@@ -53,9 +53,9 @@ export function AiConnectCard({ buttonClassName = "", tooltipClassName }: Props)
 
         <div className="grid flex-1 text-left leading-tight">
           <span className="truncate text-sm font-semibold text-white">{title}</span>
-          <span className="truncate text-xs text-sidebar-foreground">
-            {connected ? connectedLabels.join(" · ") : "Claude · ChatGPT"}
-          </span>
+          {connected && (
+            <span className="truncate text-xs text-sidebar-foreground">{connectedLabels.join(" · ")}</span>
+          )}
         </div>
 
         <ChevronRight className="ml-auto size-4 shrink-0 text-sidebar-foreground/70" />
