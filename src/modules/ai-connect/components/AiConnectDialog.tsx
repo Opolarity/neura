@@ -134,15 +134,10 @@ export function AiConnectDialog({ open, onOpenChange, connections, statusAvailab
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    <Button type="button" size="lg" onClick={() => void startConnect(app)}>
-                      Abrir {guide.label} y conectar
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </Button>
-                    <p className="text-center text-xs text-muted-foreground">
-                      Copiamos la URL y abrimos {guide.label} en una pestaña nueva.
-                    </p>
-                  </div>
+                  <Button type="button" size="lg" onClick={() => void startConnect(app)}>
+                    Abrir {guide.label} y conectar
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
                 )}
 
                 <div className="flex flex-col gap-3">
