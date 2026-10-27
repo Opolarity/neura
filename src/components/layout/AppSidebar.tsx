@@ -4,6 +4,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { APP_PERMISSIONS_CONFIG, getFilterSidebar } from "@/app/data/permissions";
 import { useAuth } from "@/modules/auth";
+import { AiConnectCard } from "@/modules/ai-connect";
+import { ComponentPermission } from "@/shared/components/component-permission";
 import { POSOpenWarningDialog } from "@/modules/pos/components/POSOpenWarningDialog";
 import { useSupportUnread } from "@/modules/support/context/SupportUnreadProvider";
 import { Badge } from "@/components/ui/badge";
@@ -338,6 +340,14 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
 
       <SidebarFooter className="border-t border-white/10">
         <SidebarMenu>
+          {/* Reemplaza a la pantalla Asistente IA. Reusa su permiso, que ya
+              viene recortado por plan (sp_get_user_permissions). */}
+          <ComponentPermission codeIn={["assistant.use"]}>
+            <SidebarMenuItem>
+              <AiConnectCard buttonClassName={MENU_BUTTON_COLORS} tooltipClassName={TOOLTIP_COLORS} />
+            </SidebarMenuItem>
+          </ComponentPermission>
+
           <SidebarMenuItem>
             <Popover
               open={isUserPopoverOpen}
