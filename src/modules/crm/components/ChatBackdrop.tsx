@@ -89,8 +89,8 @@ const LAYOUT: Array<[keyof typeof ICONS, string]> = [
  * ícono de Neura y temas de la marca. Va detrás del área que scrollea, así que
  * queda fijo mientras pasan los mensajes.
  *
- * El color sale de `text-primary` (currentColor) a opacidad baja: es el morado
- * de marca apenas visible sobre el plomo, y cambia solo en modo oscuro.
+ * El color sale de `text-chat-foreground` (currentColor) a opacidad baja: un
+ * gris apenas visible sobre el fondo oscuro del chat.
  */
 export const ChatBackdrop = () => {
   // useId devuelve ":r0:"; los dos puntos rompen el url(#…) del fill.
@@ -99,7 +99,7 @@ export const ChatBackdrop = () => {
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full text-primary opacity-[0.08]"
+      className="pointer-events-none absolute inset-0 h-full w-full text-chat-foreground opacity-[0.12]"
     >
       <defs>
         <pattern id={id} width="300" height="300" patternUnits="userSpaceOnUse">

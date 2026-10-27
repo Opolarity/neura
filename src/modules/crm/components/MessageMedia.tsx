@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { Download } from "lucide-react";
+import { VoucherPreviewModal } from "@/modules/sales/components/sales/VoucherPreviewModal";
 import { cn } from "@/shared/utils/utils";
 import type { MessageMedia as Media } from "../types/crm.types";
 import { formatBytes, MEDIA_ICON, mediaPreview } from "../utils/attachments";
 
-/** Imagen dentro de la burbuja; si no carga, queda el enlace para abrirla. */
+/**
+ * Imagen dentro de la burbuja. El click abre la vista previa que ya usan los
+ * comprobantes de ventas (descargar y abrir en otra pestaña desde ahí), en vez
+ * de sacar al asesor del chat. Si no carga, queda el enlace para abrirla.
+ */
 export const ChatImage = ({ url, small = false }: { url: string; small?: boolean }) => {
   const [failed, setFailed] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   if (failed) {
     return (
@@ -22,18 +28,34 @@ export const ChatImage = ({ url, small = false }: { url: string; small?: boolean
   }
 
   return (
-    <a href={url} target="_blank" rel="noreferrer noopener" className="mt-1 block">
-      <img
-        src={url}
-        alt="Imagen enviada en la conversación"
-        loading="lazy"
-        onError={() => setFailed(true)}
-        className={cn(
-          "w-auto max-w-full cursor-zoom-in rounded-lg object-contain",
-          small ? "max-h-32" : "max-h-64"
-        )}
+    <>
+      <button
+        type="button"
+        onClick={() => setPreviewOpen(true)}
+        className="mt-1 block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="Ver imagen"
+      >
+        <img
+          src={url}
+          alt="Imagen enviada en la conversación"
+          loading="lazy"
+          onError={() => setFailed(true)}
+          className={cn(
+            "w-auto max-w-full cursor-zoom-in rounded-lg object-contain",
+            small ? "max-h-32" : "max-h-64"
+          )}
+        />
+      </button>
+      {/* completed: el modal es el de comprobantes; acá no hay pago que confirmar. */}
+      <VoucherPreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        voucherSrc={url}
+        voucherName="imagen"
+        title="Imagen del chat"
+        completed
       />
-    </a>
+    </>
   );
 };
 

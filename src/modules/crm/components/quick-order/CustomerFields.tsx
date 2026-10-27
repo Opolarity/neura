@@ -38,6 +38,9 @@ export const CustomerFields = ({
 }: Props) => {
   // Si cambia el documento, la cuenta encontrada antes ya no corresponde.
   const set = (patch: Partial<QuickOrderCustomer>) => onChange({ ...customer, ...patch });
+  // RUC y demás documentos de empresa (persona jurídica): razón social y sin
+  // apellidos, como en Añadir venta.
+  const isCompany = documentTypes.find((d) => d.id === customer.documentTypeId)?.personType === 2;
 
   return (
     <div className="flex flex-col gap-3">
@@ -51,7 +54,10 @@ export const CustomerFields = ({
             placeholder="Tipo"
             value={customer.documentTypeId}
             options={documentTypes}
-            onChange={(documentTypeId) => set({ documentTypeId, accountId: null })}
+            onChange={(documentTypeId) => {
+              const company = documentTypes.find((d) => d.id === documentTypeId)?.personType === 2;
+              set({ documentTypeId, accountId: null, userId: null, ...(company ? { lastName: "" } : {}) });
+            }}
           />
           <form
             onSubmit={(e) => {
@@ -61,7 +67,7 @@ export const CustomerFields = ({
           >
             <Input
               value={customer.documentNumber}
-              onChange={(e) => set({ documentNumber: e.target.value, accountId: null })}
+              onChange={(e) => set({ documentNumber: e.target.value, accountId: null, userId: null })}
               placeholder="Número"
               inputMode="numeric"
               className="h-8 text-xs"
@@ -86,7 +92,7 @@ export const CustomerFields = ({
 
       <div className="flex flex-col gap-1">
         <Label htmlFor="qo-first-name" className="text-xs" required>
-          Nombre
+          {isCompany ? "Razón social" : "Nombre"}
         </Label>
         <Input
           id="qo-first-name"
@@ -96,17 +102,19 @@ export const CustomerFields = ({
           aria-required
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <Label htmlFor="qo-last-name" className="text-xs">
-          Apellidos
-        </Label>
-        <Input
-          id="qo-last-name"
-          value={customer.lastName}
-          onChange={(e) => set({ lastName: e.target.value })}
-          className="h-8 text-xs"
-        />
-      </div>
+      {!isCompany && (
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="qo-last-name" className="text-xs">
+            Apellidos
+          </Label>
+          <Input
+            id="qo-last-name"
+            value={customer.lastName}
+            onChange={(e) => set({ lastName: e.target.value })}
+            className="h-8 text-xs"
+          />
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-1.5">
         <div className="flex flex-col gap-1">
           <Label htmlFor="qo-phone" className="text-xs">

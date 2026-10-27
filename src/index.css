@@ -75,6 +75,13 @@ All colors MUST be HSL.
     --sidebar-border: 258.2 22% 17%;
 
     --sidebar-ring: 257.8 49% 60%;
+
+    /* Fondo de los chats del CRM: un gris pizarra de la familia del sidebar
+       (#00060f), bastante más claro para que no pese, y que el hilo no sea
+       otra superficie blanca. */
+    --chat: 218 14% 24%;
+    --chat-foreground: 216 16% 76%;
+    --chat-border: 218 12% 31%;
   }
 
   /* Modo oscuro (inactivo: no hay ThemeProvider). Valores alineados a la
@@ -133,6 +140,13 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 258.2 22% 17%;
     --sidebar-ring: 257.8 49% 60%;
+
+    /* Fondo de los chats del CRM: un gris pizarra de la familia del sidebar
+       (#00060f), bastante más claro para que no pese, y que el hilo no sea
+       otra superficie blanca. */
+    --chat: 218 14% 24%;
+    --chat-foreground: 216 16% 76%;
+    --chat-border: 218 12% 31%;
   }
 }
 

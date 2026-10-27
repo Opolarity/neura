@@ -123,7 +123,6 @@ const InboxPage = () => {
                 busy={acting}
                 onSituationChange={(id) => runAndRefresh(setSituation(selected, id))}
                 onAssign={(userId) => runAndRefresh(assign(selected, userId))}
-                onTake={() => runAndRefresh(takeControl(selected, false))}
                 onRelease={() => runAndRefresh(takeControl(selected, true))}
                 botEnabled={botEnabled}
                 botPause={botPause.state}
@@ -135,9 +134,9 @@ const InboxPage = () => {
                 onToggleOrder={() => setOrderOpen((open) => !open)}
               />
 
-              {/* El plomo de las tablas (--muted): sobre él se leen el cliente
-                  en blanco y lo que manda el negocio en morado. */}
-              <div className="relative min-h-0 flex-1 bg-muted">
+              {/* Fondo oscuro (--chat), de la familia del sidebar: sobre él se
+                  leen el cliente en blanco y lo que manda el negocio en morado. */}
+              <div className="relative min-h-0 flex-1 bg-chat">
                 {/* Patrón de dibujos de la marca, fijo detrás de los mensajes. */}
                 <ChatBackdrop />
                 <div className="relative h-full">
@@ -152,6 +151,8 @@ const InboxPage = () => {
                 channelId={channelId}
                 botEnabled={botEnabled}
                 onSent={reloadThread}
+                onTake={() => runAndRefresh(takeControl(selected, false))}
+                busy={acting}
               />
             </>
           ) : (

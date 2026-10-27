@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, Clock, Loader2, Lock, Paperclip, Send, X } from "lucide-react";
+import { AlertCircle, Bot, Clock, Hand, Loader2, Lock, Paperclip, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/modules/auth";
 import { cn } from "@/shared/utils/utils";
@@ -21,6 +21,10 @@ interface Props {
   botEnabled: boolean;
   /** Para traer el mensaje recién enviado sin esperar los 15 s del poll. */
   onSent: () => void;
+  /** Tomar el control (o quitárselo a otro asesor): el botón vive acá, donde se escribe. */
+  onTake: () => void;
+  /** Hay una acción del chat en curso (tomar, asignar…). */
+  busy: boolean;
 }
 
 const MAX_LEN = 4096;
@@ -36,8 +40,9 @@ const MAX_INPUT_HEIGHT = 120;
  * El bloqueo real vive en sp_crm_send_precheck, del lado del servidor. Esto es
  * la versión amable de la misma regla: explica el motivo y qué hacer.
  */
-export const MessageComposer = ({ conversation, channelId, botEnabled, onSent }: Props) => {
-  const { user } = useAuth();
+export const MessageComposer = ({ conversation, channelId, botEnabled, onSent, onTake, busy }: Props) => {
+  const { user, permissionCodes } = useAuth();
+  const canTake = permissionCodes.includes("crm_conversations.take");
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -71,24 +76,50 @@ export const MessageComposer = ({ conversation, channelId, botEnabled, onSent }:
   // ---- Los tres motivos de bloqueo -------------------------------------
   if (takenByOther) {
     return (
-      <Blocked tone="warn" icon={<Lock className="h-3.5 w-3.5" />}>
-        <strong className="font-medium">
-          {conversation.takenByName || "Otro asesor"}
-        </strong>{" "}
-        tiene el control de esta conversación. Para responder, tienes que
-        quitárselo.
+      <Blocked
+        tone="warn"
+        icon={<Lock className="h-3.5 w-3.5" />}
+        action={
+          canTake && (
+            <TakeButton
+              label="Quitarle el control"
+              title={`Le vas a quitar el control a ${conversation.takenByName || "otro asesor"}`}
+              busy={busy}
+              onTake={onTake}
+            />
+          )
+        }
+      >
+        <strong className="font-medium">{conversation.takenByName || "Otro asesor"}</strong> está atendiendo
+        este chat.
       </Blocked>
     );
   }
 
   if (!conversation.takenBy) {
+    const atiendeBot = botEnabled && conversation.botAnswers;
     return (
-      <Blocked icon={<Lock className="h-3.5 w-3.5" />}>
-        Toma el control para responder.{" "}
+      <Blocked
+        icon={atiendeBot ? <Bot className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+        action={
+          canTake && (
+            <TakeButton
+              label="Tomar el control"
+              title={
+                botEnabled
+                  ? "Responder tú; el bot deja de contestar en este chat"
+                  : "Responder tú; queda registrado que atiendes este chat"
+              }
+              busy={busy}
+              onTake={onTake}
+            />
+          )
+        }
+      >
         {conversation.assignedTo
-          ? "Está asignada, pero nadie la tiene tomada ahora."
-          : botEnabled
-            ? "Mientras nadie lo tenga, la atiende el bot."
+          ? `Asignado a ${conversation.assignedToName || "un asesor"}, pero nadie lo está atendiendo.`
+          : atiendeBot
+            ? "Atiende el bot."
             : "Nadie está atendiendo este chat."}
       </Blocked>
     );
@@ -165,7 +196,7 @@ export const MessageComposer = ({ conversation, channelId, botEnabled, onSent }:
   // redondo de enviar. Enter envía y Shift+Enter salta de línea, como en
   // WhatsApp, así que no hace falta explicarlo debajo.
   return (
-    <footer className="border-t bg-muted">
+    <footer className="border-t border-chat-border bg-chat">
       {error && (
         <p className="flex items-start gap-1.5 bg-destructive-soft px-4 py-1.5 text-[11.5px] text-destructive-soft-foreground">
           <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" />
@@ -200,7 +231,7 @@ export const MessageComposer = ({ conversation, channelId, botEnabled, onSent }:
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 shrink-0 rounded-full"
+          className="h-10 w-10 shrink-0 rounded-full text-chat-foreground hover:bg-chat-border hover:text-primary-foreground"
           onClick={() => fileRef.current?.click()}
           disabled={sending}
           aria-label="Adjuntar archivo"
@@ -209,7 +240,7 @@ export const MessageComposer = ({ conversation, channelId, botEnabled, onSent }:
           <Paperclip className="h-5 w-5" />
         </Button>
 
-        <div className="flex min-w-0 flex-1 items-end rounded-3xl border bg-background px-4 py-1.5 ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+        <div className="flex min-w-0 flex-1 items-end rounded-3xl border border-transparent bg-background px-4 py-1.5 ring-offset-chat focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
           <textarea
             ref={areaRef}
             value={text}
@@ -310,29 +341,51 @@ const AttachmentPreview = ({
 };
 
 /**
- * Pie de conversación cuando NO se puede escribir: dice por qué y qué hacer,
- * en una píldora centrada como los avisos del sistema de WhatsApp.
+ * Pie de conversación cuando NO se puede escribir: dice por qué y, si se
+ * puede hacer algo, el botón para hacerlo ahí mismo.
  */
 const Blocked = ({
   children,
   icon,
+  action,
   tone = "neutral",
 }: {
   children: React.ReactNode;
   icon: React.ReactNode;
+  action?: React.ReactNode;
   tone?: "neutral" | "warn";
 }) => (
-  <footer className="flex justify-center border-t bg-muted px-4 py-3">
-    <p
+  <footer className="flex justify-center border-t border-chat-border bg-chat px-4 py-3">
+    <div
       className={cn(
-        "flex max-w-xl items-start gap-1.5 rounded-2xl border px-4 py-2 text-xs shadow-sm",
+        "flex max-w-xl items-center gap-3 rounded-2xl border px-4 py-2 text-xs shadow-sm",
         tone === "warn"
           ? "border-transparent bg-destructive-soft text-destructive-soft-foreground"
           : "bg-background text-muted-foreground"
       )}
     >
-      <span className="mt-px shrink-0">{icon}</span>
-      <span>{children}</span>
-    </p>
+      <p className="flex items-start gap-1.5">
+        <span className="mt-px shrink-0">{icon}</span>
+        <span>{children}</span>
+      </p>
+      {action}
+    </div>
   </footer>
+);
+
+const TakeButton = ({
+  label,
+  title,
+  busy,
+  onTake,
+}: {
+  label: string;
+  title: string;
+  busy: boolean;
+  onTake: () => void;
+}) => (
+  <Button size="sm" className="h-7 shrink-0 px-2.5 text-xs" onClick={onTake} disabled={busy} title={title}>
+    <Hand className="mr-1 h-3.5 w-3.5" />
+    {label}
+  </Button>
 );

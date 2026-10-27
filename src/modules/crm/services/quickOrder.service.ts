@@ -26,6 +26,7 @@ import type {
   QuickOrderCatalogs,
   QuickOrderDraft,
   QuickOrderProduct,
+  QuickOrderProductPage,
   QuickOrderTotals,
 } from "../types/quickOrder.types";
 
@@ -62,6 +63,9 @@ export const getQuickOrderCatalogsApi = (): Promise<QuickOrderCatalogs> => {
           name: a.name,
         })),
         stockTypeId: getIdInventoryTypeAdapter(inventoryType),
+        stockTypes: (form.stockTypes ?? [])
+          .filter((st) => st.is_active)
+          .map((st) => ({ id: st.id, name: st.name })),
       };
     })().catch((error) => {
       // Un fallo no queda cacheado: el próximo intento vuelve a pedirlos.
@@ -72,20 +76,24 @@ export const getQuickOrderCatalogsApi = (): Promise<QuickOrderCatalogs> => {
   return catalogsPromise;
 };
 
-/** Prendas con stock en el almacén del vendedor, una fila por variación. */
+/** Productos por página en el buscador del panel. */
+export const QUICK_ORDER_PAGE_SIZE = 12;
+
+/** Productos con stock en el almacén del vendedor, una fila por variación. */
 export const searchQuickOrderProductsApi = async (
   search: string,
   warehouseId: number,
-  stockTypeId: number
-): Promise<QuickOrderProduct[]> => {
+  stockTypeId: number,
+  page = 1
+): Promise<QuickOrderProductPage> => {
   const response = await fetchSaleProducts({
-    page: 1,
-    size: 12,
+    page,
+    size: QUICK_ORDER_PAGE_SIZE,
     search: search.trim() || undefined,
     warehouseId,
     stockTypeId,
   });
-  return (response?.data ?? []).map((p) => ({
+  const rows: QuickOrderProduct[] = (response?.data ?? []).map((p) => ({
     productId: p.productId,
     productTitle: p.productTitle,
     variationId: p.variationId,
@@ -99,10 +107,13 @@ export const searchQuickOrderProductsApi = async (
       salePrice: pr.sale_price,
     })),
   }));
+  return { rows, total: response?.page?.total ?? rows.length };
 };
 
 export interface CustomerLookup {
   accountId: number | null;
+  /** profiles."UID" de la cuenta, para las reglas de precio por cliente. */
+  userId: string | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -124,8 +135,16 @@ export const findQuickOrderCustomerApi = async (
     await searchClientByDocument(documentTypeId, documentNumber.trim())
   );
   if (existing) {
+    // Igual que Añadir venta: el usuario de la cuenta (profiles."UID") habilita
+    // las reglas por cliente.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("UID")
+      .eq("account_id", existing.id)
+      .maybeSingle();
     return {
       accountId: existing.id,
+      userId: (profile?.UID as string | undefined) ?? null,
       firstName: existing.name ?? "",
       lastName: [existing.lastName, existing.lastName2].filter(Boolean).join(" "),
       email: existing.email ?? "",
@@ -146,6 +165,7 @@ export const findQuickOrderCustomerApi = async (
     if (found?.found) {
       return {
         accountId: null,
+        userId: null,
         firstName: code === "RUC" ? found.razonSocial ?? "" : found.nombres ?? "",
         lastName:
           code === "RUC"
@@ -158,7 +178,7 @@ export const findQuickOrderCustomerApi = async (
     }
   }
 
-  return { accountId: null, firstName: "", lastName: "", email: "", phone: "", source: "none" };
+  return { accountId: null, userId: null, firstName: "", lastName: "", email: "", phone: "", source: "none" };
 };
 
 
@@ -224,8 +244,8 @@ export const createQuickOrderApi = async (
       variationId: l.variationId,
       quantity: l.quantity,
       price: l.price,
-      discountAmount: 0,
-      stockTypeId,
+      discountAmount: l.discountAmount,
+      stockTypeId: l.stockTypeId || stockTypeId,
     })),
     // create-order recorre payments con .map(): siempre un arreglo.
     payments: payments.map((p) => ({
@@ -307,7 +327,7 @@ export const createQuickOrderApi = async (
   return {
     orderId,
     voucherWarning: failed
-      ? "La orden se creó, pero alguna captura no se pudo adjuntar. Súbela desde Ventas."
+      ? "La orden se creó, pero algún comprobante no se pudo adjuntar. Súbelo desde Ventas."
       : null,
   };
 };

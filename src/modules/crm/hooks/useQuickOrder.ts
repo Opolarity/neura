@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useUserProfile } from "@/modules/auth";
 import { applyPriceRules } from "@/modules/sales/rules/applyPriceRules";
 import { filterShippingCostsByLocation } from "@/modules/sales/utils";
+import { findExactScanMatch } from "@/modules/sales/utils/scan";
 import { formatCurrency } from "@/shared/utils/currency";
 import { toastError } from "@/shared/utils/toastError";
 import { sendMessageApi } from "../services/crm.service";
@@ -9,6 +10,7 @@ import {
   createQuickOrderApi,
   findQuickOrderCustomerApi,
   getQuickOrderCatalogsApi,
+  QUICK_ORDER_PAGE_SIZE,
   searchQuickOrderProductsApi,
   type CustomerLookup,
 } from "../services/quickOrder.service";
@@ -85,12 +87,15 @@ const initialDraft = (
       phone: localPhone(conversation.phoneNumber),
       email: c?.email ?? "",
       accountId: c?.accountId ?? null,
+      userId: null,
     },
     priceListId,
     saleTypeId,
     situationId: defaultSituationId(catalogs),
+    stockTypeId: catalogs.stockTypeId,
     lines: [],
     ruleDiscounts: [],
+    appliedRules: [],
     withShipping: false,
     shipping: {
       countryId: catalogs.countries[0]?.id ?? null,
@@ -136,8 +141,18 @@ const listPrice = (product: QuickOrderProduct, priceListId: number | null): numb
   return entry?.salePrice || entry?.price || 0;
 };
 
+/**
+ * Llave de una línea del carrito: la misma prenda puede ir de dos tipos de
+ * inventario, y el regalo de una regla va aparte de la que se compra.
+ */
+export const lineKey = (l: Pick<QuickOrderLine, "variationId" | "stockTypeId" | "isGift">) =>
+  l.isGift ? `gift:${l.variationId}` : `${l.variationId}:${l.stockTypeId}`;
+
+/** Lo que cobra una línea: (precio − descuento por unidad) × cantidad, como Añadir venta. */
+export const lineTotal = (l: QuickOrderLine) => Math.max(0, l.price - l.discountAmount) * l.quantity;
+
 export const computeTotals = (draft: QuickOrderDraft): QuickOrderTotals => {
-  const subtotal = draft.lines.reduce((sum, l) => sum + l.price * l.quantity, 0);
+  const subtotal = draft.lines.reduce((sum, l) => sum + lineTotal(l), 0);
   // Reglas de precio + manuales: negativo descuenta, positivo recarga.
   const discount =
     draft.ruleDiscounts.reduce((sum, d) => sum + d.amount, 0) +
@@ -167,7 +182,8 @@ const buildSummary = (
   const first = draft.customer.firstName.trim().split(/\s+/)[0];
   const lines = draft.lines.map((l) => {
     const detail = l.terms.length ? ` (${l.terms.join(" / ")})` : "";
-    return `• ${l.quantity} × ${l.productTitle}${detail}: ${formatCurrency(l.price * l.quantity)}`;
+    const amount = l.isGift ? "de regalo" : formatCurrency(lineTotal(l));
+    return `• ${l.quantity} × ${l.productTitle}${detail}: ${amount}`;
   });
   const parts = [
     `${first ? `Hola ${first}, ` : ""}este es el resumen de tu pedido #${orderId}:`,
@@ -216,7 +232,10 @@ export const useQuickOrder = ({
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<QuickOrderProduct[]>([]);
+  const [resultsTotal, setResultsTotal] = useState(0);
+  const [resultsPage, setResultsPage] = useState(1);
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const [lookingUp, setLookingUp] = useState(false);
   const [lookup, setLookup] = useState<CustomerLookup["source"] | null>(null);
@@ -279,18 +298,28 @@ export const useQuickOrder = ({
     }));
   }, [saleTypeFixed, channelSaleTypeId, draft, update]);
 
-  // Búsqueda con debounce: el vendedor tipea mientras lee el chat.
+  // Tipo de inventario del que se busca: el del borrador, o el del negocio.
+  const stockTypeId = draft?.stockTypeId ?? catalogs?.stockTypeId ?? null;
+
+  // Búsqueda con debounce: el vendedor tipea mientras lee el chat. Cada
+  // búsqueda nueva vuelve a la primera página.
   useEffect(() => {
-    if (!catalogs || !warehouseId) return;
+    if (!catalogs || !warehouseId || !stockTypeId) return;
     let cancelled = false;
     const timer = window.setTimeout(async () => {
       setSearching(true);
       try {
-        const rows = await searchQuickOrderProductsApi(query, warehouseId, catalogs.stockTypeId);
-        if (!cancelled) setResults(rows);
+        const page = await searchQuickOrderProductsApi(query, warehouseId, stockTypeId);
+        if (cancelled) return;
+        setResults(page.rows);
+        setResultsTotal(page.total);
+        setResultsPage(1);
       } catch (error) {
         console.error(error);
-        if (!cancelled) setResults([]);
+        if (!cancelled) {
+          setResults([]);
+          setResultsTotal(0);
+        }
       } finally {
         if (!cancelled) setSearching(false);
       }
@@ -299,19 +328,37 @@ export const useQuickOrder = ({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [query, catalogs, warehouseId]);
+  }, [query, catalogs, warehouseId, stockTypeId]);
+
+  const hasMoreResults = results.length < resultsTotal && results.length >= resultsPage * QUICK_ORDER_PAGE_SIZE;
+
+  /** "Ver más": suma la página siguiente debajo de la lista. */
+  const loadMoreResults = useCallback(async () => {
+    if (!warehouseId || !stockTypeId || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const next = resultsPage + 1;
+      const page = await searchQuickOrderProductsApi(query, warehouseId, stockTypeId, next);
+      setResults((prev) => [...prev, ...page.rows.filter((r) => !prev.some((p) => p.variationId === r.variationId))]);
+      setResultsTotal(page.total);
+      setResultsPage(next);
+    } catch (error) {
+      toastError(error, "No se pudieron cargar más productos");
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [warehouseId, stockTypeId, loadingMore, resultsPage, query]);
 
   const addProduct = useCallback(
     (product: QuickOrderProduct) => {
-      if (!draft || product.stock <= 0) return;
+      if (!draft || !stockTypeId || product.stock <= 0) return;
       update((d) => {
-        const existing = d.lines.find((l) => l.variationId === product.variationId);
+        const key = lineKey({ variationId: product.variationId, stockTypeId });
+        const existing = d.lines.find((l) => lineKey(l) === key);
         if (existing) {
           return {
             lines: d.lines.map((l) =>
-              l.variationId === product.variationId
-                ? { ...l, quantity: Math.min(l.quantity + 1, l.maxStock) }
-                : l
+              lineKey(l) === key ? { ...l, quantity: Math.min(l.quantity + 1, l.maxStock) } : l
             ),
           };
         }
@@ -325,24 +372,72 @@ export const useQuickOrder = ({
           terms: product.terms.map((t) => t.name),
           originalPrice: price,
           price,
+          manualPrice: false,
+          discountAmount: 0,
           quantity: 1,
           maxStock: product.stock,
+          stockTypeId,
         };
         return { lines: [...d.lines, line] };
       });
     },
-    [draft, update]
+    [draft, stockTypeId, update]
   );
 
+  /**
+   * Enter en el buscador, como el lector de código de barras de Añadir venta:
+   * si el código coincide exacto con una prenda, se agrega y se limpia la
+   * búsqueda; si no, queda la lista para elegir.
+   */
+  const addByCode = useCallback(async () => {
+    const code = query.trim();
+    if (!code || !warehouseId || !stockTypeId) return;
+    try {
+      const page = await searchQuickOrderProductsApi(code, warehouseId, stockTypeId);
+      const match = findExactScanMatch(code, page.rows);
+      if (match && match.stock > 0) {
+        addProduct(match);
+        setQuery("");
+        return;
+      }
+      setResults(page.rows);
+      setResultsTotal(page.total);
+      setResultsPage(1);
+    } catch (error) {
+      toastError(error, "No se pudo buscar el código");
+    }
+  }, [query, warehouseId, stockTypeId, addProduct]);
+
   const setQuantity = useCallback(
-    (variationId: number, quantity: number) => {
+    (key: string, quantity: number) => {
       update((d) => ({
         lines:
           quantity <= 0
-            ? d.lines.filter((l) => l.variationId !== variationId)
-            : d.lines.map((l) =>
-                l.variationId === variationId ? { ...l, quantity: Math.min(quantity, l.maxStock) } : l
-              ),
+            ? d.lines.filter((l) => lineKey(l) !== key)
+            : d.lines.map((l) => (lineKey(l) === key ? { ...l, quantity: Math.min(quantity, l.maxStock) } : l)),
+      }));
+    },
+    [update]
+  );
+
+  /**
+   * Precio y descuento por unidad de una línea, como en la tabla de Añadir
+   * venta. Un precio puesto a mano ya no lo pisan las reglas; `null` lo
+   * devuelve al de lista (y a las reglas).
+   */
+  const setLinePrice = useCallback(
+    (key: string, price: number | null, discountAmount: number) => {
+      update((d) => ({
+        lines: d.lines.map((l) => {
+          if (lineKey(l) !== key) return l;
+          const base = price === null ? l.originalPrice : cents(Math.max(0, price));
+          return {
+            ...l,
+            price: base,
+            manualPrice: price !== null,
+            discountAmount: cents(Math.min(Math.max(0, discountAmount), base)),
+          };
+        }),
       }));
     },
     [update]
@@ -350,12 +445,14 @@ export const useQuickOrder = ({
 
   // Reglas de precio, igual que Añadir venta: se recalculan cuando cambia el
   // carrito, la lista o el cliente. La llave evita volver a llamar cuando lo
-  // único que cambió es el precio que las propias reglas acaban de poner.
+  // único que cambió es el precio que las propias reglas acaban de poner. Los
+  // regalos que devuelven entran al carrito a S/ 0.
   const rulesKey = draft
     ? JSON.stringify([
         draft.priceListId,
         draft.customer.accountId,
-        draft.lines.map((l) => [l.variationId, l.quantity, l.originalPrice]),
+        draft.customer.userId,
+        draft.lines.filter((l) => !l.isGift).map((l) => [l.variationId, l.stockTypeId, l.quantity, l.originalPrice]),
       ])
     : "";
   const draftRef = useRef(draft);
@@ -368,25 +465,51 @@ export const useQuickOrder = ({
   useEffect(() => {
     const current = draftRef.current;
     if (!current || !current.priceListId) return;
-    if (current.lines.length === 0) {
-      if (current.ruleDiscounts.length) onDraftChangeRef.current({ ...current, ruleDiscounts: [] });
+    const regular = current.lines.filter((l) => !l.isGift);
+    if (regular.length === 0) {
+      if (current.ruleDiscounts.length || current.appliedRules.length || current.lines.length) {
+        onDraftChangeRef.current({ ...current, lines: [], ruleDiscounts: [], appliedRules: [] });
+      }
       return;
     }
     let cancelled = false;
     (async () => {
       const res = await applyPriceRules(
-        current.lines,
+        regular,
         current.priceListId!,
-        null,
+        current.customer.userId,
         current.customer.accountId
       );
       const latest = draftRef.current;
       if (cancelled || !latest) return;
-      const priceBy = new Map(res.items.map((i) => [i.variationId, i.price]));
+      const priceBy = new Map(res.items.map((i) => [lineKey(i), i.price]));
+      const fallbackStock = latest.lines.find((l) => !l.isGift)?.stockTypeId ?? latest.stockTypeId ?? 0;
+      const gifts: QuickOrderLine[] = res.gifts.map((g) => ({
+        variationId: g.variationId,
+        productId: 0,
+        productTitle: g.productName,
+        sku: g.sku,
+        imageUrl: null,
+        terms: [],
+        originalPrice: 0,
+        price: 0,
+        manualPrice: false,
+        discountAmount: 0,
+        quantity: g.quantity,
+        maxStock: g.quantity,
+        stockTypeId: fallbackStock,
+        isGift: true,
+      }));
       onDraftChangeRef.current({
         ...latest,
-        lines: latest.lines.map((l) => ({ ...l, price: priceBy.get(l.variationId) ?? l.price })),
+        lines: [
+          ...latest.lines
+            .filter((l) => !l.isGift)
+            .map((l) => (l.manualPrice ? l : { ...l, price: priceBy.get(lineKey(l)) ?? l.price })),
+          ...gifts,
+        ],
         ruleDiscounts: res.discounts.map((d) => ({ name: d.name, amount: d.amount, code: d.code })),
+        appliedRules: res.appliedRules.map((r) => ({ name: r.rule_name, message: r.message })),
       });
     })();
     return () => {
@@ -401,9 +524,11 @@ export const useQuickOrder = ({
       update((d) => ({
         priceListId,
         lines: d.lines.map((l) => {
+          if (l.isGift) return l;
           const product = results.find((r) => r.variationId === l.variationId);
           const price = product ? listPrice(product, priceListId) : l.originalPrice;
-          return { ...l, originalPrice: price, price };
+          // El precio puesto a mano se respeta; solo cambia la base de lista.
+          return l.manualPrice ? { ...l, originalPrice: price } : { ...l, originalPrice: price, price };
         }),
       }));
       writePrefs({ priceListId, saleTypeId: draft?.saleTypeId ?? null });
@@ -441,6 +566,7 @@ export const useQuickOrder = ({
           customer: {
             ...d.customer,
             accountId: found.accountId,
+            userId: found.userId,
             firstName: found.firstName || d.customer.firstName,
             lastName: found.lastName || d.customer.lastName,
             email: found.email || d.customer.email,
@@ -448,7 +574,7 @@ export const useQuickOrder = ({
           },
         }));
       } else {
-        update((d) => ({ customer: { ...d.customer, accountId: null } }));
+        update((d) => ({ customer: { ...d.customer, accountId: null, userId: null } }));
       }
     } catch (error) {
       toastError(error, "No se pudo buscar el documento");
@@ -536,7 +662,7 @@ export const useQuickOrder = ({
   const missing = useMemo(() => {
     if (!draft) return [];
     const list: string[] = [];
-    if (draft.lines.length === 0) list.push("Prendas");
+    if (!draft.lines.some((l) => !l.isGift)) list.push("Productos");
     if (!draft.customer.documentTypeId || !draft.customer.documentNumber.trim()) list.push("Documento");
     if (!draft.customer.firstName.trim()) list.push("Nombre");
     if (!draft.priceListId) list.push("Lista de precios");
@@ -545,6 +671,8 @@ export const useQuickOrder = ({
     if (draft.withShipping) {
       if (!draft.shipping.shippingCostId) list.push("Método de envío");
       if (!draft.shipping.address.trim()) list.push("Dirección");
+      const phone = draft.shipping.receptionPhone.replace(/\D/g, "");
+      if (phone && phone.length !== 9) list.push("Celular de quien recibe (9 dígitos)");
     }
     if (draft.withPayment) {
       if (draft.payments.length === 0) list.push("Al menos un pago");
@@ -553,7 +681,7 @@ export const useQuickOrder = ({
         if (!p.paymentMethodId) list.push(`Método del pago${n}`);
         if (!p.amount || p.amount <= 0) list.push(`Monto del pago${n}`);
         if (needsAccount(p.paymentMethodId) && !p.businessAccountId) list.push(`Cuenta del pago${n}`);
-        if (p.vouchers.length === 0) list.push(`Captura del pago${n}`);
+        if (p.vouchers.length === 0) list.push(`Comprobante del pago${n}`);
       });
       draft.changeEntries.forEach((e, i) => {
         const n = draft.changeEntries.length > 1 ? ` ${i + 1}` : "";
@@ -572,7 +700,13 @@ export const useQuickOrder = ({
     setSubmitting(true);
     try {
       const { orderId, voucherWarning } = await createQuickOrderApi(draft, totals, catalogs.stockTypeId);
-      setResult({ orderId, voucherWarning, summary: buildSummary(draft, totals, orderId, methodName) });
+      setResult({
+        orderId,
+        total: totals.total,
+        paid: totals.paid,
+        voucherWarning,
+        summary: buildSummary(draft, totals, orderId, methodName),
+      });
       onDraftReset();
       return true;
     } catch (error) {
@@ -623,8 +757,14 @@ export const useQuickOrder = ({
     setQuery,
     results,
     searching,
+    hasMoreResults,
+    loadMoreResults,
+    loadingMore,
     addProduct,
+    addByCode,
     setQuantity,
+    setLinePrice,
+    changeStockType: (id: number) => update({ stockTypeId: id }),
     changePriceList,
     changeSaleType,
     saleTypeFixed,

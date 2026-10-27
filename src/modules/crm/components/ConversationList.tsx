@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { es } from "date-fns/locale";
-import { MessageSquare, PanelLeftOpen, Search } from "lucide-react";
+import { Bot, Check, Clock, ListFilter, MessageSquare, PanelLeftOpen, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/modules/auth";
 import { cn } from "@/shared/utils/utils";
 import type {
   Conversation,
@@ -46,13 +48,14 @@ interface Props {
   onExpand: () => void;
 }
 
-// Valor centinela del Select: Radix no admite un SelectItem con value="".
-const ALL = "__all__";
-
+// Las vistas de todos los días van a la vista; las demás, al botón de filtro.
 const VIEWS: { key: ConversationView; label: string }[] = [
   { key: "all", label: "Todas" },
   { key: "mine", label: "Mías" },
   { key: "unassigned", label: "Sin asignar" },
+];
+
+const MORE_VIEWS: { key: ConversationView; label: string }[] = [
   { key: "taken", label: "Tomadas" },
   { key: "window_closed", label: "Vencidas" },
 ];
@@ -101,24 +104,36 @@ const LastMessage = ({ conversation: c }: { conversation: Conversation }) => {
   );
 };
 
-/** Etiqueta chica de la fila: solo se pinta lo que cambia lo que se puede hacer. */
-const Chip = ({
-  children,
-  tone = "neutral",
-}: {
-  children: React.ReactNode;
-  tone?: "neutral" | "warn";
-}) => (
-  <span
-    className={cn(
-      "inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10.5px] font-medium leading-none",
-      tone === "neutral" && "bg-muted text-muted-foreground",
-      tone === "warn" && "bg-destructive-soft text-destructive-soft-foreground"
-    )}
-  >
-    {children}
-  </span>
-);
+/**
+ * Quién atiende el chat, a la derecha de la fila: así el resto del equipo lo
+ * ve sin abrirlo. El asesor con el control, si no el bot, si no nada.
+ */
+const Attendant = ({ conversation: c, myId }: { conversation: Conversation; myId: string | null }) => {
+  if (c.takenBy) {
+    const mine = c.takenBy === myId;
+    const name = c.takenByName || "Otro asesor";
+    return (
+      <span
+        className={cn(
+          "inline-flex max-w-[84px] shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-[10.5px] font-medium leading-none",
+          mine ? "bg-primary text-primary-foreground" : "bg-primary/10 text-foreground"
+        )}
+        title={mine ? "Atiendes tú" : `Atiende ${name}`}
+      >
+        <span className="truncate">{mine ? "Tú" : name.split(/\s+/)[0]}</span>
+      </span>
+    );
+  }
+  if (c.botAnswers) {
+    return (
+      <span className="shrink-0 text-muted-foreground" title="Atiende el bot">
+        <Bot className="h-3.5 w-3.5" />
+        <span className="sr-only">Atiende el bot</span>
+      </span>
+    );
+  }
+  return null;
+};
 
 export const ConversationList = ({
   conversations,
@@ -135,6 +150,8 @@ export const ConversationList = ({
   onSelect,
   onExpand,
 }: Props) => {
+  const { user } = useAuth();
+  const myId = user?.id ?? null;
   const [searchDraft, setSearchDraft] = useState(filters.search);
 
   // Si los filtros se limpian desde afuera, el borrador del buscador acompaña.
@@ -180,25 +197,7 @@ export const ConversationList = ({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-col gap-2 p-3">
-        <div className="flex items-center gap-2">
-          <h1 className="flex-1 text-2xl font-bold text-foreground">Chats</h1>
-          <Select
-            value={filters.situationId ? String(filters.situationId) : ALL}
-            onValueChange={(v) => onFiltersChange({ situationId: v === ALL ? null : Number(v) })}
-          >
-            <SelectTrigger className="h-8 w-[118px] text-xs" aria-label="Etapa">
-              <SelectValue placeholder="Toda etapa" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>Toda etapa</SelectItem>
-              {situations.map((s) => (
-                <SelectItem key={s.id} value={String(s.id)}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <h1 className="text-2xl font-bold text-foreground">Chats</h1>
 
         {/* Pestañas de red: cada conversación vive en su canal de mensajería. */}
         <div className="-mx-3 flex border-b px-1" role="tablist" aria-label="Redes">
@@ -211,7 +210,7 @@ export const ConversationList = ({
                 role="tab"
                 aria-selected={active}
                 onClick={() => onFiltersChange({ channel: ch })}
-                title={ch === "all" ? "Todas las redes" : CHANNEL_LABEL[ch]}
+                title={`${ch === "all" ? "Todas las redes" : CHANNEL_LABEL[ch]}: ${channelTotal(ch)}`}
                 className={cn(
                   "-mb-px flex flex-1 items-center justify-center gap-1 border-b-2 px-1 py-1.5 text-[11px] transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
@@ -221,15 +220,15 @@ export const ConversationList = ({
                 )}
               >
                 {ch === "all" ? "Todos" : <ChannelIcon channel={ch} className="h-3.5 w-3.5" />}
-                <span className="tabular-nums">{channelTotal(ch)}</span>
                 {ch !== "all" && <span className="sr-only">{CHANNEL_LABEL[ch]}</span>}
               </button>
             );
           })}
         </div>
 
+        <div className="flex items-center gap-1.5">
         <form
-          className="relative"
+          className="relative min-w-0 flex-1"
           onSubmit={(e) => {
             e.preventDefault();
             onFiltersChange({ search: searchDraft });
@@ -244,6 +243,13 @@ export const ConversationList = ({
             className="h-8 pl-8 text-xs"
           />
         </form>
+        <MoreFilters
+          filters={filters}
+          counts={counts}
+          situations={situations}
+          onFiltersChange={onFiltersChange}
+        />
+        </div>
 
         <div className="flex flex-wrap gap-1" role="tablist" aria-label="Vistas">
           {VIEWS.map((v) => {
@@ -333,13 +339,28 @@ export const ConversationList = ({
                           {relative(c.lastMessageAt)}
                         </span>
                       </div>
-                      <LastMessage conversation={c} />
-                      {(c.situation || !c.windowOpen) && (
-                        <div className="mt-0.5 flex min-w-0 flex-wrap gap-1">
-                          {c.situation && <Chip>{c.situation.name}</Chip>}
-                          {!c.windowOpen && <Chip tone="warn">Vencida</Chip>}
-                        </div>
+                      {/* El número (o el @) que el título no muestra: con el
+                          nombre solo no siempre se reconoce al cliente. */}
+                      {c.subtitle && (
+                        <p className="min-w-0 truncate text-[11px] tabular-nums text-muted-foreground">
+                          {c.subtitle}
+                        </p>
                       )}
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <div className="min-w-0 flex-1">
+                          <LastMessage conversation={c} />
+                        </div>
+                        {!c.windowOpen && (
+                          <span
+                            className="shrink-0 text-destructive"
+                            title="Vencida: pasaron más de 24 h desde el último mensaje del cliente"
+                          >
+                            <Clock className="h-3.5 w-3.5" />
+                            <span className="sr-only">Vencida</span>
+                          </span>
+                        )}
+                        <Attendant conversation={c} myId={myId} />
+                      </div>
                     </div>
                   </button>
                 </li>
@@ -349,5 +370,77 @@ export const ConversationList = ({
         )}
       </div>
     </div>
+  );
+};
+
+/**
+ * Lo que no se usa a cada rato: las vistas Tomadas y Vencidas, y la etapa. El
+ * botón se marca cuando alguno está activo, para que la lista filtrada no
+ * parezca la bandeja entera.
+ */
+const MoreFilters = ({
+  filters,
+  counts,
+  situations,
+  onFiltersChange,
+}: {
+  filters: ConversationFilters;
+  counts: ConversationCounts;
+  situations: Situation[];
+  onFiltersChange: (partial: Partial<ConversationFilters>) => void;
+}) => {
+  const viewActive = MORE_VIEWS.some((v) => v.key === filters.view);
+  const active = viewActive || !!filters.situationId;
+  const label = active ? "Filtros (hay filtros activos)" : "Filtros";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant={active ? "secondary" : "outline"}
+          size="icon"
+          className="relative h-8 w-8 shrink-0"
+          title={label}
+          aria-label={label}
+        >
+          <ListFilter className="h-3.5 w-3.5" />
+          {active && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="max-h-80 w-52 overflow-y-auto">
+        <DropdownMenuLabel className="text-[11px] font-normal text-muted-foreground">Mostrar</DropdownMenuLabel>
+        {MORE_VIEWS.map((v) => {
+          const selected = filters.view === v.key;
+          return (
+            <DropdownMenuItem
+              key={v.key}
+              className="text-xs"
+              // Tocar la vista activa la quita: vuelve a Todas.
+              onSelect={() => onFiltersChange({ view: selected ? "all" : v.key })}
+            >
+              <Check className={cn("mr-2 h-3.5 w-3.5", selected ? "opacity-100" : "opacity-0")} />
+              <span className="flex-1">{v.label}</span>
+              <span className="tabular-nums text-muted-foreground">{counts[v.key]}</span>
+            </DropdownMenuItem>
+          );
+        })}
+
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-[11px] font-normal text-muted-foreground">Etapa</DropdownMenuLabel>
+        {[{ id: null, name: "Toda etapa" } as { id: number | null; name: string }, ...situations].map((st) => {
+          const selected = filters.situationId === st.id;
+          return (
+            <DropdownMenuItem
+              key={st.id ?? "all"}
+              className="text-xs"
+              onSelect={() => onFiltersChange({ situationId: st.id })}
+            >
+              <Check className={cn("mr-2 h-3.5 w-3.5", selected ? "opacity-100" : "opacity-0")} />
+              {st.name}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
