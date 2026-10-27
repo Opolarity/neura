@@ -53,6 +53,63 @@ export const settingCodesIn = (text: string): string[] => {
   return [...codes];
 };
 
+/** Un trozo de un párrafo técnico: texto, o las versiones de un ajuste entre las que elige la tienda. */
+export type ParagraphPart =
+  | { kind: "text"; text: string }
+  | { kind: "choice"; code: string; raw: string; variants: { value: string; text: string; isDefault: boolean }[] };
+
+/**
+ * Parte un párrafo técnico para mostrarlo: cada grupo seguido de
+ * `[[si ajuste = valor]] … [[fin]]` del mismo ajuste es una elección (las
+ * versiones del texto, una por valor). Lo demás queda como texto, con sus
+ * marcas, para que renderWithSettings lo resuelva.
+ */
+export const splitChoices = (text: string): ParagraphPart[] => {
+  const lines = text.split("\n");
+  const parts: ParagraphPart[] = [];
+  let plain: string[] = [];
+  const flush = () => {
+    if (plain.length) parts.push({ kind: "text", text: plain.join("\n") });
+    plain = [];
+  };
+  let i = 0;
+  while (i < lines.length) {
+    const run: { code: string; op?: string; raw?: string; isDefault: boolean; body: string[] }[] = [];
+    let j = i;
+    while (j < lines.length) {
+      const m = SI.exec(lines[j]);
+      if (!m || (run.length && m[1] !== run[0].code)) break;
+      const end = lines.findIndex((l, k) => k > j && FIN.test(l));
+      if (end < 0) break;
+      run.push({ code: m[1], op: m[2], raw: m[3], isDefault: !!m[4], body: lines.slice(j + 1, end) });
+      j = end + 1;
+    }
+    if (!run.length) {
+      plain.push(lines[i]);
+      i += 1;
+      continue;
+    }
+    if (run.every((r) => r.op === "=")) {
+      flush();
+      parts.push({
+        kind: "choice",
+        code: run[0].code,
+        raw: lines.slice(i, j).join("\n"),
+        variants: run.map((r) => ({
+          value: r.raw?.startsWith('"') ? r.raw.slice(1, -1) : (r.raw ?? ""),
+          text: r.body.join("\n"),
+          isDefault: r.isDefault,
+        })),
+      });
+    } else {
+      plain.push(...lines.slice(i, j));
+    }
+    i = j;
+  }
+  flush();
+  return parts;
+};
+
 /**
  * Cómo lo lee el bot hoy: las variantes que van según los ajustes publicados y
  * los huecos llenos. Sin la sintaxis interna, que confunde.

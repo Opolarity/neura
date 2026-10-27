@@ -9,11 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/modules/auth";
 import { PageLoader } from "@/shared/components/page-loader";
 import { cn } from "@/shared/utils/utils";
-import { headingText, matchesQuery } from "../adapters/chatbotConsiderations.adapter";
+import { headingText, matchesQuery, settingCodesIn } from "../adapters/chatbotConsiderations.adapter";
 import AddPromptBlockDialog from "../components/chatbot-considerations/AddPromptBlockDialog";
 import PromptBlockHistoryDialog from "../components/chatbot-considerations/PromptBlockHistoryDialog";
 import PromptBlockItem from "../components/chatbot-considerations/PromptBlockItem";
-import PromptSettingsDialog from "../components/chatbot-considerations/PromptSettingsDialog";
 import PromptSettingHistoryDialog from "../components/chatbot-behavior/PromptSettingHistoryDialog";
 import { useChatbotConsiderations } from "../hooks/useChatbotConsiderations";
 import type { ChatbotPromptSetting } from "../types/chatbotBehavior.types";
@@ -40,10 +39,15 @@ export default function ChatbotConsiderationsPage() {
   const [tag, setTag] = useState(ALL);
   const [adding, setAdding] = useState<{ title: string; headingKey: string | null } | null>(null);
   const [history, setHistory] = useState<PromptBlock | null>(null);
-  const [settingCodes, setSettingCodes] = useState<string[]>([]);
   const [settingHistory, setSettingHistory] = useState<ChatbotPromptSetting | null>(null);
 
   const headings = useMemo(() => c.blocks.filter((b) => b.kind === "heading" && (b.headingLevel ?? 0) >= 2), [c.blocks]);
+  /** En cuántos párrafos aparece cada ajuste: cambiarlo en uno los cambia a todos. */
+  const settingUsage = useMemo(() => {
+    const usage = new Map<string, number>();
+    for (const b of c.blocks) for (const code of settingCodesIn(b.content)) usage.set(code, (usage.get(code) ?? 0) + 1);
+    return usage;
+  }, [c.blocks]);
   const allTags = useMemo(() => [...new Set(c.blocks.flatMap((b) => b.tags))].sort(), [c.blocks]);
   const filtering = !!query.trim() || onlyEditable || onlyStore || tag !== ALL;
 
@@ -89,7 +93,6 @@ export default function ChatbotConsiderationsPage() {
   if (c.loading) return <PageLoader message="Cargando las consideraciones del chatbot..." />;
 
   const goTo = (h: PromptBlock) => document.getElementById(`block-${h.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const settingsOpen = c.settings.filter((s) => settingCodes.includes(s.code));
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
@@ -97,7 +100,7 @@ export default function ChatbotConsiderationsPage() {
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-foreground">Consideraciones del chatbot</h1>
           <p className="text-sm text-muted-foreground">
-            Todo lo que sabe el bot, en el orden en que lo lee. Haz clic en un párrafo para editarlo; lo que tiene candado lo usa el sistema. Al guardar, el bot lo usa en menos de un minuto.
+            Todo lo que sabe el bot, en el orden en que lo lee. Haz clic en un párrafo para editarlo; lo que tiene candado lo usa el sistema, y si trae versiones, eliges ahí mismo la que usa el bot. Al guardar, el bot lo usa en menos de un minuto.
           </p>
         </div>
         <Button onClick={() => setAdding({ title: query.trim(), headingKey: null })}>
@@ -199,7 +202,9 @@ export default function ChatbotConsiderationsPage() {
                   onRestore={() => c.restore(r.block)}
                   onDelete={() => c.remove(r.block)}
                   onHistory={() => setHistory(r.block)}
-                  onSettings={setSettingCodes}
+                  settingUsage={settingUsage}
+                  onSaveSetting={c.saveSetting}
+                  onSettingHistory={setSettingHistory}
                 />
               )
             )
@@ -217,7 +222,6 @@ export default function ChatbotConsiderationsPage() {
         onCreate={c.createBlock}
       />
       <PromptBlockHistoryDialog block={history} saving={c.saving} onClose={() => setHistory(null)} onUse={(b, content) => c.saveBlock(b, content)} />
-      <PromptSettingsDialog settings={settingsOpen} saving={c.saving} onClose={() => setSettingCodes([])} onSave={c.saveSetting} onHistory={setSettingHistory} />
       <PromptSettingHistoryDialog
         setting={settingHistory}
         onClose={() => setSettingHistory(null)}
