@@ -21,7 +21,7 @@ export function AiConnectCard({ buttonClassName = "", tooltipClassName }: Props)
   const { connections, error, revoke } = useAiConnections();
   const { state, isMobile } = useSidebar();
 
-  const connectedLabels = [...new Set(connections.map((c) => (c.app === "other" ? c.name : AI_APP_GUIDES[c.app].label)))];
+  const connectedLabels = [...new Set(connections.map((c) => AI_APP_GUIDES[c.app].label))];
   const connected = connectedLabels.length > 0;
   const title = connected ? "IA conectada" : "Conecta tu IA";
 

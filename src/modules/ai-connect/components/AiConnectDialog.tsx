@@ -13,13 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/shared/hooks/use-toast";
 import { formatDateLong } from "@/shared/utils/date";
-import {
-  AI_APP_GUIDES,
-  AI_APP_ORDER,
-  CLAUDE_CODE_COMMAND,
-  MCP_GUIDE_URL,
-  MCP_URL,
-} from "../constants/aiConnect.constants";
+import { AI_APP_GUIDES, AI_APP_ORDER, MCP_GUIDE_URL, MCP_URL } from "../constants/aiConnect.constants";
 import type { AiApp, AiConnection } from "../types";
 
 interface Props {
@@ -50,7 +44,7 @@ export function AiConnectDialog({ open, onOpenChange, connections, statusAvailab
   const startConnect = async (app: AiApp) => {
     const guide = AI_APP_GUIDES[app];
     await copyText(MCP_URL, "URL del MCP");
-    if (guide.settingsUrl) window.open(guide.settingsUrl, "_blank", "noopener,noreferrer");
+    window.open(guide.settingsUrl, "_blank", "noopener,noreferrer");
     setWaiting((prev) => ({ ...prev, [app]: true }));
   };
 
@@ -80,7 +74,7 @@ export function AiConnectDialog({ open, onOpenChange, connections, statusAvailab
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={(value) => setTab(value as AiApp)} className="flex flex-col gap-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             {AI_APP_ORDER.map((app) => (
               <TabsTrigger key={app} value={app}>
                 {AI_APP_GUIDES[app].label}
@@ -129,7 +123,7 @@ export function AiConnectDialog({ open, onOpenChange, connections, statusAvailab
                       </Button>
                     </div>
                   ))
-                ) : guide.settingsUrl && waiting[app] && statusAvailable ? (
+                ) : waiting[app] && statusAvailable ? (
                   <div className="flex items-center gap-3 rounded-lg border bg-muted px-4 py-3">
                     <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
                     <div className="flex flex-col">
@@ -139,7 +133,7 @@ export function AiConnectDialog({ open, onOpenChange, connections, statusAvailab
                       </span>
                     </div>
                   </div>
-                ) : guide.settingsUrl ? (
+                ) : (
                   <div className="flex flex-col gap-2">
                     <Button type="button" size="lg" onClick={() => void startConnect(app)}>
                       Abrir {guide.label} y conectar
@@ -148,24 +142,6 @@ export function AiConnectDialog({ open, onOpenChange, connections, statusAvailab
                     <p className="text-center text-xs text-muted-foreground">
                       Copiamos la URL y abrimos {guide.label} en una pestaña nueva.
                     </p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-sm font-medium">Comando para Claude Code</span>
-                    <div className="flex gap-2">
-                      <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-md border bg-muted px-3 py-2.5 font-mono text-sm">
-                        {CLAUDE_CODE_COMMAND}
-                      </code>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        title="Copiar comando"
-                        onClick={() => void copyText(CLAUDE_CODE_COMMAND, "Línea de comando")}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </div>
                 )}
 
