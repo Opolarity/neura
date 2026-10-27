@@ -43,8 +43,8 @@ export function AiConnectDialog({ open, onOpenChange, connections, statusAvailab
 
   const startConnect = async (app: AiApp) => {
     const guide = AI_APP_GUIDES[app];
-    await copyText(MCP_URL, "URL del MCP");
-    window.open(guide.settingsUrl, "_blank", "noopener,noreferrer");
+    if (guide.copyUrl) await copyText(MCP_URL, "URL del MCP");
+    window.open(guide.connectUrl, "_blank", "noopener,noreferrer");
     setWaiting((prev) => ({ ...prev, [app]: true }));
   };
 
@@ -82,23 +82,26 @@ export function AiConnectDialog({ open, onOpenChange, connections, statusAvailab
             ))}
           </TabsList>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="mcp-url">URL del servidor MCP</Label>
-            <div className="flex gap-2">
-              <Input id="mcp-url" readOnly value={MCP_URL} className="font-mono" />
-              <Button type="button" variant="outline" onClick={() => void copyText(MCP_URL, "URL del MCP")}>
-                <Copy className="mr-2 h-4 w-4" />
-                Copiar
-              </Button>
-            </div>
-          </div>
-
           {AI_APP_ORDER.map((app) => {
             const guide = AI_APP_GUIDES[app];
             const appConnections = statusAvailable ? connections.filter((c) => c.app === app) : [];
 
             return (
               <TabsContent key={app} value={app} className="mt-0 flex flex-col gap-4">
+                {/* Solo para el conector personalizado: la app publicada ya trae la URL. */}
+                {guide.copyUrl && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`mcp-url-${app}`}>URL del servidor MCP</Label>
+                    <div className="flex gap-2">
+                      <Input id={`mcp-url-${app}`} readOnly value={MCP_URL} className="font-mono" />
+                      <Button type="button" variant="outline" onClick={() => void copyText(MCP_URL, "URL del MCP")}>
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copiar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {appConnections.length > 0 ? (
                   appConnections.map((connection) => (
                     <div
