@@ -35,7 +35,7 @@ export function AiConnectCard({ buttonClassName = "", tooltipClassName }: Props)
         }}
         className={`border border-sidebar-border group-data-[collapsible=icon]:border-0 ${buttonClassName}`}
       >
-        <span className="relative flex shrink-0 text-white">
+        <span className="relative flex shrink-0">
           <Sparkles className="size-4" />
           {connected && (
             // El punto es estado, no adorno: por eso lleva color.
@@ -46,9 +46,9 @@ export function AiConnectCard({ buttonClassName = "", tooltipClassName }: Props)
           )}
         </span>
 
-        <span className="flex-1 truncate font-semibold text-white">{title}</span>
+        <span className="flex-1 truncate">{title}</span>
 
-        <ChevronRight className="ml-auto size-4 shrink-0 text-sidebar-foreground/70" />
+        <ChevronRight className="ml-auto size-4 shrink-0" />
       </SidebarMenuButton>
 
       <AiConnectDialog
