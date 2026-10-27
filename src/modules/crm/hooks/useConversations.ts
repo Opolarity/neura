@@ -1,55 +1,103 @@
-import { useCallback, useEffect, useState } from "react";
-import type { PaginationState } from "@/shared/components/pagination/Pagination";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@/modules/auth";
 import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 import { conversationsAdapter } from "../adapters/conversations.adapter";
 import {
   assignConversationApi,
-  getChannelIdApi,
   getConversationsApi,
   getCrmSituationsApi,
   setConversationSituationApi,
   takeConversationApi,
+  type ListParams,
 } from "../services/crm.service";
-import type { Conversation, ConversationFilters, Situation } from "../types/crm.types";
-import { toastError } from "@/shared/utils/toastError";
+import type {
+  Conversation,
+  ConversationCounts,
+  ConversationFilters,
+  ConversationView,
+  NetworkCounts,
+  Situation,
+} from "../types/crm.types";
 
 const EMPTY_FILTERS: ConversationFilters = {
   search: "",
   situationId: null,
-  assignedTo: null,
-  unassigned: false,
-  taken: null,
+  view: "all",
+  channel: "all",
 };
 
-// Cada cuánto se refresca la lista. La bandeja no usa realtime todavía: con el
-// número compartido con el bot, los mensajes entran por n8n y no hay un evento
-// que escuchar del lado del ERP. 30 s alcanza para trabajar y no castiga a la
-// base, que hoy resuelve el listado en ~17 ms.
+const EMPTY_NETWORK_COUNTS: NetworkCounts = {
+  all: 0,
+  whatsapp: 0,
+  instagram: 0,
+  facebook: 0,
+  tiktok: 0,
+};
+
+const EMPTY_COUNTS: ConversationCounts = {
+  all: 0,
+  mine: 0,
+  unassigned: 0,
+  taken: 0,
+  window_closed: 0,
+};
+
+// La bandeja no pagina: trae las conversaciones más recientes de la vista. Con
+// los filtros a mano, 100 alcanza para trabajar el día.
+const PAGE_SIZE = 100;
+
+// Cada cuánto se refresca la lista. Los mensajes entran por el servicio del
+// bot y no hay un evento que escuchar del lado del ERP.
 const POLL_MS = 30_000;
 
+/** Traduce la vista elegida a los filtros del SP. */
+const viewParams = (
+  view: ConversationView,
+  userId: string | null
+): Pick<ListParams, "assignedTo" | "unassigned" | "taken" | "windowOpen"> => {
+  switch (view) {
+    case "mine":
+      return { assignedTo: userId };
+    case "unassigned":
+      return { unassigned: true };
+    case "taken":
+      return { taken: true };
+    case "window_closed":
+      return { windowOpen: false };
+    default:
+      return {};
+  }
+};
+
 export const useConversations = () => {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+
   const [data, setData] = useState<Conversation[]>([]);
+  const [counts, setCounts] = useState<ConversationCounts>(EMPTY_COUNTS);
+  const [networkCounts, setNetworkCounts] = useState<NetworkCounts>(EMPTY_NETWORK_COUNTS);
   const [situations, setSituations] = useState<Situation[]>([]);
   const [channelId, setChannelId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  // La carga inicial tapa la bandeja; las recargas por filtro solo marcan la
+  // lista, como en WhatsApp: el chat abierto no se mueve.
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [listLoading, setListLoading] = useState(false);
   const [acting, setActing] = useState(false);
+  // Cambiar de filtro rápido dispara varias peticiones: solo vale la última.
+  const requestSeq = useRef(0);
   const [filters, setFilters] = useState<ConversationFilters>(EMPTY_FILTERS);
-  const [pagination, setPagination] = useState<PaginationState>({
-    p_page: 1,
-    p_size: 20,
-    total: 0,
-  });
+  const { search, situationId, view, channel } = filters;
 
-  // El canal y el catálogo de etapas no cambian mientras la pantalla vive.
+  // El catálogo de etapas no cambia mientras la pantalla vive.
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        const [id, rows] = await Promise.all([getChannelIdApi(), getCrmSituationsApi()]);
+        const rows = await getCrmSituationsApi();
         if (cancelled) return;
 
-        setChannelId(id);
         setSituations(
           (rows as Array<Record<string, unknown>>).map((r) => ({
             id: r.id as number,
@@ -61,7 +109,7 @@ export const useConversations = () => {
         );
       } catch (error) {
         console.error(error);
-        toastError(error, "No se pudo cargar la configuración del CRM");
+        toastError(error, "No se pudieron cargar las etapas del CRM");
       }
     })();
 
@@ -72,33 +120,41 @@ export const useConversations = () => {
 
   const fetchData = useCallback(
     async (silent = false) => {
-      if (!silent) setLoading(true);
+      const seq = ++requestSeq.current;
+      if (!silent) setListLoading(true);
       try {
         const response = await getConversationsApi({
-          search: filters.search,
-          situationId: filters.situationId,
-          assignedTo: filters.assignedTo,
-          unassigned: filters.unassigned,
-          taken: filters.taken,
-          page: pagination.p_page,
-          size: pagination.p_size,
+          search,
+          situationId,
+          ...viewParams(view, userId),
+          network: channel === "all" ? null : channel,
+          page: 1,
+          size: PAGE_SIZE,
         });
 
-        const { data: mapped, pagination: pag } = conversationsAdapter(response);
-        setData(mapped);
-        setPagination(pag);
+        if (seq !== requestSeq.current) return;
+        const mapped = conversationsAdapter(response);
+        setData(mapped.data);
+        setCounts(mapped.counts);
+        setNetworkCounts(mapped.networkCounts);
+        setChannelId(mapped.channelId);
       } catch (error) {
         console.error(error);
         // En el refresco silencioso no se avisa: un corte de red momentáneo no
         // debería llenar la pantalla de toasts cada 30 segundos.
-        if (!silent) {
+        if (!silent && seq === requestSeq.current) {
           toastError(error, "Error al cargar las conversaciones");
         }
       } finally {
-        if (!silent) setLoading(false);
+        if (seq === requestSeq.current) {
+          setListLoading(false);
+          setInitialLoading(false);
+        }
       }
     },
-    [filters, pagination.p_page, pagination.p_size]
+    // La pestaña de red filtra en el servidor, igual que la vista: así los
+    // contadores de las vistas son los de esa red.
+    [search, situationId, view, channel, userId]
   );
 
   useEffect(() => {
@@ -149,17 +205,17 @@ export const useConversations = () => {
   );
 
   const assign = useCallback(
-    (conversation: Conversation, userId: string | null) => {
+    (conversation: Conversation, assignee: string | null) => {
       if (!channelId) return Promise.resolve(false);
       return runAction(
         () =>
           assignConversationApi(
             channelId,
-            userId,
+            assignee,
             conversation.phoneNumber,
             conversation.whatsappUserId
           ),
-        userId ? "Conversación asignada" : "Conversación sin asignar"
+        assignee ? "Conversación asignada" : "Conversación sin asignar"
       );
     },
     [channelId, runAction]
@@ -186,25 +242,22 @@ export const useConversations = () => {
 
   const updateFilters = (partial: Partial<ConversationFilters>) => {
     setFilters((prev) => ({ ...prev, ...partial }));
-    setPagination((prev) => ({ ...prev, p_page: 1 }));
   };
 
   return {
     data,
+    counts,
+    networkCounts,
     situations,
-    // Lo necesita el compositor: la edge function de envío pide el canal por id.
+    // Lo necesitan el compositor y el POS: los SP y las edges piden el canal por id.
     channelId,
-    loading,
+    initialLoading,
+    listLoading,
     acting,
     filters,
-    pagination,
     updateFilters,
     clearFilters: () => updateFilters(EMPTY_FILTERS),
-    handlePageChange: (page: number) =>
-      setPagination((prev) => ({ ...prev, p_page: page })),
-    handlePageSizeChange: (size: number) =>
-      setPagination((prev) => ({ ...prev, p_size: size, p_page: 1 })),
-    reload: () => fetchData(),
+    reload: () => fetchData(true),
     setSituation,
     assign,
     takeControl,

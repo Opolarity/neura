@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
+import { addCalendarDays, getTodayDate } from "@/shared/utils/date";
 import {
   getChannelMetricsApi,
   getChannelOverTimeApi,
@@ -10,12 +11,10 @@ import type {
   ChannelPointApi,
   ChannelProductApi,
 } from "../types/crm.types";
-import { toastError } from "@/shared/utils/toastError";
-import { addCalendarDays, getTodayDate } from "@/shared/utils/date";
 
 export type RangePreset = "30d" | "90d" | "120d" | "365d";
 
-const DAYS: Record<RangePreset, number> = {
+export const RANGE_DAYS: Record<RangePreset, number> = {
   "30d": 30,
   "90d": 90,
   "120d": 120,
@@ -29,10 +28,15 @@ export const RANGE_LABELS: Record<RangePreset, string> = {
   "365d": "Último año",
 };
 
+/** Rango en días civiles de Lima, terminando hoy. */
+export const rangeFor = (preset: RangePreset) => {
+  const hoy = getTodayDate();
+  return { start: addCalendarDays(hoy, -(RANGE_DAYS[preset] - 1)), end: hoy };
+};
+
 /**
- * Con 30 días un gráfico diario ya tiene 30 puntos por canal; con un año
- * tendría 365 y sería ilegible. La granularidad la decide el rango, no el
- * usuario: es una decisión que no aporta nada tomar a mano.
+ * Con 30 días un gráfico diario ya tiene 30 barras; con un año serían 365 e
+ * ilegible. La granularidad la decide el rango, no el usuario.
  */
 const granularityFor = (preset: RangePreset): "day" | "week" | "month" =>
   preset === "30d" ? "day" : preset === "365d" ? "month" : "week";
@@ -44,21 +48,13 @@ export const useChannelMetrics = () => {
   const [company, setCompany] = useState({ sold: 0, collected: 0 });
   const [points, setPoints] = useState<ChannelPointApi[]>([]);
   const [products, setProducts] = useState<ChannelProductApi[]>([]);
-  const [range, setRange] = useState<{ start: string; end: string } | null>(null);
 
-  const { start, end } = useMemo(() => {
-    // El rango son dias civiles de LIMA. Antes salian de
-    // `new Date().toISOString().slice(0, 10)`, que es el dia UTC: a partir de
-    // las 19:00 de Lima el reporte se pedia ya para el dia siguiente.
-    const hoy = getTodayDate();
-    return { start: addCalendarDays(hoy, -(DAYS[preset] - 1)), end: hoy };
-  }, [preset]);
+  const { start, end } = useMemo(() => rangeFor(preset), [preset]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      // Las tres consultas son independientes: en serie la pantalla tardaría
-      // el triple sin ninguna razón.
+      // Las tres consultas son independientes: en serie tardaría el triple.
       const [metrics, overTime, top] = await Promise.all([
         getChannelMetricsApi(start, end),
         getChannelOverTimeApi(start, end, granularityFor(preset)),
@@ -67,12 +63,10 @@ export const useChannelMetrics = () => {
 
       setChannels(metrics.channels);
       setCompany(metrics.company);
-      setRange({ start: metrics.range.start, end: metrics.range.end });
       setPoints(overTime.points);
       setProducts(top.products);
     } catch (error) {
-      console.error(error);
-      toastError(error, undefined, "Error al cargar el rendimiento por canal");
+      toastError(error, "No se pudo cargar el rendimiento por canal");
     } finally {
       setLoading(false);
     }
@@ -90,7 +84,6 @@ export const useChannelMetrics = () => {
     company,
     points,
     products,
-    range,
     granularity: granularityFor(preset),
     reload: fetchAll,
   };

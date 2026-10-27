@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, ChevronDown, UserCog } from "lucide-react";
+import { Check, ChevronDown, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,9 +13,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/modules/auth";
 import { cn } from "@/shared/utils/utils";
 import { getErpUsersApi, type ErpUser } from "../services/crm.service";
+import { ConversationAvatar } from "./ConversationAvatar";
 
 interface Props {
   assignedTo: string | null;
+  /** Nombre del asesor asignado: el chip lo muestra en vez de "Asignar a…". */
+  assignedToName: string | null;
   disabled?: boolean;
   onAssign: (userId: string | null) => void;
 }
@@ -34,7 +37,7 @@ interface Props {
  * montar la pantalla: son hasta 100 usuarios que la mayoría de las veces no se
  * van a mirar.
  */
-export const AssignMenu = ({ assignedTo, disabled, onAssign }: Props) => {
+export const AssignMenu = ({ assignedTo, assignedToName, disabled, onAssign }: Props) => {
   const { user, permissionCodes, isAdmin } = useAuth();
   const canAssignOthers =
     isAdmin || permissionCodes.includes("crm_conversations.assign_any");
@@ -63,11 +66,29 @@ export const AssignMenu = ({ assignedTo, disabled, onAssign }: Props) => {
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
+      {/* Chip: dice a quién está asignado (o que nadie la tiene) y se cambia
+          al tocarlo. Solo el primer nombre, para no comerse el encabezado. */}
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={disabled}>
-          <UserCog className="mr-1 h-3.5 w-3.5" />
-          Asignar a…
-          <ChevronDown className="ml-1 h-3 w-3 opacity-60" />
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 gap-1.5 rounded-full px-2.5 text-xs font-normal"
+          disabled={disabled}
+          title={assignedTo ? `Asignado a ${assignedToName || "un asesor"}` : "Sin asignar"}
+        >
+          {assignedTo ? (
+            <ConversationAvatar name={assignedToName || "?"} size="sm" />
+          ) : (
+            <UserRound className="h-3.5 w-3.5" />
+          )}
+          <span className="max-w-[90px] truncate">
+            {assignedTo
+              ? assignedToMe
+                ? "Tú"
+                : (assignedToName || "Asignado").split(/\s+/)[0]
+              : "Sin asignar"}
+          </span>
+          <ChevronDown className="h-3 w-3 opacity-60" />
         </Button>
       </DropdownMenuTrigger>
 

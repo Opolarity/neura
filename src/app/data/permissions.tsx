@@ -85,6 +85,7 @@ import CrmInboxPage from "@/modules/crm/pages/InboxPage";
 import CrmBoardPage from "@/modules/crm/pages/BoardPage";
 import CrmChannelsPage from "@/modules/crm/pages/ChannelsPage";
 import CrmCostsPage from "@/modules/crm/pages/CostsPage";
+import CrmMessagingChannelsPage from "@/modules/crm/pages/MessagingChannelsPage";
 import CrmChatbotTemplatesPage from "@/modules/crm/pages/ChatbotTemplatesPage";
 import CrmChatbotBehaviorPage from "@/modules/crm/pages/ChatbotBehaviorPage";
 // Modulo Produccion. El `code` del grupo se queda en "suppliers" igual que en
@@ -451,6 +452,10 @@ export const APP_PERMISSIONS_CONFIG = [
               // Los costos son egresos normales en movements: esta pantalla los
               // lee y cruza, y el alta manda al formulario de gastos que ya existe.
               { name: "Costos por canal", path: "/crm/costs", code: "crm_costs.list", element: <CrmCostsPage />, showSidebar: true, node: [] },
+              // WhatsApp, Instagram, Facebook y TikTok del negocio: bot por red,
+              // canal de venta y conexión con Meta. Usa el permiso de Chats; la
+              // edición la habilita crm_messaging.manage dentro de la pantalla.
+              { name: "Canales de mensajería", path: "/crm/messaging", code: "crm_conversations.list", element: <CrmMessagingChannelsPage />, showSidebar: true, node: [] },
             ]
           },
           {
