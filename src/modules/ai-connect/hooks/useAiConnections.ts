@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AiConnection } from "../types";
 import { listGrants, revokeGrant } from "../services/aiConnect.service";
-import { adaptConnection } from "../adapters/aiConnect.adapters";
+import { adaptConnections } from "../adapters/aiConnect.adapters";
 
 /**
  * Apps que el usuario conecto al MCP de Neura. Es POR USUARIO: cada uno
@@ -19,7 +19,7 @@ export function useAiConnections() {
   const refresh = useCallback(async () => {
     try {
       const grants = await listGrants();
-      setConnections(grants.map(adaptConnection));
+      setConnections(adaptConnections(grants));
       setError(null);
     } catch (err) {
       // Sin el servidor OAuth activo la consulta falla: la tarjeta sigue

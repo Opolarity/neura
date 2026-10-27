@@ -5,8 +5,8 @@
 // /oauth/consent. Lo unico que el ERP ve de esa conexion es el grant OAuth que
 // Supabase Auth guarda para el usuario.
 
-/** App a la que se conecta el MCP. "other" = Claude Code, Codex u otro cliente. */
-export type AiApp = "claude" | "chatgpt" | "other";
+/** App a la que se conecta el MCP. */
+export type AiApp = "claude" | "chatgpt";
 
 export interface AiConnection {
   /** Id del cliente OAuth en Supabase Auth: es lo que pide revokeGrant. */
