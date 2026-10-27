@@ -6,12 +6,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-const AYUDA: { nombre: string; texto: string }[] = [
-  {
-    nombre: "Vence en…",
-    texto:
-      "Lo que queda de las 24 h que da WhatsApp desde el último mensaje del cliente. Al vencer ya no se le puede escribir hasta que vuelva a hablar.",
-  },
+type Ayuda = { nombre: string; texto: string };
+
+const VENTANA: Ayuda = {
+  nombre: "Vence en…",
+  texto:
+    "Lo que queda de las 24 h que da WhatsApp desde el último mensaje del cliente. Al vencer ya no se le puede escribir hasta que vuelva a hablar.",
+};
+
+const CON_BOT: Ayuda[] = [
+  VENTANA,
   {
     nombre: "Etapa",
     texto: "Ubica el chat en una columna del tablero del CRM. Es solo para organizarse: no afecta al bot.",
@@ -31,11 +35,30 @@ const AYUDA: { nombre: string; texto: string }[] = [
   },
 ];
 
+// Bot apagado (Chats como bandeja): nada de esto calla a un bot. Tomar el
+// control sigue siendo lo que habilita escribir y deja registrado quién atiende.
+const SIN_BOT: Ayuda[] = [
+  VENTANA,
+  {
+    nombre: "Etapa",
+    texto: "Ubica el chat en una columna del tablero del CRM. Es solo para organizarse.",
+  },
+  {
+    nombre: "Asignar a…",
+    texto: "Elige el asesor que se encarga del cliente.",
+  },
+  {
+    nombre: "Tomar el control",
+    texto:
+      "Te haces cargo del chat para responder. Queda registrado quién lo atiende y nadie más puede escribir hasta que lo sueltes.",
+  },
+];
+
 /**
- * Explica los controles del encabezado del chat. Son varios y tres de ellos
- * callan al bot de formas distintas, así que se aclara qué hace cada uno.
+ * Explica los controles del encabezado del chat. Con bot, tres de ellos lo
+ * callan de formas distintas, así que se aclara qué hace cada uno.
  */
-export const ConversationControlsHelp = () => (
+export const ConversationControlsHelp = ({ botEnabled }: { botEnabled: boolean }) => (
   <Popover>
     <PopoverTrigger asChild>
       <Button
@@ -51,17 +74,19 @@ export const ConversationControlsHelp = () => (
     <PopoverContent align="end" className="w-80 p-3 text-xs">
       <p className="mb-2 text-[13px] font-semibold">¿Qué hace cada botón?</p>
       <dl className="space-y-2">
-        {AYUDA.map((item) => (
+        {(botEnabled ? CON_BOT : SIN_BOT).map((item) => (
           <div key={item.nombre}>
             <dt className="font-medium">{item.nombre}</dt>
             <dd className="text-muted-foreground">{item.texto}</dd>
           </div>
         ))}
       </dl>
-      <p className="mt-3 rounded-md bg-muted px-2 py-1.5 text-muted-foreground">
-        Asignar, Pausar bot y Tomar el control se suman: basta con que uno esté
-        activo para que el bot no responda.
-      </p>
+      {botEnabled && (
+        <p className="mt-3 rounded-md bg-muted px-2 py-1.5 text-muted-foreground">
+          Asignar, Pausar bot y Tomar el control se suman: basta con que uno esté
+          activo para que el bot no responda.
+        </p>
+      )}
     </PopoverContent>
   </Popover>
 );

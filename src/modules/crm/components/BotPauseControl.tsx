@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, PauseCircle, PlayCircle } from "lucide-react";
+import { Bot, PauseCircle, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,9 +12,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/shared/utils/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ComponentPermission } from "@/shared/components/component-permission";
@@ -64,40 +66,43 @@ export const BotPauseControl = ({ state, busy, onPause, onResume }: Props) => {
   const tope = limaIsoToDateTimeLocal(new Date(Date.now() + MAX_DIAS * 24 * HORA_MS).toISOString());
   const fechaValida = !!fecha && fecha > ahora && fecha <= tope;
 
+  // El estado va en el propio ícono: en pausa se ve en ámbar suave, y el
+  // detalle (hasta cuándo, quién) en el title y dentro del menú.
+  const estado = state.paused
+    ? manual
+      ? `Bot en pausa ${hasta}`
+      : `Bot en pausa: respondió el dueño ${hasta}`
+    : "Bot activo en este chat";
+  const titulo = state.paused && state.pausedBy ? `${estado} · por ${state.pausedBy}` : estado;
+  const iconClass = cn(
+    "h-7 w-7 shrink-0 rounded-full",
+    state.paused && "border-transparent bg-warning-soft text-warning-soft-foreground hover:bg-warning-soft"
+  );
+
   return (
     <>
-      {state.paused && (
-        <span
-          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-[10.5px] font-medium leading-none text-warning-soft-foreground"
-          title={state.pausedBy ? `Pausado por ${state.pausedBy}` : undefined}
-        >
-          <PauseCircle className="h-3 w-3" />
-          {manual ? `Bot en pausa ${hasta}` : `Bot en pausa: respondió el dueño ${hasta}`}
-        </span>
-      )}
-
       <ComponentPermission codeIn={["crm_conversations.take"]}>
-        {state.paused && manual ? (
-          <Button
-            variant="secondary"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            onClick={onResume}
-            disabled={busy}
-          >
-            <PlayCircle className="mr-1 h-3.5 w-3.5" />
-            Reactivar bot
-          </Button>
-        ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-7 px-2 text-xs" disabled={busy}>
-                <PauseCircle className="mr-1 h-3.5 w-3.5" />
-                Pausar bot
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="text-xs">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className={iconClass} disabled={busy} title={titulo} aria-label={titulo}>
+              {state.paused ? <PauseCircle className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 text-xs">
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{estado}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {state.paused && manual ? (
+              <DropdownMenuItem className="text-xs" onSelect={onResume}>
+                <PlayCircle className="mr-2 h-3.5 w-3.5" />
+                Reactivar bot
+              </DropdownMenuItem>
+            ) : state.paused ? (
+              // La pausa del dueño (respondió desde la app) vence sola.
+              <DropdownMenuItem className="text-xs" disabled>
+                Se reactiva solo al vencer
+              </DropdownMenuItem>
+            ) : (
+              <>
               <DropdownMenuItem
                 className="text-xs"
                 onSelect={() => onPause(new Date(Date.now() + HORA_MS).toISOString())}
@@ -117,9 +122,10 @@ export const BotPauseControl = ({ state, busy, onPause, onResume }: Props) => {
               <DropdownMenuItem className="text-xs" onSelect={() => onPause(null)}>
                 Hasta que lo reactive
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </ComponentPermission>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
