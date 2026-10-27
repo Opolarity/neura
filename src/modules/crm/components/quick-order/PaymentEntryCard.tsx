@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Trash, X } from "lucide-react";
+import { FileText, ImagePlus, Trash, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PaymentMethod } from "@/modules/sales/types";
@@ -32,7 +32,17 @@ const VoucherThumb = ({ file, onRemove }: { file: File; onRemove: () => void }) 
   }, [file]);
   return (
     <span className="relative">
-      {url && <img src={url} alt={file.name} className="h-11 w-11 rounded-md border object-cover" />}
+      {file.type === "application/pdf" ? (
+        <span
+          className="flex h-11 w-11 flex-col items-center justify-center rounded-md border bg-muted text-[9px] text-muted-foreground"
+          title={file.name}
+        >
+          <FileText className="h-4 w-4" />
+          PDF
+        </span>
+      ) : (
+        url && <img src={url} alt={file.name} className="h-11 w-11 rounded-md border object-cover" />
+      )}
       <button
         type="button"
         onClick={onRemove}
@@ -48,7 +58,7 @@ const VoucherThumb = ({ file, onRemove }: { file: File; onRemove: () => void }) 
 /**
  * Tarjeta de un pago (o vuelto), como en Añadir venta: método, monto, cuenta
  * de destino si el método no trae una, código de operación y hasta 3
- * capturas. Las capturas se eligen, se arrastran o se pegan con Ctrl+V.
+ * comprobantes (imagen o PDF). Se eligen, se arrastran o se pegan con Ctrl+V.
  */
 export const PaymentEntryCard = <T extends Entry>({
   entry,
@@ -66,9 +76,12 @@ export const PaymentEntryCard = <T extends Entry>({
   const set = (patch: Partial<T>) => onChange({ ...entry, ...patch });
 
   const addFiles = (files: FileList | File[] | null | undefined) => {
-    const images = Array.from(files ?? []).filter((f) => f.type.startsWith("image/"));
-    if (!images.length) return;
-    set({ vouchers: [...entry.vouchers, ...images].slice(0, MAX_VOUCHERS) } as Partial<T>);
+    // Imágenes o PDF, como en Añadir venta.
+    const accepted = Array.from(files ?? []).filter(
+      (f) => f.type.startsWith("image/") || f.type === "application/pdf"
+    );
+    if (!accepted.length) return;
+    set({ vouchers: [...entry.vouchers, ...accepted].slice(0, MAX_VOUCHERS) } as Partial<T>);
   };
 
   const full = entry.vouchers.length >= MAX_VOUCHERS;
@@ -128,7 +141,7 @@ export const PaymentEntryCard = <T extends Entry>({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,application/pdf"
         multiple
         className="hidden"
         onChange={(e) => {
@@ -166,7 +179,7 @@ export const PaymentEntryCard = <T extends Entry>({
           >
             <ImagePlus className="h-4 w-4 shrink-0" />
             <span>
-              {entry.vouchers.length ? "Otra captura" : "Subir captura"}
+              {entry.vouchers.length ? "Otro comprobante" : "Subir comprobante"}
               <span className="block text-muted-foreground">
                 Arrastra, pega o elige · {entry.vouchers.length}/{MAX_VOUCHERS}
               </span>

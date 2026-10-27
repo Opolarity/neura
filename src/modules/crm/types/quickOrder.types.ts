@@ -28,11 +28,19 @@ export interface QuickOrderLine {
   terms: string[];
   /** Precio de lista; las reglas de precio parten de acá. */
   originalPrice: number;
-  /** Precio final tras las reglas de precio. */
+  /** Precio unitario final: el de las reglas de precio, o el que puso el vendedor. */
   price: number;
+  /** El vendedor fijó el precio a mano: las reglas ya no lo tocan. */
+  manualPrice: boolean;
+  /** Descuento por unidad, como en Añadir venta. Se resta del precio. */
+  discountAmount: number;
   quantity: number;
   /** Stock al momento de agregarla: tope de la cantidad. */
   maxStock: number;
+  /** Tipo de inventario del que sale (order_products.stock_type_id). */
+  stockTypeId: number;
+  /** Regalo de una regla de precio: va a S/ 0 y no se edita. */
+  isGift?: boolean;
 }
 
 export interface QuickOrderCustomer {
@@ -44,6 +52,8 @@ export interface QuickOrderCustomer {
   email: string;
   /** Ya existe en accounts: create-order no la vuelve a crear. */
   accountId: number | null;
+  /** Usuario (profiles.id) de la cuenta: las reglas de precio por cliente lo usan. */
+  userId: string | null;
 }
 
 export interface QuickOrderShipping {
@@ -60,7 +70,7 @@ export interface QuickOrderShipping {
   receptionPhone: string;
 }
 
-/** Hasta cuántas capturas se adjuntan por pago o vuelto, como en Añadir venta. */
+/** Hasta cuántos comprobantes (imagen o PDF) se adjuntan por pago o vuelto, como en Añadir venta. */
 export const MAX_VOUCHERS = 3;
 
 export interface QuickOrderPayment {
@@ -71,7 +81,7 @@ export interface QuickOrderPayment {
   businessAccountId: number | null;
   amount: number | null;
   operationCode: string;
-  /** Capturas del pago. Se suben recién cuando la orden existe. */
+  /** Comprobantes del pago (imagen o PDF). Se suben recién cuando la orden existe. */
   vouchers: File[];
 }
 
@@ -90,9 +100,13 @@ export interface QuickOrderDraft {
   priceListId: number | null;
   saleTypeId: number | null;
   situationId: number | null;
+  /** Tipo de inventario con el que se buscan y agregan productos. */
+  stockTypeId: number | null;
   lines: QuickOrderLine[];
   /** Descuentos que devolvieron las reglas de precio (montos negativos). */
   ruleDiscounts: { name: string; amount: number; code: string }[];
+  /** Mensajes de las reglas aplicadas ("2x1 en polos"…), para que el vendedor sepa por qué cambió el precio. */
+  appliedRules: { name: string; message: string }[];
   manualDiscounts: QuickOrderManualDiscount[];
   withShipping: boolean;
   shipping: QuickOrderShipping;
@@ -117,7 +131,10 @@ export interface QuickOrderCatalogs {
   shippingCosts: ShippingCost[];
   /** Cuentas activas, para los métodos de pago que no traen una propia. */
   businessAccounts: { id: number; name: string }[];
+  /** Tipo de inventario por defecto del negocio. */
   stockTypeId: number;
+  /** Todos los tipos de inventario activos: el selector solo aparece si hay más de uno. */
+  stockTypes: { id: number; name: string }[];
 }
 
 /** Resultado de buscar prendas: una fila por variación con stock. */
@@ -151,8 +168,16 @@ export interface QuickOrderTotals {
 
 export interface QuickOrderResult {
   orderId: number;
+  total: number;
+  paid: number;
   /** El texto del resumen para mandarle al cliente por WhatsApp. */
   summary: string;
   /** La orden se creó pero la captura no se pudo adjuntar. */
   voucherWarning: string | null;
+}
+
+/** Una página de la búsqueda de productos. */
+export interface QuickOrderProductPage {
+  rows: QuickOrderProduct[];
+  total: number;
 }

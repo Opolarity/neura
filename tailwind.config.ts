@@ -65,6 +65,11 @@ export default {
           DEFAULT: "hsl(var(--pending))",
           foreground: "hsl(var(--pending-foreground))",
         },
+        chat: {
+          DEFAULT: "hsl(var(--chat))",
+          foreground: "hsl(var(--chat-foreground))",
+          border: "hsl(var(--chat-border))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",

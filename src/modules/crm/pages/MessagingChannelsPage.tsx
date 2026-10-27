@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Bot, Info, Link2, Unlink } from "lucide-react";
+import { AlertTriangle, Bot, Link2, Unlink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -105,23 +105,6 @@ const MessagingChannelsPage = () => {
             onDisconnect={(account) => void disconnectAccount(account)}
           />
         ))}
-      </div>
-
-      <div className="flex items-start gap-2 rounded-lg border bg-background p-4 text-sm">
-        <Info className="mt-0.5 h-4 w-4 shrink-0" />
-        <div className="flex flex-col gap-2 text-muted-foreground">
-          <p>
-            Con el bot activado en una red, atiende a los clientes a cualquier hora: responde consultas, muestra el
-            catálogo con precios, promociones y stock, envía la guía de tallas, arma el pedido y registra el
-            comprobante de pago. Cuando un asesor toma un chat, el bot deja de responder ahí.
-          </p>
-          <p>
-            Las cuatro redes usan el mismo catálogo, precios y stock del canal del bot: no hace falta habilitar
-            productos por red. Cada red solo indica a qué <strong className="font-medium text-foreground">canal de
-            venta</strong> van sus órdenes: el Pedido que armas desde un chat lo toma de aquí, y Rendimiento y Costos
-            por canal cuentan las ventas con eso.
-          </p>
-        </div>
       </div>
     </div>
   );

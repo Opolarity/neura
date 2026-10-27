@@ -58,16 +58,31 @@ export const ShippingFields = ({ shipping, catalogs, options, onChange }: Props)
           onChange={(neighborhoodId) => set({ neighborhoodId, ...resetCost })}
         />
       </div>
-      <NumberSelect
-        label="Método de envío"
-        placeholder={options.length ? "Método de envío" : "Sin tarifas para esta ubicación"}
-        value={shipping.shippingCostId}
-        options={options.map((o) => ({ id: o.id, name: `${o.name} · ${formatCurrency(o.cost)}` }))}
-        onChange={(id) => {
-          const option = options.find((o) => o.id === id);
-          set({ shippingCostId: id, cost: option?.cost ?? 0 });
-        }}
-      />
+      {/* La tarifa propone el costo; se puede cambiar, como en Añadir venta. */}
+      <div className="grid grid-cols-[1fr_84px] gap-1.5">
+        <NumberSelect
+          label="Método de envío"
+          placeholder={options.length ? "Método de envío" : "Sin tarifas para esta ubicación"}
+          value={shipping.shippingCostId}
+          options={options.map((o) => ({ id: o.id, name: `${o.name} · ${formatCurrency(o.cost)}` }))}
+          onChange={(id) => {
+            const option = options.find((o) => o.id === id);
+            set({ shippingCostId: id, cost: option?.cost ?? 0 });
+          }}
+        />
+        <Input
+          type="number"
+          min={0}
+          step="0.01"
+          value={shipping.shippingCostId ? shipping.cost : ""}
+          onChange={(e) => set({ cost: e.target.value === "" ? 0 : Math.max(0, Number(e.target.value)) })}
+          disabled={!shipping.shippingCostId}
+          placeholder="Costo"
+          className="h-8 text-xs"
+          aria-label="Costo del envío"
+          title="Costo del envío"
+        />
+      </div>
       <Input
         value={shipping.address}
         onChange={(e) => set({ address: e.target.value })}
@@ -93,8 +108,8 @@ export const ShippingFields = ({ shipping, catalogs, options, onChange }: Props)
         />
         <Input
           value={shipping.receptionPhone}
-          onChange={(e) => set({ receptionPhone: e.target.value })}
-          placeholder="Celular"
+          onChange={(e) => set({ receptionPhone: e.target.value.replace(/\D/g, "").slice(0, 9) })}
+          placeholder="Celular (9 dígitos)"
           inputMode="tel"
           className="h-8 text-xs"
           aria-label="Celular de quien recibe"

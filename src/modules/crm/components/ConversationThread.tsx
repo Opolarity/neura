@@ -80,7 +80,7 @@ export const ConversationThread = ({ messages, loading }: Props) => {
                   y texto gris sueltos se pierden sobre el patrón del fondo. */}
               {showDay && (
                 <div className="flex justify-center py-2">
-                  <span className="rounded-full border bg-background px-3 py-1 text-[11px] text-muted-foreground shadow-sm">
+                  <span className="rounded-full bg-chat-border px-3 py-1 text-[11px] text-chat-foreground shadow-sm">
                     {day}
                   </span>
                 </div>
@@ -97,10 +97,10 @@ export const ConversationThread = ({ messages, loading }: Props) => {
                     "min-w-0 max-w-[68%] rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed shadow-sm",
                     // El asesor y el bot son "el negocio": mismo lado y mismo
                     // morado de marca. Lo que contestó el bot se distingue por
-                    // su etiqueta. El cliente va en blanco con el borde de las
-                    // tablas, que es lo que se lee sobre el fondo plomo.
+                    // su etiqueta. El cliente va en blanco, que es lo que se lee
+                    // sobre el fondo oscuro.
                     (mine || isBot) && "bg-primary text-primary-foreground",
-                    !mine && !isBot && "border border-border bg-background text-foreground"
+                    !mine && !isBot && "bg-background text-foreground"
                   )}
                 >
                   {isBot && (
