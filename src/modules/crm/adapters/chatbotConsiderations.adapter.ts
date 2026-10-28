@@ -28,12 +28,25 @@ export const normalize = (s: string): string =>
 export const matchesQuery = (b: PromptBlock, query: string): boolean => {
   const q = normalize(query.trim());
   if (!q) return true;
-  return normalize(`${b.title}\n${b.content}\n${b.tags.join(" ")}`).includes(q);
+  // Sin los símbolos de formato: "Reglas duras" encuentra "**Reglas** duras".
+  return normalize(`${b.title}\n${b.content}\n${b.tags.join(" ")}`.replace(/[*`]/g, "")).includes(q);
 };
 
 /** ¿La tienda cambió el texto que publicó el equipo? */
 export const isEditedByStore = (b: PromptBlock): boolean =>
   b.origin === "system" && b.originalContent != null && b.content !== b.originalContent;
+
+/**
+ * ¿Es la frase que abre una lista? ("Reglas duras:"). El bot la deja con
+ * candado (esEntrada, neura-chatbot) y acá se muestra como texto bajo el
+ * título, sin recuadro ni botones. Lo mismo la frase de una sola oración que
+ * dice cuándo aplica la sección ("Cuando el cliente pregunta por…").
+ */
+export const isIntroLine = (b: PromptBlock): boolean => {
+  const t = b.content.trim();
+  if (b.origin !== "system" || !b.locked || b.content.includes("\n")) return false;
+  return /:\**\s*$/.test(t) || (/^Cuando el cliente\b.*\.["”»*]*$/.test(t) && !/\.\s/.test(t));
+};
 
 /** El título de una sección sin los # del prompt. */
 export const headingText = (b: PromptBlock): string => b.content.replace(/^#+\s*/, "");
@@ -51,6 +64,63 @@ export const settingCodesIn = (text: string): string[] => {
     if (m) codes.add(m[1]);
   }
   return [...codes];
+};
+
+/** Un trozo de un párrafo técnico: texto, o las versiones de un ajuste entre las que elige la tienda. */
+export type ParagraphPart =
+  | { kind: "text"; text: string }
+  | { kind: "choice"; code: string; raw: string; variants: { value: string; text: string; isDefault: boolean }[] };
+
+/**
+ * Parte un párrafo técnico para mostrarlo: cada grupo seguido de
+ * `[[si ajuste = valor]] … [[fin]]` del mismo ajuste es una elección (las
+ * versiones del texto, una por valor). Lo demás queda como texto, con sus
+ * marcas, para que renderWithSettings lo resuelva.
+ */
+export const splitChoices = (text: string): ParagraphPart[] => {
+  const lines = text.split("\n");
+  const parts: ParagraphPart[] = [];
+  let plain: string[] = [];
+  const flush = () => {
+    if (plain.length) parts.push({ kind: "text", text: plain.join("\n") });
+    plain = [];
+  };
+  let i = 0;
+  while (i < lines.length) {
+    const run: { code: string; op?: string; raw?: string; isDefault: boolean; body: string[] }[] = [];
+    let j = i;
+    while (j < lines.length) {
+      const m = SI.exec(lines[j]);
+      if (!m || (run.length && m[1] !== run[0].code)) break;
+      const end = lines.findIndex((l, k) => k > j && FIN.test(l));
+      if (end < 0) break;
+      run.push({ code: m[1], op: m[2], raw: m[3], isDefault: !!m[4], body: lines.slice(j + 1, end) });
+      j = end + 1;
+    }
+    if (!run.length) {
+      plain.push(lines[i]);
+      i += 1;
+      continue;
+    }
+    if (run.every((r) => r.op === "=")) {
+      flush();
+      parts.push({
+        kind: "choice",
+        code: run[0].code,
+        raw: lines.slice(i, j).join("\n"),
+        variants: run.map((r) => ({
+          value: r.raw?.startsWith('"') ? r.raw.slice(1, -1) : (r.raw ?? ""),
+          text: r.body.join("\n"),
+          isDefault: r.isDefault,
+        })),
+      });
+    } else {
+      plain.push(...lines.slice(i, j));
+    }
+    i = j;
+  }
+  flush();
+  return parts;
 };
 
 /**

@@ -1,4 +1,4 @@
-import { Video, Trash2 } from "lucide-react";
+import { Video, Trash } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -85,7 +85,7 @@ const MediaGrid = ({ medios, loading, onSelect, onDelete }: MediaGridProps) => {
                 onDelete(medio);
               }}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash className="h-3.5 w-3.5" />
             </Button>
           </ComponentPermission>
         </Card>

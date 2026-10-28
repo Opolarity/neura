@@ -73,6 +73,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MassiveEditVariationsTable from "@/modules/ecommerce/components/MassiveEditVariationsTable";
 import MinimumStockModal from "@/modules/ecommerce/components/MinimumStockModal";
 import { useVariationsMinStock } from "@/modules/ecommerce/hooks/useVariationsMinStock";
+import MassiveEditHeader from "@/modules/ecommerce/components/MassiveEditHeader";
 
 
 const PromotionalTextPage = () => {
@@ -514,8 +515,7 @@ const PromotionalTextPage = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <div className="flex flex-wrap gap-4 justify-between items-center">
-        <h1 className="text-2xl font-bold text-foreground">Edición masiva</h1>
+      <MassiveEditHeader>
         <div className="flex gap-2 flex-wrap justify-end">
           {/* Abre el editor de la tienda pública vía SSO, en otra pestaña: es
               otra herramienta, no una edición de productos, de ahí su propio
@@ -630,7 +630,7 @@ const PromotionalTextPage = () => {
           </ComponentPermission>
           )}
         </div>
-      </div>
+      </MassiveEditHeader>
 
       {/* Dos vistas de lo mismo con distinto registro: la de siempre, por
           producto, y la de variaciones (T-596), por SKU, que es la única forma

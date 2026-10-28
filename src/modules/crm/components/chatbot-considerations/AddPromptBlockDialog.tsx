@@ -3,14 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { headingText } from "../../adapters/chatbotConsiderations.adapter";
+import { isMappedSection, sectionName } from "../../adapters/chatbotSections";
 import type { PromptBlock, PromptBlockCreateInput } from "../../types/chatbotConsiderations.types";
 
 interface AddPromptBlockDialogProps {
   open: boolean;
-  headings: PromptBlock[];
+  /** Las secciones por grupo, como en el índice: cada título `## ` seguido de sus `### `. */
+  groups: { group: string; headings: PromptBlock[] }[];
   initialTitle: string;
   initialHeadingKey: string | null;
   saving: boolean;
@@ -19,7 +21,7 @@ interface AddPromptBlockDialogProps {
 }
 
 /** Agregar algo que el bot no sabe: va al final de la sección elegida. */
-export default function AddPromptBlockDialog({ open, headings, initialTitle, initialHeadingKey, saving, onClose, onCreate }: AddPromptBlockDialogProps) {
+export default function AddPromptBlockDialog({ open, groups, initialTitle, initialHeadingKey, saving, onClose, onCreate }: AddPromptBlockDialogProps) {
   const [headingKey, setHeadingKey] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -63,10 +65,15 @@ export default function AddPromptBlockDialog({ open, headings, initialTitle, ini
                 <SelectValue placeholder="¿En qué parte va?" />
               </SelectTrigger>
               <SelectContent className="max-h-80">
-                {headings.map((h) => (
-                  <SelectItem key={h.headingKey} value={h.headingKey}>
-                    {h.headingLevel === 3 ? `   ↳ ${headingText(h)}` : headingText(h)}
-                  </SelectItem>
+                {groups.map((g) => (
+                  <SelectGroup key={g.group}>
+                    <SelectLabel>{g.group}</SelectLabel>
+                    {g.headings.map((h) => (
+                      <SelectItem key={h.headingKey} value={h.headingKey}>
+                        {h.headingLevel === 3 && !isMappedSection(h) ? `   ↳ ${headingText(h)}` : sectionName(h)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>

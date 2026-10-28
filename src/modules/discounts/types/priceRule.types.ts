@@ -151,6 +151,10 @@ export interface PriceRule {
   // S-186: solo cupones. HTML que el carrito del ecommerce muestra para invitar
   // a usar el cupón mientras todavía no está aplicado.
   cart_message: string | null;
+  // S-289: solo automáticas. Textos del carrito del ecommerce según el estado
+  // de la promoción, con variables ({faltan}, {cantidad}, {ahorro}, {total}).
+  cart_message_pending: string | null;
+  cart_message_applied: string | null;
   rule_type: "automatic" | "coupon";
   priority: number;
   is_stackable: boolean;
@@ -215,6 +219,8 @@ export interface PriceRuleFormData {
   code: string;
   landing_url: string;
   cart_message: string;
+  cart_message_pending: string;
+  cart_message_applied: string;
   rule_type: "automatic" | "coupon";
   priority: number;
   is_stackable: boolean;

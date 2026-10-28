@@ -2,6 +2,7 @@ import { Ticket, Zap } from "lucide-react";
 import { cn } from "@/shared/utils/utils";
 import type { PriceRuleFormData } from "../../types/priceRule.types";
 import { CouponSection } from "./CouponSection";
+import { CartMessagesSection } from "./CartMessagesSection";
 
 interface RuleTypeSectionProps {
   formData: PriceRuleFormData;
@@ -75,6 +76,10 @@ export const RuleTypeSection = ({ formData, updateField }: RuleTypeSectionProps)
 
       {formData.rule_type === "coupon" && (
         <CouponSection formData={formData} updateField={updateField} />
+      )}
+
+      {formData.rule_type === "automatic" && (
+        <CartMessagesSection formData={formData} updateField={updateField} />
       )}
     </div>
   );

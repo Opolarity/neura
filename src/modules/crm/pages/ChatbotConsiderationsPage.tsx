@@ -1,19 +1,18 @@
 import { useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { ChevronRight, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/modules/auth";
 import { PageLoader } from "@/shared/components/page-loader";
 import { cn } from "@/shared/utils/utils";
-import { headingText, matchesQuery } from "../adapters/chatbotConsiderations.adapter";
+import { headingText, isIntroLine, matchesQuery, settingCodesIn } from "../adapters/chatbotConsiderations.adapter";
+import { groupSections, hasFriendlyName, sectionName } from "../adapters/chatbotSections";
 import AddPromptBlockDialog from "../components/chatbot-considerations/AddPromptBlockDialog";
 import PromptBlockHistoryDialog from "../components/chatbot-considerations/PromptBlockHistoryDialog";
 import PromptBlockItem from "../components/chatbot-considerations/PromptBlockItem";
-import PromptSettingsDialog from "../components/chatbot-considerations/PromptSettingsDialog";
 import PromptSettingHistoryDialog from "../components/chatbot-behavior/PromptSettingHistoryDialog";
 import { useChatbotConsiderations } from "../hooks/useChatbotConsiderations";
 import type { ChatbotPromptSetting } from "../types/chatbotBehavior.types";
@@ -22,62 +21,105 @@ import type { PromptBlock } from "../types/chatbotConsiderations.types";
 /** Valor del Select para "todas": Radix no admite un SelectItem con value "". */
 const ALL = "__all__";
 
-type Row = { kind: "heading"; block: PromptBlock } | { kind: "paragraph"; block: PromptBlock };
+type Row =
+  | { kind: "group"; name: string }
+  | { kind: "section"; block: PromptBlock }
+  | { kind: "heading"; block: PromptBlock }
+  | { kind: "paragraph"; block: PromptBlock };
+
+const groupId = (name: string) => `group-${name.replace(/\W+/g, "-")}`;
 
 /**
- * Consideraciones del chatbot: el prompt completo, en el orden en que lo lee
- * el bot, partido en párrafos que se editan como un bloc de notas. Arriba, un
- * buscador; a la izquierda, el índice. Lo técnico va con candado. Si lo buscado
- * no está, se agrega ahí mismo. Todo lo guardado queda vivo en menos de un
- * minuto. Solo admin (lo exigen también los SP).
+ * Consideraciones del chatbot: el prompt completo partido en párrafos que se
+ * editan como un bloc de notas, con las secciones agrupadas por tema y con
+ * nombres claros (chatbotSections.ts; el bot las sigue leyendo en su orden).
+ * Arriba, un buscador; a la izquierda, el índice por grupos. Lo técnico va con
+ * candado y no se muestra (salvo los que nombran un dato, como las sedes: el
+ * dato se cambia ahí). Si lo buscado no está, se agrega ahí mismo. Todo lo
+ * guardado queda vivo en menos de un minuto. Solo admin (lo exigen también los SP).
  */
 export default function ChatbotConsiderationsPage() {
   const { isAdmin } = useAuth();
   const c = useChatbotConsiderations(isAdmin);
   const [query, setQuery] = useState("");
-  const [onlyEditable, setOnlyEditable] = useState(false);
   const [onlyStore, setOnlyStore] = useState(false);
   const [tag, setTag] = useState(ALL);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [adding, setAdding] = useState<{ title: string; headingKey: string | null } | null>(null);
   const [history, setHistory] = useState<PromptBlock | null>(null);
-  const [settingCodes, setSettingCodes] = useState<string[]>([]);
   const [settingHistory, setSettingHistory] = useState<ChatbotPromptSetting | null>(null);
 
-  const headings = useMemo(() => c.blocks.filter((b) => b.kind === "heading" && (b.headingLevel ?? 0) >= 2), [c.blocks]);
+  const groups = useMemo(() => groupSections(c.blocks), [c.blocks]);
+  /** Para "Agregar": cada sección con sus subtítulos, en el orden del índice. */
+  const addGroups = useMemo(
+    () =>
+      groups.map((g) => ({
+        group: g.group,
+        headings: g.sections.flatMap((s) => [s.heading, ...s.items.filter((b) => b.kind === "heading" && (b.headingLevel ?? 0) >= 3)]),
+      })),
+    [groups]
+  );
+  /** En cuántos párrafos aparece cada ajuste: cambiarlo en uno los cambia a todos. */
+  const settingUsage = useMemo(() => {
+    const usage = new Map<string, number>();
+    for (const b of c.blocks) for (const code of settingCodesIn(b.content)) usage.set(code, (usage.get(code) ?? 0) + 1);
+    return usage;
+  }, [c.blocks]);
   const allTags = useMemo(() => [...new Set(c.blocks.flatMap((b) => b.tags))].sort(), [c.blocks]);
-  const filtering = !!query.trim() || onlyEditable || onlyStore || tag !== ALL;
+  const filtering = !!query.trim() || onlyStore || tag !== ALL;
 
-  /** Los párrafos que pasan los filtros, con sus títulos de sección (solo los que tienen algo). */
-  const { rows, counts, total } = useMemo(() => {
+  /** Los párrafos que se ven, por grupo y sección: solo las secciones y subtítulos que tienen algo editable. */
+  const { rows, counts, groupCounts, total } = useMemo(() => {
+    const hasData = (b: PromptBlock) => settingCodesIn(b.content).some((code) => c.settings.some((x) => x.code === code));
     const visible = (b: PromptBlock) =>
       b.kind === "paragraph" &&
       matchesQuery(b, query) &&
-      (!onlyEditable || !b.locked) &&
+      (!b.locked || isIntroLine(b) || hasData(b)) &&
       (!onlyStore || b.origin === "store") &&
       (tag === ALL || b.tags.includes(tag));
     const out: Row[] = [];
     const counts = new Map<string, number>();
-    let pending: PromptBlock[] = [];
-    let section: string | null = null;
+    const groupCounts = new Map<string, number>();
     let total = 0;
-    for (const b of c.blocks) {
-      if (b.kind === "heading") {
-        if (!filtering) out.push({ kind: "heading", block: b });
-        else pending = [...pending.filter((h) => (h.headingLevel ?? 1) < (b.headingLevel ?? 1)), b];
-        if ((b.headingLevel ?? 0) <= 2) section = b.headingKey;
-        continue;
+    for (const g of groups) {
+      const groupRows: Row[] = [];
+      let inGroup = 0;
+      for (const s of g.sections) {
+        const sectionRows: Row[] = [];
+        let pending: PromptBlock[] = [];
+        // Sin lo bloqueado, la frase de entrada ("Reglas duras:") sale solo si debajo queda algo.
+        let intro: PromptBlock | null = null;
+        let n = 0;
+        for (const b of s.items) {
+          if (b.kind === "heading") {
+            intro = null;
+            pending = [...pending.filter((h) => (h.headingLevel ?? 1) < (b.headingLevel ?? 1)), b];
+            continue;
+          }
+          if (!visible(b)) continue;
+          if (isIntroLine(b)) {
+            intro = b;
+            continue;
+          }
+          for (const h of pending) sectionRows.push({ kind: "heading", block: h });
+          pending = [];
+          if (intro) {
+            sectionRows.push({ kind: "paragraph", block: intro });
+            intro = null;
+          }
+          sectionRows.push({ kind: "paragraph", block: b });
+          n += 1;
+        }
+        counts.set(s.heading.headingKey, n);
+        inGroup += n;
+        if (n > 0) groupRows.push({ kind: "section", block: s.heading }, ...sectionRows);
       }
-      if (!visible(b)) continue;
-      if (filtering) {
-        for (const h of pending) out.push({ kind: "heading", block: h });
-        pending = [];
-      }
-      out.push({ kind: "paragraph", block: b });
-      total += 1;
-      if (section) counts.set(section, (counts.get(section) ?? 0) + 1);
+      groupCounts.set(g.group, inGroup);
+      total += inGroup;
+      if (groupRows.length) out.push({ kind: "group", name: g.group }, ...groupRows);
     }
-    return { rows: out, counts, total };
-  }, [c.blocks, query, onlyEditable, onlyStore, tag, filtering]);
+    return { rows: out, counts, groupCounts, total };
+  }, [groups, c.settings, query, onlyStore, tag]);
 
   if (!isAdmin) {
     return (
@@ -88,8 +130,14 @@ export default function ChatbotConsiderationsPage() {
   }
   if (c.loading) return <PageLoader message="Cargando las consideraciones del chatbot..." />;
 
-  const goTo = (h: PromptBlock) => document.getElementById(`block-${h.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const settingsOpen = c.settings.filter((s) => settingCodes.includes(s.code));
+  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const toggleGroup = (name: string) =>
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
@@ -97,7 +145,7 @@ export default function ChatbotConsiderationsPage() {
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-foreground">Consideraciones del chatbot</h1>
           <p className="text-sm text-muted-foreground">
-            Todo lo que sabe el bot, en el orden en que lo lee. Haz clic en un párrafo para editarlo; lo que tiene candado lo usa el sistema. Al guardar, el bot lo usa en menos de un minuto.
+            Todo lo que sabe el bot, agrupado por tema. Haz clic en un párrafo para editarlo. Si un párrafo nombra un dato (sedes, números), lo cambias debajo. Al guardar, el bot lo usa en menos de un minuto.
           </p>
         </div>
         <Button onClick={() => setAdding({ title: query.trim(), headingKey: null })}>
@@ -111,9 +159,6 @@ export default function ChatbotConsiderationsPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar: recojo, garantía, Gamarra, boleta…" className="pl-9" aria-label="Buscar en lo que sabe el bot" />
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={onlyEditable} onCheckedChange={(v) => setOnlyEditable(v === true)} /> Solo lo editable
-          </label>
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={onlyStore} onCheckedChange={(v) => setOnlyStore(v === true)} /> Solo lo de la tienda
           </label>
@@ -136,29 +181,50 @@ export default function ChatbotConsiderationsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
         <Card className="hidden min-h-0 overflow-y-auto md:block">
           <CardContent className="!p-2">
-            <p className="px-2 py-1 text-xs text-muted-foreground">Secciones</p>
-            {headings
-              .filter((h) => h.headingLevel === 2)
-              .map((h) => {
-                const n = counts.get(h.headingKey) ?? 0;
-                return (
+            <p className="px-2 py-1 text-xs text-muted-foreground">Temas</p>
+            {groups.map((g) => {
+              const n = groupCounts.get(g.group) ?? 0;
+              const open = openGroups.has(g.group) || (filtering && n > 0);
+              const dim = n === 0;
+              return (
+                <div key={g.group} className={cn(dim && "opacity-40")}>
                   <button
-                    key={h.id}
-                    onClick={() => goTo(h)}
-                    disabled={filtering && n === 0}
-                    className={cn(
-                      "flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-muted",
-                      filtering && n === 0 && "opacity-40"
-                    )}
+                    onClick={() => {
+                      toggleGroup(g.group);
+                      scrollTo(groupId(g.group));
+                    }}
+                    disabled={dim}
+                    aria-expanded={open}
+                    className="flex w-full items-center gap-1.5 rounded px-2 py-1.5 text-left text-sm font-medium hover:bg-muted"
                   >
-                    <span className="truncate">{headingText(h)}</span>
+                    <ChevronRight className={cn("h-3.5 w-3.5 shrink-0 transition-transform", open && "rotate-90")} />
+                    <span className="flex-1 truncate">{g.group}</span>
                     {filtering && n > 0 && <span className="text-xs text-primary">{n}</span>}
                   </button>
-                );
-              })}
+                  {open &&
+                    g.sections.map((s) => {
+                      const k = counts.get(s.heading.headingKey) ?? 0;
+                      return (
+                        <button
+                          key={s.heading.id}
+                          onClick={() => scrollTo(`block-${s.heading.id}`)}
+                          disabled={k === 0}
+                          className={cn(
+                            "flex w-full items-center justify-between gap-2 rounded py-1 pl-7 pr-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
+                            k === 0 && "opacity-40"
+                          )}
+                        >
+                          <span className="truncate">{sectionName(s.heading)}</span>
+                          {filtering && k > 0 && <span className="text-xs text-primary">{k}</span>}
+                        </button>
+                      );
+                    })}
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
 
@@ -173,21 +239,33 @@ export default function ChatbotConsiderationsPage() {
               </CardContent>
             </Card>
           ) : (
-            rows.map((r) =>
-              r.kind === "heading" ? (
-                <div
-                  key={`h-${r.block.id}`}
-                  id={`block-${r.block.id}`}
-                  className={cn("flex scroll-mt-2 items-center justify-between gap-2 pt-4", (r.block.headingLevel ?? 1) <= 2 ? "border-b pb-1" : "pt-2")}
-                >
-                  <h2 className={cn("font-semibold text-foreground", (r.block.headingLevel ?? 1) <= 2 ? "text-lg" : "text-base")}>{headingText(r.block)}</h2>
-                  {(r.block.headingLevel ?? 0) >= 2 && (
-                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setAdding({ title: query.trim(), headingKey: r.block.headingKey })}>
+            rows.map((r) => {
+              if (r.kind === "group") {
+                return (
+                  <h2 key={`g-${r.name}`} id={groupId(r.name)} className="scroll-mt-2 pt-6 text-xs font-semibold uppercase tracking-wide text-primary first:pt-0">
+                    {r.name}
+                  </h2>
+                );
+              }
+              if (r.kind === "section" || r.kind === "heading") {
+                const section = r.kind === "section";
+                return (
+                  <div
+                    key={`h-${r.block.id}`}
+                    id={`block-${r.block.id}`}
+                    className={cn("flex scroll-mt-2 items-center justify-between gap-2", section ? "border-b pb-1 pt-2" : "pt-2")}
+                  >
+                    <div className="min-w-0">
+                      <h3 className={cn("font-semibold text-foreground", section ? "text-lg" : "text-base")}>{section ? sectionName(r.block) : headingText(r.block)}</h3>
+                      {section && hasFriendlyName(r.block) && <p className="truncate text-xs text-muted-foreground">En el prompt: {headingText(r.block)}</p>}
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={() => setAdding({ title: query.trim(), headingKey: r.block.headingKey })}>
                       <Plus className="mr-1 h-3.5 w-3.5" /> Agregar aquí
                     </Button>
-                  )}
-                </div>
-              ) : (
+                  </div>
+                );
+              }
+              return (
                 <PromptBlockItem
                   key={`p-${r.block.id}-${r.block.updatedAt}`}
                   block={r.block}
@@ -199,17 +277,19 @@ export default function ChatbotConsiderationsPage() {
                   onRestore={() => c.restore(r.block)}
                   onDelete={() => c.remove(r.block)}
                   onHistory={() => setHistory(r.block)}
-                  onSettings={setSettingCodes}
+                  settingUsage={settingUsage}
+                  onSaveSetting={c.saveSetting}
+                  onSettingHistory={setSettingHistory}
                 />
-              )
-            )
+              );
+            })
           )}
         </div>
       </div>
 
       <AddPromptBlockDialog
         open={!!adding}
-        headings={headings}
+        groups={addGroups}
         initialTitle={adding?.title ?? ""}
         initialHeadingKey={adding?.headingKey ?? null}
         saving={c.saving}
@@ -217,7 +297,6 @@ export default function ChatbotConsiderationsPage() {
         onCreate={c.createBlock}
       />
       <PromptBlockHistoryDialog block={history} saving={c.saving} onClose={() => setHistory(null)} onUse={(b, content) => c.saveBlock(b, content)} />
-      <PromptSettingsDialog settings={settingsOpen} saving={c.saving} onClose={() => setSettingCodes([])} onSave={c.saveSetting} onHistory={setSettingHistory} />
       <PromptSettingHistoryDialog
         setting={settingHistory}
         onClose={() => setSettingHistory(null)}
