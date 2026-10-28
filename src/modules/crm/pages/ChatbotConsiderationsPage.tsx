@@ -34,15 +34,14 @@ const groupId = (name: string) => `group-${name.replace(/\W+/g, "-")}`;
  * editan como un bloc de notas, con las secciones agrupadas por tema y con
  * nombres claros (chatbotSections.ts; el bot las sigue leyendo en su orden).
  * Arriba, un buscador; a la izquierda, el índice por grupos. Lo técnico va con
- * candado y queda oculto salvo que se pida verlo (los que nombran un dato, como
- * las sedes, se ven igual: el dato se cambia ahí). Si lo buscado no está, se agrega ahí mismo. Todo lo guardado queda
- * vivo en menos de un minuto. Solo admin (lo exigen también los SP).
+ * candado y no se muestra (salvo los que nombran un dato, como las sedes: el
+ * dato se cambia ahí). Si lo buscado no está, se agrega ahí mismo. Todo lo
+ * guardado queda vivo en menos de un minuto. Solo admin (lo exigen también los SP).
  */
 export default function ChatbotConsiderationsPage() {
   const { isAdmin } = useAuth();
   const c = useChatbotConsiderations(isAdmin);
   const [query, setQuery] = useState("");
-  const [showLocked, setShowLocked] = useState(false);
   const [onlyStore, setOnlyStore] = useState(false);
   const [tag, setTag] = useState(ALL);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
@@ -68,16 +67,14 @@ export default function ChatbotConsiderationsPage() {
   }, [c.blocks]);
   const allTags = useMemo(() => [...new Set(c.blocks.flatMap((b) => b.tags))].sort(), [c.blocks]);
   const filtering = !!query.trim() || onlyStore || tag !== ALL;
-  /** Sin lo bloqueado, como con filtros: solo las secciones y subtítulos que tienen algo. */
-  const compact = filtering || !showLocked;
 
-  /** Los párrafos que pasan los filtros, por grupo y sección (con filtros, solo los que tienen algo). */
+  /** Los párrafos que se ven, por grupo y sección: solo las secciones y subtítulos que tienen algo editable. */
   const { rows, counts, groupCounts, total } = useMemo(() => {
     const hasData = (b: PromptBlock) => settingCodesIn(b.content).some((code) => c.settings.some((x) => x.code === code));
     const visible = (b: PromptBlock) =>
       b.kind === "paragraph" &&
       matchesQuery(b, query) &&
-      (showLocked || !b.locked || isIntroLine(b) || hasData(b)) &&
+      (!b.locked || isIntroLine(b) || hasData(b)) &&
       (!onlyStore || b.origin === "store") &&
       (tag === ALL || b.tags.includes(tag));
     const out: Row[] = [];
@@ -96,19 +93,16 @@ export default function ChatbotConsiderationsPage() {
         for (const b of s.items) {
           if (b.kind === "heading") {
             intro = null;
-            if (!compact) sectionRows.push({ kind: "heading", block: b });
-            else pending = [...pending.filter((h) => (h.headingLevel ?? 1) < (b.headingLevel ?? 1)), b];
+            pending = [...pending.filter((h) => (h.headingLevel ?? 1) < (b.headingLevel ?? 1)), b];
             continue;
           }
           if (!visible(b)) continue;
-          if (!showLocked && isIntroLine(b)) {
+          if (isIntroLine(b)) {
             intro = b;
             continue;
           }
-          if (compact) {
-            for (const h of pending) sectionRows.push({ kind: "heading", block: h });
-            pending = [];
-          }
+          for (const h of pending) sectionRows.push({ kind: "heading", block: h });
+          pending = [];
           if (intro) {
             sectionRows.push({ kind: "paragraph", block: intro });
             intro = null;
@@ -118,14 +112,14 @@ export default function ChatbotConsiderationsPage() {
         }
         counts.set(s.heading.headingKey, n);
         inGroup += n;
-        if (!compact || n > 0) groupRows.push({ kind: "section", block: s.heading }, ...sectionRows);
+        if (n > 0) groupRows.push({ kind: "section", block: s.heading }, ...sectionRows);
       }
       groupCounts.set(g.group, inGroup);
       total += inGroup;
       if (groupRows.length) out.push({ kind: "group", name: g.group }, ...groupRows);
     }
     return { rows: out, counts, groupCounts, total };
-  }, [groups, c.settings, query, showLocked, onlyStore, tag, compact]);
+  }, [groups, c.settings, query, onlyStore, tag]);
 
   if (!isAdmin) {
     return (
@@ -151,7 +145,7 @@ export default function ChatbotConsiderationsPage() {
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-foreground">Consideraciones del chatbot</h1>
           <p className="text-sm text-muted-foreground">
-            Todo lo que sabe el bot, agrupado por tema. Haz clic en un párrafo para editarlo. Lo que usa el sistema está oculto (márcalo en «Mostrar lo bloqueado» para leerlo); si nombra un dato (sedes, números), se ve igual y lo cambias debajo. Al guardar, el bot lo usa en menos de un minuto.
+            Todo lo que sabe el bot, agrupado por tema. Haz clic en un párrafo para editarlo. Si un párrafo nombra un dato (sedes, números), lo cambias debajo. Al guardar, el bot lo usa en menos de un minuto.
           </p>
         </div>
         <Button onClick={() => setAdding({ title: query.trim(), headingKey: null })}>
@@ -165,9 +159,6 @@ export default function ChatbotConsiderationsPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar: recojo, garantía, Gamarra, boleta…" className="pl-9" aria-label="Buscar en lo que sabe el bot" />
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={showLocked} onCheckedChange={(v) => setShowLocked(v === true)} /> Mostrar lo bloqueado
-          </label>
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={onlyStore} onCheckedChange={(v) => setOnlyStore(v === true)} /> Solo lo de la tienda
           </label>
@@ -197,7 +188,7 @@ export default function ChatbotConsiderationsPage() {
             {groups.map((g) => {
               const n = groupCounts.get(g.group) ?? 0;
               const open = openGroups.has(g.group) || (filtering && n > 0);
-              const dim = compact && n === 0;
+              const dim = n === 0;
               return (
                 <div key={g.group} className={cn(dim && "opacity-40")}>
                   <button
@@ -220,10 +211,10 @@ export default function ChatbotConsiderationsPage() {
                         <button
                           key={s.heading.id}
                           onClick={() => scrollTo(`block-${s.heading.id}`)}
-                          disabled={compact && k === 0}
+                          disabled={k === 0}
                           className={cn(
                             "flex w-full items-center justify-between gap-2 rounded py-1 pl-7 pr-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground",
-                            compact && k === 0 && "opacity-40"
+                            k === 0 && "opacity-40"
                           )}
                         >
                           <span className="truncate">{sectionName(s.heading)}</span>
