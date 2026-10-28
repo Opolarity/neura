@@ -10,16 +10,22 @@ import { headingText } from "./chatbotConsiderations.adapter";
  * La clave es la de la sección en chatbot_prompt_blocks (`h:` + el título en
  * minúsculas, sin tildes). Una sección que el equipo agregue al prompt y no
  * esté acá aparece en "Otros", con su título del prompt.
+ *
+ * Un subtítulo `### ` que está en el mapa se muestra como sección propia, en
+ * su tema (así "Estilo", que en el prompt vive dentro de REGLAS TÉCNICAS, va
+ * con "cómo habla"). Lo que sigue a su próximo `### ` vuelve a su sección.
  */
 export const SECTION_GROUPS: ReadonlyArray<{ name: string; sections: ReadonlyArray<readonly [key: string, name: string]> }> = [
   {
     name: "Quién es y cómo habla",
     sections: [
       ["h:identidad", "Quién es el bot"],
+      ["h:estilo", "Estilo: tono, emojis y largo"],
       ["h:formato-de-respuesta-nunca-violar", "Formato de los mensajes"],
       ["h:saludo-inicial", "Saludo"],
       ["h:cierre", "Cómo termina cada mensaje"],
       ["h:temas-fuera-de-contexto", "Temas que no son de la tienda"],
+      ["h:mensajes-no-soportados", "Audios, stickers y mensajes que no llegan"],
     ],
   },
   {
@@ -29,6 +35,7 @@ export const SECTION_GROUPS: ReadonlyArray<{ name: string; sections: ReadonlyArr
       ["h:tallas-el-corte-y-el-link-nunca-una-recomendacion", "Tallas y guía de tallas"],
       ["h:links-de-categoria", "Links de categorías"],
       ["h:links-que-manda-el-cliente", "Links que manda el cliente"],
+      ["h:imagenes", "Fotos que manda el cliente"],
     ],
   },
   {
@@ -102,6 +109,9 @@ const BY_KEY = new Map(SECTION_GROUPS.flatMap((g) => g.sections.map(([key, name]
 /** El nombre de una sección en la pantalla; si no está en el mapa, su título del prompt. */
 export const sectionName = (heading: PromptBlock): string => BY_KEY.get(heading.headingKey)?.name ?? headingText(heading);
 
+/** ¿Es una sección del mapa? (un `### ` del mapa se muestra como sección, no como subtítulo). */
+export const isMappedSection = (heading: PromptBlock): boolean => BY_KEY.has(heading.headingKey);
+
 /** ¿El nombre de la pantalla es distinto del título del prompt? (entonces el original va en chico). */
 export const hasFriendlyName = (heading: PromptBlock): boolean => BY_KEY.has(heading.headingKey) && sectionName(heading) !== headingText(heading);
 
@@ -120,12 +130,22 @@ export interface PromptSection {
  */
 export const groupSections = (blocks: PromptBlock[]): { group: string; sections: PromptSection[] }[] => {
   const sections: PromptSection[] = [];
+  let parent: PromptSection | undefined;
+  let current: PromptSection | undefined;
   for (const b of blocks) {
-    if (b.kind === "heading" && (b.headingLevel ?? 1) <= 2) {
-      if ((b.headingLevel ?? 1) === 2) sections.push({ heading: b, group: BY_KEY.get(b.headingKey)?.group ?? OTHERS_GROUP, items: [] });
+    const level = b.kind === "heading" ? (b.headingLevel ?? 1) : null;
+    if (level !== null && level <= 2) {
+      parent = current = level === 2 ? { heading: b, group: BY_KEY.get(b.headingKey)?.group ?? OTHERS_GROUP, items: [] } : undefined;
+      if (current) sections.push(current);
       continue;
     }
-    sections.at(-1)?.items.push(b);
+    if (level === 3 && BY_KEY.has(b.headingKey)) {
+      current = { heading: b, group: BY_KEY.get(b.headingKey)!.group, items: [] };
+      sections.push(current);
+      continue;
+    }
+    if (level === 3 && current !== parent) current = parent;
+    current?.items.push(b);
   }
   const order = (s: PromptSection) => {
     const g = SECTION_GROUPS.findIndex((x) => x.name === s.group);

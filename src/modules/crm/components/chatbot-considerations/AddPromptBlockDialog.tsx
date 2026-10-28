@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { headingText } from "../../adapters/chatbotConsiderations.adapter";
-import { sectionName } from "../../adapters/chatbotSections";
+import { isMappedSection, sectionName } from "../../adapters/chatbotSections";
 import type { PromptBlock, PromptBlockCreateInput } from "../../types/chatbotConsiderations.types";
 
 interface AddPromptBlockDialogProps {
@@ -70,7 +70,7 @@ export default function AddPromptBlockDialog({ open, groups, initialTitle, initi
                     <SelectLabel>{g.group}</SelectLabel>
                     {g.headings.map((h) => (
                       <SelectItem key={h.headingKey} value={h.headingKey}>
-                        {h.headingLevel === 3 ? `   ↳ ${headingText(h)}` : sectionName(h)}
+                        {h.headingLevel === 3 && !isMappedSection(h) ? `   ↳ ${headingText(h)}` : sectionName(h)}
                       </SelectItem>
                     ))}
                   </SelectGroup>
