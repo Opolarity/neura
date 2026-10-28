@@ -39,10 +39,14 @@ export const isEditedByStore = (b: PromptBlock): boolean =>
 /**
  * ¿Es la frase que abre una lista? ("Reglas duras:"). El bot la deja con
  * candado (esEntrada, neura-chatbot) y acá se muestra como texto bajo el
- * título, sin recuadro ni botones.
+ * título, sin recuadro ni botones. Lo mismo la frase de una sola oración que
+ * dice cuándo aplica la sección ("Cuando el cliente pregunta por…").
  */
-export const isIntroLine = (b: PromptBlock): boolean =>
-  b.origin === "system" && b.locked && !b.content.includes("\n") && /:\**\s*$/.test(b.content.trim());
+export const isIntroLine = (b: PromptBlock): boolean => {
+  const t = b.content.trim();
+  if (b.origin !== "system" || !b.locked || b.content.includes("\n")) return false;
+  return /:\**\s*$/.test(t) || (/^Cuando el cliente\b.*\.["”»*]*$/.test(t) && !/\.\s/.test(t));
+};
 
 /** El título de una sección sin los # del prompt. */
 export const headingText = (b: PromptBlock): string => b.content.replace(/^#+\s*/, "");
