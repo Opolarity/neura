@@ -1,4 +1,4 @@
-import { Layers, Pencil, Plus, Trash2 } from "lucide-react";
+import { Layers, Pencil, Copy, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,6 +31,8 @@ interface ExplosionMaterialsEditorProps {
   search: string;
   onSearchChange: (value: string) => void;
   onAddLine: () => void;
+  /** Abre «Copiar de otra receta» (2026-10-19); sin él no se muestra el botón. */
+  onCopyFromRecipe?: () => void;
   onRemoveLine: (index: number) => void;
   onSelectMaterial: (index: number, material: MaterialOption) => void;
   onChangeQuantity: (index: number, value: string) => void;
@@ -69,6 +71,7 @@ export const ExplosionMaterialsEditor = ({
   search,
   onSearchChange,
   onAddLine,
+  onCopyFromRecipe,
   onRemoveLine,
   onSelectMaterial,
   onChangeQuantity,
@@ -98,10 +101,19 @@ export const ExplosionMaterialsEditor = ({
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Materiales por producto</h2>
         {!readOnly && (
-          <Button type="button" variant="outline" onClick={onAddLine} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Añadir material
-          </Button>
+          <div className="flex gap-2">
+            {/* Cargar los materiales de otra receta que lleva casi lo mismo. */}
+            {onCopyFromRecipe && (
+              <Button type="button" variant="outline" onClick={onCopyFromRecipe} className="gap-2">
+                <Copy className="w-4 h-4" />
+                Copiar de otra receta
+              </Button>
+            )}
+            <Button type="button" variant="outline" onClick={onAddLine} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Añadir material
+            </Button>
+          </div>
         )}
       </div>
 

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { DateField } from "@/shared/components/date-range";
 import {
   Select,
   SelectContent,
@@ -170,7 +171,13 @@ export default function AddMovementPage({ movementType }: AddMovementPageProps) 
                   </div>
                   {useCustomDate ? (
                     <>
-                      <Input id="movement_date" type="date" {...register("movement_date")} />
+                      <DateField
+                        id="movement_date"
+                        value={form.watch("movement_date") || null}
+                        onChange={(value) =>
+                          setValue("movement_date", value ?? "", { shouldValidate: true })
+                        }
+                      />
                       {errors.movement_date && (
                         <p className="text-sm text-destructive">{errors.movement_date.message}</p>
                       )}

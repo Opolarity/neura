@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/shared/utils/utils";
@@ -21,7 +21,16 @@ function Calendar({
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
+        caption_label: "inline-flex items-center text-sm font-medium capitalize",
+        // captionLayout="dropdown*": el <select> nativo va invisible encima de
+        // la etiqueta, que es lo que se ve (así lo resuelve el CSS de rdp).
+        caption_dropdowns: "flex items-center gap-1",
+        dropdown_month:
+          "relative inline-flex items-center rounded-md px-1.5 py-0.5 hover:bg-accent",
+        dropdown_year:
+          "relative inline-flex items-center rounded-md px-1.5 py-0.5 hover:bg-accent",
+        dropdown: "absolute inset-0 z-10 w-full cursor-pointer opacity-0",
+        vhidden: "sr-only",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -54,6 +63,9 @@ function Calendar({
       components={{
         IconLeft: ({ ..._props }) => <ChevronLeft className="h-4 w-4" />,
         IconRight: ({ ..._props }) => <ChevronRight className="h-4 w-4" />,
+        IconDropdown: ({ ..._props }) => (
+          <ChevronDown className="ml-1 h-3 w-3 opacity-60" />
+        ),
       }}
       {...props}
     />
