@@ -26,8 +26,16 @@ interface CopyRecipeMaterialsDialogProps {
   currentId: number | null;
   /** Si la receta ya tiene materiales: se elige reemplazarlos o sumar. */
   hasLines: boolean;
-  onCopy: (lines: ExplosionMaterial[], mode: CopyMode) => void;
+  /**
+   * El código de modelo con el que está la receta. Copiar de una del MISMO
+   * código no se permite (2026-10-28): los productos de un modelo ya comparten
+   * receta. El backend lo revalida al guardar.
+   */
+  modelCode: string;
+  onCopy: (lines: ExplosionMaterial[], mode: CopyMode, sourceId: number) => void;
 }
+
+const normalizar = (code: string | null | undefined) => (code ?? "").trim().toLowerCase();
 
 const fmt = (value: number | null) =>
   value === null ? "—" : value.toLocaleString("es-PE", { maximumFractionDigits: 4 });
@@ -43,14 +51,18 @@ export const CopyRecipeMaterialsDialog = ({
   onOpenChange,
   currentId,
   hasLines,
+  modelCode,
   onCopy,
 }: CopyRecipeMaterialsDialogProps) => {
+  const codigoActual = normalizar(modelCode);
+  const mismoModelo = (code: string | null) => codigoActual !== "" && normalizar(code) === codigoActual;
   const [search, setSearch] = useState("");
   const debounced = useDebounce(search, 300);
   const [options, setOptions] = useState<ComboboxOption[]>([]);
   const [selected, setSelected] = useState<ComboboxOption | null>(null);
   const [source, setSource] = useState<ExplosionMaterial[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -64,7 +76,10 @@ export const CopyRecipeMaterialsDialog = ({
             .map((r) => {
               const nombre = r.productTitle ?? r.description ?? `Receta #${r.id}`;
               const label = r.modelCode ? `${nombre} · ${r.modelCode}` : nombre;
-              return { id: r.id, label, title: label };
+              // Se ven, pero no se eligen: así se entiende por qué no están.
+              return mismoModelo(r.modelCode)
+                ? { id: r.id, label, title: label, disabled: true, hint: "Mismo código de modelo" }
+                : { id: r.id, label, title: label };
             }),
         );
       })
@@ -72,14 +87,23 @@ export const CopyRecipeMaterialsDialog = ({
     return () => {
       vigente = false;
     };
-  }, [open, debounced, currentId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mismoModelo depende solo de modelCode
+  }, [open, debounced, currentId, modelCode]);
 
   const elegir = async (option: ComboboxOption) => {
     setSelected(option);
     setSource(null);
+    setError(null);
     try {
       setLoading(true);
       const detalle = await explosionByIdApi(option.id);
+      if (mismoModelo(detalle.modelCode)) {
+        setError(
+          `No se puede copiar: esa receta es del mismo código de modelo (${detalle.modelCode?.trim()}). ` +
+            "Los productos de un mismo modelo ya comparten receta."
+        );
+        return;
+      }
       setSource(detalle.materials);
     } catch (error) {
       toast({ title: "No se pudo leer la receta: " + (error as Error).message, variant: "destructive" });
@@ -89,8 +113,8 @@ export const CopyRecipeMaterialsDialog = ({
   };
 
   const copiar = (mode: CopyMode) => {
-    if (!source || source.length === 0) return;
-    onCopy(source, mode);
+    if (!selected || !source || source.length === 0) return;
+    onCopy(source, mode, selected.id);
     onOpenChange(false);
   };
 
@@ -118,6 +142,12 @@ export const CopyRecipeMaterialsDialog = ({
             fallbackLabel={selected?.label ?? null}
           />
         </div>
+
+        {error && (
+          <p role="alert" className="rounded-md border border-destructive bg-destructive-soft px-3 py-2 text-sm text-destructive-soft-foreground">
+            {error}
+          </p>
+        )}
 
         {loading && (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -13,6 +13,7 @@ import { ProductRecipesFilterBar } from "../components/explosions/ProductRecipes
 import { ProductRecipesFilterModal } from "../components/explosions/ProductRecipesFilterModal";
 import { ProductRecipesTable } from "../components/explosions/ProductRecipesTable";
 import ExplosionsHeader from "../components/explosions/ExplosionsHeader";
+import { AssignRecipeDialog } from "../components/explosions/AssignRecipeDialog";
 import { ItemProductDialog } from "../components/production-orders/ItemProductDialog";
 import { ProductRecipe } from "../types/productRecipes.types";
 import { categoriesListApi } from "@/modules/products/services/Categories.service";
@@ -29,6 +30,7 @@ const ExplosionsList = () => {
   const navigate = useNavigate();
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
   const [categories, setCategories] = useState<SimpleCategory[]>([]);
 
   const {
@@ -42,6 +44,7 @@ const ExplosionsList = () => {
     handleApplyFilters,
     handlePageChange,
     handlePageSizeChange,
+    reload,
   } = useProductRecipes();
 
   // Las categorías salen del módulo de productos: son las mismas que etiquetan
@@ -57,7 +60,10 @@ const ExplosionsList = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <ExplosionsHeader onCreate={() => setProductDialogOpen(true)} />
+      <ExplosionsHeader
+        onCreate={() => setProductDialogOpen(true)}
+        onAssign={() => setAssignOpen(true)}
+      />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="!p-4">
@@ -95,6 +101,18 @@ const ExplosionsList = () => {
         categories={categories}
         counts={counts}
       />
+
+      {/* Asignación masiva: se monta al abrir para que nazca limpia. */}
+      {assignOpen && (
+        <AssignRecipeDialog
+          open
+          onOpenChange={setAssignOpen}
+          onAssigned={() => {
+            setAssignOpen(false);
+            void reload();
+          }}
+        />
+      )}
 
       {/* El producto todavía no existe: se crea como en la orden (o se elige
           uno que ya existe) y se sigue directo a su receta. Se monta al abrir

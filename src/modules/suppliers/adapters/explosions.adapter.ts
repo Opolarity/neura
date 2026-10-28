@@ -1,4 +1,6 @@
 import {
+  AssignedRecipeProduct,
+  AssignRecipeResult,
   Explosion,
   ExplosionDetail,
   ExplosionMaterial,
@@ -104,4 +106,19 @@ export const toExplosionDetail = (row: any): ExplosionDetail => ({
   materials: (row.materials ?? []).map(toExplosionMaterial),
   processes: (row.processes ?? []).map(toExplosionProcess),
   ...toExplosionVariations(row),
+});
+
+const toAssignedRecipeProduct = (row: any): AssignedRecipeProduct => ({
+  productId: Number(row.product_id),
+  productTitle: toTextOrNull(row.product_title),
+  explosionId: toNumberOrNull(row.explosion_id),
+  ...(row.reason ? { reason: row.reason } : {}),
+});
+
+/** La respuesta de sp_assign_explosion_to_products. */
+export const toAssignRecipeResult = (row: any): AssignRecipeResult => ({
+  sourceId: Number(row?.source_id),
+  modelCode: String(row?.model_code ?? ""),
+  created: (row?.created ?? []).map(toAssignedRecipeProduct),
+  skipped: (row?.skipped ?? []).map(toAssignedRecipeProduct),
 });

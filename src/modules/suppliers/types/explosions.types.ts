@@ -195,4 +195,27 @@ export interface SaveExplosionData {
     /** Vacío = proceso completo. */
     operations: Array<{ process_id: number }>;
   }>;
+  /**
+   * Las recetas de las que se copiaron materiales. El backend rechaza copiar
+   * de una receta del mismo código de modelo (lo revalida con el código con
+   * el que se guarda).
+   */
+  copied_from_ids?: number[];
+}
+
+/** Producto que recibió (o ya tenía) el modelo en una asignación masiva. */
+export interface AssignedRecipeProduct {
+  productId: number;
+  productTitle: string | null;
+  explosionId: number | null;
+  /** Solo en los omitidos: SOURCE = es el producto de origen; ALREADY_ASSIGNED = ya tenía este modelo. */
+  reason?: "SOURCE" | "ALREADY_ASSIGNED";
+}
+
+/** Resultado de asignar la receta de un código de modelo a varios productos. */
+export interface AssignRecipeResult {
+  sourceId: number;
+  modelCode: string;
+  created: AssignedRecipeProduct[];
+  skipped: AssignedRecipeProduct[];
 }
