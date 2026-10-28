@@ -145,6 +145,8 @@ export const DEFAULT_FORM_DATA: PriceRuleFormData = {
   code: "",
   landing_url: "",
   cart_message: "",
+  cart_message_pending: "",
+  cart_message_applied: "",
   rule_type: "automatic",
   priority: 100,
   is_stackable: true,
@@ -221,6 +223,8 @@ export function adaptPriceRuleToForm(rule: PriceRule): PriceRuleFormData {
     code: rule.code || "",
     landing_url: rule.landing_url || "",
     cart_message: rule.cart_message || "",
+    cart_message_pending: rule.cart_message_pending || "",
+    cart_message_applied: rule.cart_message_applied || "",
     rule_type: rule.rule_type,
     priority: rule.priority,
     is_stackable: rule.is_stackable,
@@ -248,6 +252,9 @@ export function adaptFormToPayload(formData: PriceRuleFormData): PriceRuleFormDa
     // S-186: el mensaje del carrito es solo de cupones. Si la regla pasa a
     // automática, se borra ("" → NULL en el backend) en vez de quedar oculto.
     cart_message: formData.rule_type === "coupon" ? formData.cart_message : "",
+    // S-289: y a la inversa, los mensajes por estado son solo de automáticas.
+    cart_message_pending: formData.rule_type === "automatic" ? formData.cart_message_pending : "",
+    cart_message_applied: formData.rule_type === "automatic" ? formData.cart_message_applied : "",
   };
 }
 
