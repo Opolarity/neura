@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, X } from "lucide-react";
+import { es } from "date-fns/locale";
 import { cn } from "@/shared/utils/utils";
 import {
   parseLocalDate,
@@ -21,17 +22,28 @@ export interface DateFieldProps {
   placeholder?: string;
   /** Tope inferior "YYYY-MM-DD". */
   minDate?: string;
-  /** Tope superior "YYYY-MM-DD". Por defecto hoy en Lima. */
-  maxDate?: string;
+  /**
+   * Tope superior "YYYY-MM-DD". Por defecto hoy en Lima, porque este campo
+   * nació para filtrar sobre lo que ya ocurrió.
+   *
+   * `null` = sin tope, para los campos que miran al futuro: una entrega se
+   * compromete para dentro de tres semanas. Hace falta decirlo así y no
+   * omitir la prop, porque el valor por defecto también se aplica cuando se
+   * pasa `undefined`.
+   */
+  maxDate?: string | null;
   disabled?: boolean;
   /** Muestra una X para volver a "sin fecha". */
   showClear?: boolean;
-  className?: string;
   /**
-   * Se pasa al boton que abre el calendario, para poder asociarle un <label>.
-   * Lo agrega el port del modulo de Produccion, que lo usa en sus formularios.
+   * Id del disparador, para que un `<Label htmlFor>` apunte a algo. Sin esto,
+   * el rótulo de un formulario queda huérfano: no enfoca al pulsarlo y el
+   * lector de pantalla no lo asocia.
    */
   id?: string;
+  className?: string;
+  /** Clases del botón disparador, p. ej. la versión compacta `h-8 text-xs`. */
+  triggerClassName?: string;
 }
 
 /**
@@ -46,8 +58,9 @@ const DateField = ({
   maxDate = getTodayDate(),
   disabled = false,
   showClear = false,
-  className,
   id,
+  className,
+  triggerClassName,
 }: DateFieldProps) => {
   const selected = value ? parseLocalDate(value) : undefined;
 
@@ -56,6 +69,19 @@ const DateField = ({
     ...(minDate ? [{ before: parseLocalDate(minDate) }] : []),
     ...(maxDate ? [{ after: parseLocalDate(maxDate) }] : []),
   ];
+
+  // Los desplegables de mes/año de rdp solo aparecen con ambos extremos, así
+  // que sin tope se acota a una ventana razonable alrededor del año en Lima
+  // (ampliada si el valor ya guardado cae fuera, para poder volver a él).
+  const currentYear = Number(getTodayDate().slice(0, 4));
+  const fallbackFrom = `${currentYear - 10}-01-01`;
+  const fallbackTo = `${currentYear + 5}-12-31`;
+  const fromDate = parseLocalDate(
+    minDate ?? (value && value < fallbackFrom ? value : fallbackFrom)
+  );
+  const toDate = parseLocalDate(
+    maxDate ?? (value && value > fallbackTo ? value : fallbackTo)
+  );
 
   return (
     <div className={cn("relative", className)}>
@@ -69,7 +95,8 @@ const DateField = ({
             className={cn(
               "w-full justify-start text-left font-normal",
               showClear && value && "pr-9",
-              !value && "text-muted-foreground"
+              !value && "text-muted-foreground",
+              triggerClassName
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
@@ -79,7 +106,14 @@ const DateField = ({
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
+            locale={es}
+            captionLayout="dropdown-buttons"
+            fromDate={fromDate}
+            toDate={toDate}
             selected={selected}
+            // Sin valor, abre en el tope inferior: el "Hasta" de un rango
+            // arranca en el mes del "Desde" en vez del mes actual.
+            defaultMonth={selected ?? (minDate ? fromDate : undefined)}
             onSelect={(date) => onChange(date ? toDateInputValue(date) : null)}
             disabled={disabledDays}
             initialFocus

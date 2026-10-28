@@ -21,6 +21,7 @@ import { materialByIdApi } from "../services/materials.service";
 import { Material } from "../types/materials.types";
 import { useExplosionDetail } from "../hooks/useExplosionDetail";
 import { ExplosionProcessesDialog } from "../components/explosions/ExplosionProcessesDialog";
+import { CopyRecipeMaterialsDialog } from "../components/explosions/CopyRecipeMaterialsDialog";
 import { ExplosionMaterialsEditor } from "../components/explosions/ExplosionMaterialsEditor";
 import { AddMaterialModal } from "../components/materials/AddMaterialModal";
 import { ItemProductDialog } from "../components/production-orders/ItemProductDialog";
@@ -56,6 +57,8 @@ const ExplosionDetail = () => {
    * En el alta no hay nada que leer todavía, así que nace en edición.
    */
   const [editing, setEditing] = useState(false);
+  /** «Copiar de otra receta»: cargar los materiales de otra receta parecida. */
+  const [copyOpen, setCopyOpen] = useState(false);
   /** La ruta se edita en su propio modal, no en la ficha. */
   const [processesDialogOpen, setProcessesDialogOpen] = useState(false);
 
@@ -91,6 +94,7 @@ const ExplosionDetail = () => {
     creatingOperation,
     addLine,
     removeLine,
+    copyLines,
     setLineMaterial,
     creatingMaterialFor,
     setCreatingMaterialFor,
@@ -420,6 +424,7 @@ const ExplosionDetail = () => {
             search={materialSearch}
             onSearchChange={setMaterialSearch}
             onAddLine={addLine}
+            onCopyFromRecipe={() => setCopyOpen(true)}
             onRemoveLine={removeLine}
             onSelectMaterial={setLineMaterial}
             onCreateMaterial={setCreatingMaterialFor}
@@ -435,6 +440,16 @@ const ExplosionDetail = () => {
 
       {/* Se monta al abrir, como los demás: los buscadores de dentro nacen
           limpios. */}
+      {copyOpen && (
+        <CopyRecipeMaterialsDialog
+          open
+          onOpenChange={setCopyOpen}
+          currentId={isNew ? null : Number(id)}
+          hasLines={lines.some((line) => line.materialId)}
+          onCopy={copyLines}
+        />
+      )}
+
       {processesDialogOpen && (
         <ExplosionProcessesDialog
           open

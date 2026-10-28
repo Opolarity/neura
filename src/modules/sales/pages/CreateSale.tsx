@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/shared/components/date-range";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -1071,12 +1072,12 @@ const CreateSale = () => {
                     />
                   </div>
                   <div>
-                    <Label>Fecha</Label>
-                    <Input
-                      type="date"
-                      value={formData.saleDate}
-                      onChange={(e) =>
-                        handleInputChange("saleDate", e.target.value)
+                    <Label htmlFor="sale-date">Fecha</Label>
+                    <DateField
+                      id="sale-date"
+                      value={formData.saleDate || null}
+                      onChange={(value) =>
+                        handleInputChange("saleDate", value ?? "")
                       }
                     />
                   </div>

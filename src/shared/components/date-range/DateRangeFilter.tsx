@@ -24,8 +24,12 @@ export interface DateRangeFilterProps extends DateRangeValue {
   maxRangeDays?: number;
   /** Tope inferior duro "YYYY-MM-DD". */
   minDate?: string;
-  /** Tope superior "YYYY-MM-DD". Por defecto hoy en Lima. */
-  maxDate?: string;
+  /**
+   * Tope superior "YYYY-MM-DD". Por defecto hoy en Lima. `null` = sin tope,
+   * para los rangos que miran al futuro (entregas comprometidas), igual que
+   * en DateField.
+   */
+  maxDate?: string | null;
   /** "grid" = dos columnas (modales) · "inline" = fila compacta (barras de filtros). */
   layout?: "grid" | "inline";
   disabled?: boolean;

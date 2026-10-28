@@ -3,6 +3,7 @@ import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DateField } from '@/shared/components/date-range';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -579,11 +580,10 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                 <Label htmlFor="createdAt" className="text-sm text-muted-foreground mb-1 block">
                   Fecha de creación
                 </Label>
-                <Input
+                <DateField
                   id="createdAt"
-                  type="date"
-                  value={createdAt}
-                  onChange={(e) => setCreatedAt(e.target.value)}
+                  value={createdAt || null}
+                  onChange={(value) => setCreatedAt(value ?? "")}
                   disabled={viewOnly}
                   className="w-full"
                 />

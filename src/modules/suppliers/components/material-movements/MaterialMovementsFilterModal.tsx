@@ -7,8 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DateRangeFilter } from "@/shared/components/date-range";
 import {
   Select,
   SelectContent,
@@ -191,29 +191,15 @@ const MaterialMovementsFilterModal = ({
 
           {/* Días civiles de Lima: viajan como "YYYY-MM-DD" y el SP los
               resuelve con AT TIME ZONE. No se convierten aquí. */}
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="start-date">Desde</Label>
-            <Input
-              id="start-date"
-              type="date"
-              value={draft.start_date ?? ""}
-              onChange={(e) =>
-                setDraft((p) => ({ ...p, start_date: e.target.value || null }))
-              }
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="end-date">Hasta</Label>
-            <Input
-              id="end-date"
-              type="date"
-              value={draft.end_date ?? ""}
-              onChange={(e) =>
-                setDraft((p) => ({ ...p, end_date: e.target.value || null }))
-              }
-            />
-          </div>
+          <DateRangeFilter
+            startLabel="Desde"
+            endLabel="Hasta"
+            startDate={draft.start_date ?? null}
+            endDate={draft.end_date ?? null}
+            onChange={({ startDate, endDate }) =>
+              setDraft((p) => ({ ...p, start_date: startDate, end_date: endDate }))
+            }
+          />
         </div>
 
         <DialogFooter>

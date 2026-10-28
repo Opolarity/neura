@@ -4,6 +4,7 @@ import { formatCurrency } from "@/shared/utils/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DateField } from "@/shared/components/date-range";
 import {
   Dialog,
   DialogContent,
@@ -277,11 +278,12 @@ export const AddQuotationServiceDialog = ({
               porque cada servicio se promete para un día distinto. */}
           <div className="space-y-2">
             <Label htmlFor="line-promised-date">Fecha pactada</Label>
-            <Input
+            {/* maxDate null: lo pactado es a futuro. */}
+            <DateField
               id="line-promised-date"
-              type="date"
-              value={form.promised_date}
-              onChange={(e) => setField("promised_date", e.target.value)}
+              value={form.promised_date || null}
+              onChange={(value) => setField("promised_date", value ?? "")}
+              maxDate={null}
             />
           </div>
 

@@ -7,8 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DateRangeFilter } from "@/shared/components/date-range";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -260,32 +260,22 @@ export const ProductionPlanFilterModal = ({
                   pregunta en un flujo de producción. */}
               <div className="space-y-2">
                 <Label>Entrega comprometida</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    id="plan-promised-from"
-                    type="date"
-                    aria-label="Entrega desde"
-                    value={localFilters.promised_from ?? ""}
-                    onChange={(event) =>
-                      setLocalFilters({
-                        ...localFilters,
-                        promised_from: event.target.value || null,
-                      })
-                    }
-                  />
-                  <Input
-                    id="plan-promised-to"
-                    type="date"
-                    aria-label="Entrega hasta"
-                    value={localFilters.promised_to ?? ""}
-                    onChange={(event) =>
-                      setLocalFilters({
-                        ...localFilters,
-                        promised_to: event.target.value || null,
-                      })
-                    }
-                  />
-                </div>
+                {/* maxDate null: una entrega se compromete a futuro. */}
+                <DateRangeFilter
+                  startLabel="Entrega desde"
+                  endLabel="Entrega hasta"
+                  startDate={localFilters.promised_from ?? null}
+                  endDate={localFilters.promised_to ?? null}
+                  maxDate={null}
+                  showPresets={false}
+                  onChange={({ startDate, endDate }) =>
+                    setLocalFilters({
+                      ...localFilters,
+                      promised_from: startDate,
+                      promised_to: endDate,
+                    })
+                  }
+                />
                 <p className="text-muted-foreground text-xs">
                   Vacío no acota nada. Con un rango, las órdenes sin fecha de
                   entrega quedan fuera.

@@ -512,6 +512,33 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
   const removeLine = (index: number) =>
     setLines((prev) => prev.filter((_, i) => i !== index));
 
+  /**
+   * Los materiales de otra receta (2026-10-19). Se copian material, variación
+   * y cantidad; sin el id de la línea ni las excepciones por talla (son tallas
+   * del otro producto). «append» suma solo los que todavía no están.
+   */
+  const copyLines = (source: ExplosionMaterial[], mode: "replace" | "append") => {
+    const limpias = source.map((line) => ({ ...line, id: undefined, variations: [] }));
+    const clave = (line: ExplosionMaterial) => `${line.materialId}-${line.materialVariationId ?? ""}`;
+    if (mode === "replace") {
+      setLines(limpias);
+      toast({ title: `${limpias.length} materiales copiados`, variant: "success" });
+      return;
+    }
+    // Las filas vacías (sin material) se quitan: el copiado las llena.
+    const base = lines.filter((line) => line.materialId);
+    const ya = new Set(base.map(clave));
+    const agregadas = limpias.filter((line) => !ya.has(clave(line)));
+    setLines([...base, ...agregadas]);
+    toast({
+      title:
+        agregadas.length === 0
+          ? "Esos materiales ya estaban en la receta"
+          : `${agregadas.length} materiales agregados`,
+      variant: agregadas.length === 0 ? "info" : "success",
+    });
+  };
+
   // Se copian unitCost y measurementUnit del material para poder calcular
   // el total en vivo sin volver a consultar al backend.
   /**
@@ -741,6 +768,7 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
     lines,
     addLine,
     removeLine,
+    copyLines,
     processes,
     processGroups,
     operationCatalog,
