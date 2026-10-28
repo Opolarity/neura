@@ -539,6 +539,7 @@ const ProductionOrderDetail = () => {
                   orderCode={code}
                   reloadKey={reloadKey}
                   showHeading={false}
+                  onRecipeRefreshed={handleLinked}
                 />
               </TabsContent>
 

@@ -99,8 +99,22 @@ export interface MaterialRequirementItem {
   materials: MaterialRequirementItemMaterial[];
 }
 
+/**
+ * Una prenda cuya foto de receta ya no es la de hoy. La orden congela la
+ * receta al armarse; esto es lo que deja verlo y ofrecer traer la vigente.
+ * - `other_recipe`: su producto ya tiene receta propia y la prenda usa otra.
+ * - `changed`: la receta cambió después de armar la orden.
+ */
+export interface MaterialRequirementStaleItem {
+  productionOrderItemId: number;
+  itemName: string;
+  reason: "other_recipe" | "changed";
+}
+
 export interface MaterialRequirement {
   productionOrderId: number;
+  /** Prendas que no siguen su receta actual. Vacío si todo está al día. */
+  staleItems: MaterialRequirementStaleItem[];
   /** Agregado por material: cuánto hay que comprar en total de cada uno. */
   materials: MaterialRequirementRow[];
   /** Agrupado por prenda: lo que pinta el panel. */

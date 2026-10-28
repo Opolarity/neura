@@ -77,6 +77,11 @@ const toItem = (row: any): MaterialRequirementItem => ({
 /** Respuesta de sp_get_production_order_material_requirement → modelo de UI. */
 export const toMaterialRequirement = (row: any): MaterialRequirement => ({
   productionOrderId: row?.production_order_id ?? 0,
+  staleItems: (row?.stale_items ?? []).map((s: any) => ({
+    productionOrderItemId: Number(s?.production_order_item_id ?? 0),
+    itemName: String(s?.item_name ?? ""),
+    reason: s?.reason === "other_recipe" ? "other_recipe" : "changed",
+  })),
   materials: (row?.materials ?? []).map(toRow),
   items: (row?.items ?? []).map(toItem),
   estimatedTotalCost: num(row?.estimated_total_cost),
