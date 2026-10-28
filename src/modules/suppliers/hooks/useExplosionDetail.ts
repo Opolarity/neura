@@ -117,6 +117,11 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
   const [modelCode, setModelCode] = useState("");
   const [lines, setLines] = useState<ExplosionMaterial[]>([]);
   /**
+   * De qué recetas se copiaron materiales. Viajan al guardar para que el
+   * backend rechace la copia si son del mismo código de modelo (2026-10-28).
+   */
+  const [copiedFromIds, setCopiedFromIds] = useState<number[]>([]);
+  /**
    * La ruta del molde, EN ORDEN. La posición manda: al guardar, el backend
    * numera los pasos por la posición en el array.
    */
@@ -517,7 +522,15 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
    * y cantidad; sin el id de la línea ni las excepciones por talla (son tallas
    * del otro producto). «append» suma solo los que todavía no están.
    */
-  const copyLines = (source: ExplosionMaterial[], mode: "replace" | "append") => {
+  const copyLines = (
+    source: ExplosionMaterial[],
+    mode: "replace" | "append",
+    sourceId: number,
+  ) => {
+    // Reemplazar se lleva lo copiado antes; sumar lo acumula.
+    setCopiedFromIds((prev) =>
+      mode === "replace" ? [sourceId] : prev.includes(sourceId) ? prev : [...prev, sourceId],
+    );
     const limpias = source.map((line) => ({ ...line, id: undefined, variations: [] }));
     const clave = (line: ExplosionMaterial) => `${line.materialId}-${line.materialVariationId ?? ""}`;
     if (mode === "replace") {
@@ -729,6 +742,7 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
           process_id: o.processId,
         })),
       })),
+      ...(copiedFromIds.length > 0 ? { copied_from_ids: copiedFromIds } : {}),
     };
 
     try {

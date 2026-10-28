@@ -3,10 +3,12 @@ import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { buildEndpoint } from "@/shared/utils/query";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import {
+  toAssignRecipeResult,
   toExplosion,
   toExplosionDetail,
 } from "../adapters/explosions.adapter";
 import {
+  AssignRecipeResult,
   Explosion,
   ExplosionDetail,
   ExplosionsFilters,
@@ -107,4 +109,21 @@ export const updateExplosionApi = async (
     method: "POST",
     body: payload,
   });
+};
+
+/**
+ * Asignación masiva: copia la receta de un código de modelo (materiales y
+ * operaciones) a cada producto, con el mismo código. Todo o nada: si alguno ya
+ * tiene otra receta, el SP no crea ninguna y su mensaje dice cuáles chocan.
+ */
+export const assignExplosionToProductsApi = async (
+  explosionId: number,
+  productIds: number[]
+): Promise<AssignRecipeResult> => {
+  const data = await invokeFunction("assign-explosion-to-products", {
+    method: "POST",
+    body: { explosion_id: explosionId, product_ids: productIds },
+  });
+
+  return toAssignRecipeResult(data?.data);
 };

@@ -20,6 +20,9 @@ export interface ComboboxOption {
   label: string;
   /** Texto completo para el tooltip, cuando `label` va recortada. */
   title?: string;
+  /** Se ve pero no se puede elegir; `hint` dice por qué. */
+  disabled?: boolean;
+  hint?: string;
 }
 
 interface EntityComboboxProps {
@@ -95,6 +98,7 @@ export const EntityCombobox = ({
                 <CommandItem
                   key={option.id}
                   value={option.label}
+                  disabled={option.disabled}
                   onSelect={() => onSelect(option)}
                 >
                   <Check
@@ -106,6 +110,11 @@ export const EntityCombobox = ({
                   <span className="truncate" title={option.title ?? option.label}>
                     {option.label}
                   </span>
+                  {option.hint && (
+                    <span className="ml-auto shrink-0 pl-2 text-xs text-muted-foreground">
+                      {option.hint}
+                    </span>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>
