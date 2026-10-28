@@ -28,7 +28,8 @@ export const normalize = (s: string): string =>
 export const matchesQuery = (b: PromptBlock, query: string): boolean => {
   const q = normalize(query.trim());
   if (!q) return true;
-  return normalize(`${b.title}\n${b.content}\n${b.tags.join(" ")}`).includes(q);
+  // Sin los símbolos de formato: "Reglas duras" encuentra "**Reglas** duras".
+  return normalize(`${b.title}\n${b.content}\n${b.tags.join(" ")}`.replace(/[*`]/g, "")).includes(q);
 };
 
 /** ¿La tienda cambió el texto que publicó el equipo? */

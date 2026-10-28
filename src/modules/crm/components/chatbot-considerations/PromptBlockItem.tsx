@@ -9,7 +9,9 @@ import { cn } from "@/shared/utils/utils";
 import { isEditedByStore, isIntroLine, renderWithSettings, settingCodesIn, splitChoices } from "../../adapters/chatbotConsiderations.adapter";
 import type { ChatbotPromptSetting } from "../../types/chatbotBehavior.types";
 import type { PromptBlock } from "../../types/chatbotConsiderations.types";
-import Highlight from "./Highlight";
+import { canEditFormatted } from "../../utils/promptMarkdown";
+import PromptMarkdownEditor from "./PromptMarkdownEditor";
+import PromptMarkdownView from "./PromptMarkdownView";
 import SettingChoice from "./SettingChoice";
 import SettingInline from "./SettingInline";
 
@@ -36,6 +38,8 @@ const splitTags = (s: string) => s.split(",").map((t) => t.trim()).filter(Boolea
  * técnico, un clic lo abre para editarlo. Los técnicos llevan candado; si
  * traen versiones según un ajuste (trato, emojis…), se ven todas ahí y la tienda
  * marca la que usa el bot; si nombran un dato (sedes, números…), se cambia debajo.
+ * El texto se ve formateado (sin ** ni `) y se edita con botones de formato,
+ * siempre que ida y vuelta dé el mismo texto (canEditFormatted).
  */
 export default function PromptBlockItem({ block, settings, query, saving, onSave, onToggle, onRestore, onDelete, onHistory, settingUsage, onSaveSetting, onSettingHistory }: PromptBlockItemProps) {
   const [editing, setEditing] = useState(false);
@@ -62,6 +66,7 @@ export default function PromptBlockItem({ block, settings, query, saving, onSave
     setTags(block.tags.join(", "));
     setEditing(true);
   };
+  const formatted = editing && canEditFormatted(block.content);
   const save = async () => {
     const ok = await onSave(text, store ? { title, tags: splitTags(tags) } : undefined);
     if (ok) setEditing(false);
@@ -69,9 +74,7 @@ export default function PromptBlockItem({ block, settings, query, saving, onSave
 
   if (isIntroLine(block)) {
     return (
-      <p className="whitespace-pre-wrap break-words px-1 pt-1 text-sm font-medium leading-relaxed text-foreground">
-        <Highlight text={renderWithSettings(block.content, settings)} query={query} />
-      </p>
+      <PromptMarkdownView text={renderWithSettings(block.content, settings)} query={query} className="px-1 pt-1 font-medium text-foreground" />
     );
   }
 
@@ -122,14 +125,18 @@ export default function PromptBlockItem({ block, settings, query, saving, onSave
       {editing ? (
         <div className="mt-2 space-y-2">
           {store && <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder="Título" />}
-          <Textarea
-            autoFocus
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={Math.min(16, Math.max(3, text.split("\n").length + 1))}
-            maxLength={4000}
-            className="font-mono text-sm"
-          />
+          {formatted ? (
+            <PromptMarkdownEditor initialMarkdown={block.content} disabled={saving} onChange={setText} />
+          ) : (
+            <Textarea
+              autoFocus
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={Math.min(16, Math.max(3, text.split("\n").length + 1))}
+              maxLength={4000}
+              className="font-mono text-sm"
+            />
+          )}
           {store && <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Etiquetas, separadas por coma" />}
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">
@@ -168,9 +175,9 @@ export default function PromptBlockItem({ block, settings, query, saving, onSave
             }
             const text = renderWithSettings(p.text, settings);
             return text.trim() ? (
-              <p key={i} className="whitespace-pre-wrap break-words text-sm leading-relaxed" title="Esta parte la usa el sistema. Para cambiarla, pídela al equipo.">
-                <Highlight text={text} query={query} />
-              </p>
+              <div key={i} title="Esta parte la usa el sistema. Para cambiarla, pídela al equipo.">
+                <PromptMarkdownView text={text} query={query} />
+              </div>
             ) : null;
           })}
           {dataSettings.length > 0 && (
@@ -189,9 +196,9 @@ export default function PromptBlockItem({ block, settings, query, saving, onSave
           )}
         </div>
       ) : (
-        <p onClick={open} className="mt-1 cursor-text whitespace-pre-wrap break-words text-sm leading-relaxed" title="Clic para editar">
-          <Highlight text={block.content} query={query} />
-        </p>
+        <div onClick={open} className="mt-1 cursor-text" title="Clic para editar">
+          <PromptMarkdownView text={block.content} query={query} />
+        </div>
       )}
     </div>
   );
