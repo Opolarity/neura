@@ -1,5 +1,15 @@
 import { useMemo, useState } from "react";
-import { Loader2, Package, ShoppingCart } from "lucide-react";
+import { AlertTriangle, Loader2, Package, RefreshCw, ShoppingCart } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +38,11 @@ interface MaterialRequirementPanelProps {
    * solo el bloque de la izquierda; lo de la derecha de esa fila se queda.
    */
   showHeading?: boolean;
+  /**
+   * Al traer la receta vigente cambia también lo que el detalle muestra de
+   * cada prenda (su receta, su costo), así que se le avisa para recargar.
+   */
+  onRecipeRefreshed?: () => void;
 }
 
 const fmt = (value: number) =>
@@ -63,11 +78,13 @@ export const MaterialRequirementPanel = ({
   orderCode,
   reloadKey = 0,
   showHeading = true,
+  onRecipeRefreshed,
 }: MaterialRequirementPanelProps) => {
-  const { requirement, loading, reload } = useMaterialRequirement(
-    productionOrderId,
-    reloadKey
-  );
+  const { requirement, loading, reload, refreshing, refreshRecipe } =
+    useMaterialRequirement(productionOrderId, reloadKey);
+
+  /** El diálogo que confirma traer la receta vigente. */
+  const [confirmandoReceta, setConfirmandoReceta] = useState(false);
 
   const [comprando, setComprando] = useState(false);
   /**
@@ -92,6 +109,7 @@ export const MaterialRequirementPanel = ({
   });
 
   const materials = requirement?.materials ?? [];
+  const staleItems = requirement?.staleItems ?? [];
 
   /** Cuántos materiales no alcanzan. Es lo que decide si se puede comprar. */
   const faltantes = materials.filter((material) => material.missing > 0).length;
@@ -167,6 +185,50 @@ export const MaterialRequirementPanel = ({
           </div>
         )}
       </div>
+
+      {/* La orden congela la receta de cada prenda al armarse, a propósito:
+          que un material suba mañana no mueve el costo de una orden lanzada.
+          Pero si la receta se CORRIGE, la orden sigue pidiendo lo viejo sin
+          que nada lo diga. Esto lo dice y ofrece traer la vigente. */}
+      {!loading && staleItems.length > 0 && (
+        <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg bg-warning-soft p-3 text-warning-soft-foreground">
+          <div className="flex gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div className="space-y-1 text-sm">
+              <p className="font-medium">
+                {staleItems.length === 1
+                  ? "1 prenda no sigue su receta actual"
+                  : `${staleItems.length} prendas no siguen su receta actual`}
+              </p>
+              <ul className="space-y-0.5 text-xs">
+                {staleItems.map((item) => (
+                  <li key={item.productionOrderItemId}>
+                    {item.itemName}:{" "}
+                    {item.reason === "other_recipe"
+                      ? "su producto tiene otra receta"
+                      : "la receta cambió"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={refreshing}
+            onClick={() => setConfirmandoReceta(true)}
+          >
+            {refreshing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Actualizar con la receta vigente
+          </Button>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-muted-foreground flex items-center justify-center gap-2 py-8">
@@ -327,6 +389,34 @@ export const MaterialRequirementPanel = ({
           }}
         />
       )}
+      <AlertDialog open={confirmandoReceta} onOpenChange={setConfirmandoReceta}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Actualizar con la receta vigente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cada prenda pasa a la receta de su producto si ya tiene una, y se
+              recalculan sus materiales y costos con la receta y los precios de
+              hoy. La ruta de procesos no cambia.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={refreshing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={refreshing}
+              onClick={async (event) => {
+                // El AlertDialog cierra solo al pulsar; se espera al servidor.
+                event.preventDefault();
+                const ok = await refreshRecipe();
+                setConfirmandoReceta(false);
+                if (ok) onRecipeRefreshed?.();
+              }}
+            >
+              {refreshing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Actualizar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
