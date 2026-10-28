@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/shared/utils/utils";
-import { isEditedByStore, renderWithSettings, settingCodesIn, splitChoices } from "../../adapters/chatbotConsiderations.adapter";
+import { isEditedByStore, isIntroLine, renderWithSettings, settingCodesIn, splitChoices } from "../../adapters/chatbotConsiderations.adapter";
 import type { ChatbotPromptSetting } from "../../types/chatbotBehavior.types";
 import type { PromptBlock } from "../../types/chatbotConsiderations.types";
 import Highlight from "./Highlight";
@@ -66,6 +66,14 @@ export default function PromptBlockItem({ block, settings, query, saving, onSave
     const ok = await onSave(text, store ? { title, tags: splitTags(tags) } : undefined);
     if (ok) setEditing(false);
   };
+
+  if (isIntroLine(block)) {
+    return (
+      <p className="whitespace-pre-wrap break-words px-1 pt-1 text-sm font-medium leading-relaxed text-foreground">
+        <Highlight text={renderWithSettings(block.content, settings)} query={query} />
+      </p>
+    );
+  }
 
   return (
     <div

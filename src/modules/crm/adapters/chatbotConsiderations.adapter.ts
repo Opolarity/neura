@@ -35,6 +35,14 @@ export const matchesQuery = (b: PromptBlock, query: string): boolean => {
 export const isEditedByStore = (b: PromptBlock): boolean =>
   b.origin === "system" && b.originalContent != null && b.content !== b.originalContent;
 
+/**
+ * ¿Es la frase que abre una lista? ("Reglas duras:"). El bot la deja con
+ * candado (esEntrada, neura-chatbot) y acá se muestra como texto bajo el
+ * título, sin recuadro ni botones.
+ */
+export const isIntroLine = (b: PromptBlock): boolean =>
+  b.origin === "system" && b.locked && !b.content.includes("\n") && /:\**\s*$/.test(b.content.trim());
+
 /** El título de una sección sin los # del prompt. */
 export const headingText = (b: PromptBlock): string => b.content.replace(/^#+\s*/, "");
 
