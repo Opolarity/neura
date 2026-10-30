@@ -23,6 +23,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -159,6 +160,9 @@ export const ReceiveProductionOrderDialog = ({
   /** A dónde entra la merma. Arranca igual que lo bueno. */
   const [badWarehouseId, setBadWarehouseId] = useState<string>("");
   const [badStockTypeId, setBadStockTypeId] = useState<string>("");
+  /** Código de guía de remisión y nota de la tanda: opcionales, van al detalle. */
+  const [remissionGuideCode, setRemissionGuideCode] = useState("");
+  const [notes, setNotes] = useState("");
 
   /** Solo entran a stock los que tienen producto: el resto no tiene a qué subir. */
   const receivable = useMemo(
@@ -209,6 +213,8 @@ export const ReceiveProductionOrderDialog = ({
 
   useEffect(() => {
     if (!open) return;
+    setRemissionGuideCode("");
+    setNotes("");
     setInputs(
       Object.fromEntries(
         receivable.map((item) => [
@@ -397,6 +403,8 @@ export const ReceiveProductionOrderDialog = ({
             totalBad > 0 && badWarehouseId ? Number(badWarehouseId) : null,
           badStockTypeId:
             totalBad > 0 && badStockTypeId ? Number(badStockTypeId) : null,
+          remissionGuideCode: remissionGuideCode.trim() || null,
+          notes: notes.trim() || null,
         },
         payload
       );
@@ -757,6 +765,31 @@ export const ReceiveProductionOrderDialog = ({
                 </p>
               </div>
             )}
+
+            <div className="space-y-2">
+              <div className="space-y-1">
+                <Label htmlFor="receive-remission-guide-code">
+                  Código de guía de remisión (opcional)
+                </Label>
+                <Input
+                  id="receive-remission-guide-code"
+                  placeholder="Guía Nº 366"
+                  maxLength={200}
+                  value={remissionGuideCode}
+                  onChange={(e) => setRemissionGuideCode(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="receive-notes">Nota (opcional)</Label>
+                <Textarea
+                  id="receive-notes"
+                  rows={2}
+                  maxLength={1000}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
         </div>
 

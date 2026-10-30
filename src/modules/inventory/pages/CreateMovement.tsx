@@ -8,6 +8,7 @@ import {
 } from "../services/Movements.service";
 import CMovementTypeModal from "../components/create-movements/CMovementTypeModal";
 import CMovementSummary from "../components/create-movements/CMovementSummary";
+import CMovementEntryInfo from "../components/create-movements/CMovementEntryInfo";
 import CMovementSelectProducts from "../components/create-movements/CMovementSelectProducts";
 import CMovementTable from "../components/create-movements/CMovementTable";
 import { Link } from "react-router-dom";
@@ -25,6 +26,10 @@ const CreateMovement = () => {
     movementType,
     movementTypes,
     userSummary,
+    remissionGuideCode,
+    notes,
+    setRemissionGuideCode,
+    setNotes,
     isOpen,
     products,
     productStatusTypes,
@@ -71,6 +76,14 @@ const CreateMovement = () => {
           warehouseName={userSummary?.warehouse_name}
           movementType={movementType?.name}
         />
+        {movementType?.code === "MER" && (
+          <CMovementEntryInfo
+            remissionGuideCode={remissionGuideCode}
+            notes={notes}
+            onRemissionGuideCodeChange={setRemissionGuideCode}
+            onNotesChange={setNotes}
+          />
+        )}
 
         <div className="flex flex-row gap-2">
           <CMovementSelectProductTypes

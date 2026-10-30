@@ -72,6 +72,8 @@ export const stockMovementDetailAdapter = (
     variationLabel: terms.length > 0 ? terms.join(", ") : "sin variación",
     sku: movement.variation?.sku ?? "—",
     user: fullName || movement.created_by_profile?.user_name || "—",
+    remissionGuideCode: movement.stock_entry?.remission_guide_code ?? null,
+    notes: movement.stock_entry?.notes ?? null,
     links: response.links,
   };
 };

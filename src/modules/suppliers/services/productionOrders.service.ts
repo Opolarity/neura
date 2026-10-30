@@ -146,6 +146,9 @@ export interface ReceiveProductionOrderDestination {
   /** El de la merma. Sin ellos, la merma va donde y como lo bueno. */
   badWarehouseId?: number | null;
   badStockTypeId?: number | null;
+  /** Código de guía de remisión y nota de la tanda. Opcionales. */
+  remissionGuideCode?: string | null;
+  notes?: string | null;
 }
 
 /**
@@ -173,6 +176,8 @@ export const receiveProductionOrderApi = async (
         stock_type_id: destination.stockTypeId ?? null,
         bad_warehouse_id: destination.badWarehouseId ?? null,
         bad_stock_type_id: destination.badStockTypeId ?? null,
+        remission_guide_code: destination.remissionGuideCode ?? null,
+        notes: destination.notes ?? null,
         items,
       },
     }
