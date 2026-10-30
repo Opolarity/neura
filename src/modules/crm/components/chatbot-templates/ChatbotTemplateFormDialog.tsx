@@ -97,8 +97,6 @@ export default function ChatbotTemplateFormDialog({
   const [topic, setTopic] = useState<ChatbotTemplateTopic | "">("");
   const [tags, setTags] = useState<string[]>([]);
   const [saleSola, setSaleSola] = useState(true);
-  /** T-921: una plantilla nueva nace en observación (el bot no la manda hasta que se active). */
-  const [enObservacion, setEnObservacion] = useState(true);
   const [ejemplos, setEjemplos] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -117,7 +115,6 @@ export default function ChatbotTemplateFormDialog({
     setTopic(template?.topic ?? "");
     setTags(template?.tags ?? []);
     setSaleSola(template?.saleSola ?? true);
-    setEnObservacion(true);
     setEjemplos([]);
     setTouched(false);
     abiertoEn.current = Date.now();
@@ -175,7 +172,7 @@ export default function ChatbotTemplateFormDialog({
     const content = fromFriendlyText(text, vars, fallbacks);
     const meta: ChatbotTemplateMeta | undefined = tagsEditable && topic ? { topic, tags } : undefined;
     const ok = creating
-      ? await onCreate({ name: name.trim(), content, ...(meta as ChatbotTemplateMeta), enObservacion })
+      ? await onCreate({ name: name.trim(), content, ...(meta as ChatbotTemplateMeta) })
       : await onSave(template!, content, meta, template!.locked ? undefined : saleSola);
     if (ok) onOpenChange(false);
   };
@@ -325,19 +322,6 @@ export default function ChatbotTemplateFormDialog({
           <p className="rounded-md bg-warning-soft p-3 text-xs text-warning-soft-foreground" role="status">
             {aviso}
           </p>
-        )}
-
-        {creating && (
-          <div className="flex items-start justify-between gap-4 rounded-md border p-3">
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="tpl-observacion">Empezar en observación</Label>
-              <p className="text-xs text-muted-foreground">
-                El bot no la manda: anota en qué mensajes reales la habría usado. La activas desde la lista cuando lo
-                revises.
-              </p>
-            </div>
-            <Switch id="tpl-observacion" checked={enObservacion} onCheckedChange={setEnObservacion} />
-          </div>
         )}
 
         <div className="grid gap-4 md:grid-cols-2">

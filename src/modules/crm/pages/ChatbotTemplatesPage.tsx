@@ -18,7 +18,6 @@ import ChatbotTemplatesHeader from "../components/chatbot-templates/ChatbotTempl
 import ChatbotTemplatesTable from "../components/chatbot-templates/ChatbotTemplatesTable";
 import ChatbotTemplateFormDialog from "../components/chatbot-templates/ChatbotTemplateFormDialog";
 import ChatbotTemplateDeleteDialog from "../components/chatbot-templates/ChatbotTemplateDeleteDialog";
-import TemplateShadowDialog from "../components/chatbot-templates/TemplateShadowDialog";
 import { useChatbotTemplates } from "../hooks/useChatbotTemplates";
 import type { ChatbotTemplate } from "../types/chatbotTemplates.types";
 
@@ -50,12 +49,10 @@ export default function ChatbotTemplatesPage() {
     save,
     create,
     remove,
-    activate,
   } = useChatbotTemplates(isAdmin);
   const [editing, setEditing] = useState<ChatbotTemplate | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<ChatbotTemplate | null>(null);
-  const [shadowing, setShadowing] = useState<ChatbotTemplate | null>(null);
 
   if (!isAdmin) {
     return (
@@ -127,7 +124,6 @@ export default function ChatbotTemplatesPage() {
             searching={!!search.trim() || !!tagFilter}
             onEdit={setEditing}
             onDelete={setDeleting}
-            onShadow={setShadowing}
           />
         </CardContent>
         <CardFooter className="!p-0">
@@ -147,13 +143,6 @@ export default function ChatbotTemplatesPage() {
         }}
         onSave={save}
         onCreate={create}
-      />
-
-      <TemplateShadowDialog
-        template={shadowing}
-        activating={saving}
-        onOpenChange={(open) => !open && setShadowing(null)}
-        onActivate={activate}
       />
 
       <ChatbotTemplateDeleteDialog

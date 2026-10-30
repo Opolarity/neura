@@ -18,7 +18,6 @@ import type {
 } from "../types/crm.types";
 import type {
   ChatbotTemplateCreateInput,
-  ShadowHit,
   TemplateTestApi,
   ChatbotTemplateCreateResponse,
   ChatbotTemplateDeleteResponse,
@@ -571,8 +570,8 @@ export const createChatbotTemplateApi = async (
     p_content: input.content,
     p_topic: input.topic,
     p_tags: input.tags,
-    // T-921: las nuevas nacen en observación salvo que el admin elija lo contrario.
-    p_en_observacion: input.enObservacion ?? true,
+    // Nacen activas: el modo observación de T-921 se quitó del ERP (30/10/2026).
+    p_en_observacion: false,
   });
 
   return unwrap(
@@ -604,13 +603,6 @@ export const deleteChatbotTemplateApi = async (id: number): Promise<ChatbotTempl
   );
 };
 
-/** T-921: activar una plantilla en observación (o devolverla a observación). Solo admin. */
-export const setChatbotTemplateObservacionApi = async (id: number, enObservacion: boolean): Promise<ChatbotTemplateUpdateResponse> => {
-  const { data, error } = await db.rpc("sp_crm_chatbot_template_set_observacion", { p_id: id, p_en_observacion: enObservacion });
-
-  return unwrap(data as ChatbotTemplateUpdateResponse | null, error, "No se pudo cambiar el modo observación.");
-};
-
 /** T-921: "Probar antes de guardar". La prueba la hace el servicio del bot (Jev) vía crm-chatbot-template-test. */
 export const testChatbotTemplateApi = async (input: {
   examples: string[];
@@ -621,14 +613,6 @@ export const testChatbotTemplateApi = async (input: {
     body: { action: "test", ...input },
   });
   return data.data;
-};
-
-/** T-921: mensajes reales en los que Jev habría elegido una plantilla en observación (últimos 30 días). */
-export const chatbotTemplateShadowHitsApi = async (name: string): Promise<ShadowHit[]> => {
-  const data = await invokeFunction<{ success: boolean; data: { hits: ShadowHit[] } }>("crm-chatbot-template-test", {
-    body: { action: "shadow_hits", name, days: 30 },
-  });
-  return data.data?.hits ?? [];
 };
 
 // ---------------------------------------------------------------------------

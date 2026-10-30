@@ -3,7 +3,6 @@ import { toast } from "@/shared/hooks/use-toast";
 import { toastError } from "@/shared/utils/toastError";
 import {
   createChatbotTemplateApi,
-  setChatbotTemplateObservacionApi,
   deleteChatbotTemplateApi,
   getChatbotTagsApi,
   getChatbotTemplatesApi,
@@ -131,35 +130,12 @@ export const useChatbotTemplates = (enabled: boolean) => {
     setSaving(true);
     try {
       await createChatbotTemplateApi(input);
-      toast({
-        title: "Plantilla creada",
-        description:
-          input.enObservacion === false
-            ? "El bot empieza a usarla en menos de un minuto."
-            : "Queda en observación: el bot no la manda, pero anota en qué mensajes la habría usado.",
-      });
+      toast({ title: "Plantilla creada", description: "El bot empieza a usarla en menos de un minuto." });
       await load();
       return true;
     } catch (error) {
       console.error(error);
       toastError(error, undefined, "No se pudo crear la plantilla");
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  /** T-921: activa una plantilla en observación. Devuelve true si se activó. */
-  const activate = async (template: ChatbotTemplate): Promise<boolean> => {
-    setSaving(true);
-    try {
-      await setChatbotTemplateObservacionApi(template.id, false);
-      toast({ title: "Plantilla activada", description: "El bot empieza a usarla en menos de un minuto." });
-      await load();
-      return true;
-    } catch (error) {
-      console.error(error);
-      toastError(error, undefined, "No se pudo activar la plantilla");
       return false;
     } finally {
       setSaving(false);
@@ -202,6 +178,5 @@ export const useChatbotTemplates = (enabled: boolean) => {
     save,
     create,
     remove,
-    activate,
   };
 };
