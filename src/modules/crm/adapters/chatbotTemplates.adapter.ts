@@ -12,7 +12,6 @@ export const toChatbotTemplate = (t: ChatbotTemplateApi): ChatbotTemplate => ({
   locked: t.locked === true,
   rol: t.rol ?? null,
   saleSola: t.sale_sola !== false,
-  enObservacion: t.en_observacion === true,
   createdAt: t.created_at ?? null,
   placeholders: t.placeholders ?? [],
   requiredPlaceholders: t.required_placeholders ?? [],
