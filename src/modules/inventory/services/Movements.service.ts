@@ -154,10 +154,19 @@ interface MovementPayload {
   warehouse_id: number;
 }
 
-export const createStockMovementsEntranceApi = async (newMovement: MovementPayload[]) => {
+/** Código de guía de remisión y nota del ingreso: opcionales, viajan en la cabecera. */
+interface EntranceHeader {
+  remission_guide_code?: string | null;
+  notes?: string | null;
+}
+
+export const createStockMovementsEntranceApi = async (
+  newMovement: MovementPayload[],
+  header: EntranceHeader = {},
+) => {
   const data = await invokeFunction("create-stock-movements-entrance", {
     method: "POST",
-    body: newMovement
+    body: { items: newMovement, ...header }
   });
   return data;
 }

@@ -21,6 +21,9 @@ export const useCreateMovements = () => {
     const [productStatusTypes, setProductStatusTypes] = useState<Types[]>([]);
     const [productStatusType, setProductStatusType] = useState<Types | null>(null);
     const [userSummary, setUserSummary] = useState<UserSummary | null>(null);
+    //INGRESO: código de guía de remisión y nota (opcionales)
+    const [remissionGuideCode, setRemissionGuideCode] = useState("");
+    const [notes, setNotes] = useState("");
     //SELECT PRODUCTS
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [products, setProducts] = useState<ProductSales[]>([]);
@@ -241,7 +244,10 @@ export const useCreateMovements = () => {
                     warehouse_id: userSummary?.warehouse_id
                 }));
 
-                await createStockMovementsEntranceApi(transformed);
+                await createStockMovementsEntranceApi(transformed, {
+                    remission_guide_code: remissionGuideCode.trim() || null,
+                    notes: notes.trim() || null,
+                });
             } else if (movementType.code === "TRS") {
                 const payload = {
                     warehouse_id: userSummary?.warehouse_id,
@@ -332,6 +338,10 @@ export const useCreateMovements = () => {
         productStatusTypes,
         productStatusType,
         userSummary,
+        remissionGuideCode,
+        notes,
+        setRemissionGuideCode,
+        setNotes,
         isOpen,
         products,
         selectedProduct,

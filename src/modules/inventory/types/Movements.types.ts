@@ -215,6 +215,16 @@ export interface StockMovementDetailApiResponse {
             user_name: string | null;
             account: { name: string | null; last_name: string | null; last_name2: string | null } | null;
         } | null;
+        /**
+         * Cabecera del ingreso (Ingreso mercadería / por producción). null en los
+         * demás movimientos. Opcional: no viene hasta que el backend esté desplegado.
+         */
+        stock_entry?: {
+            id: number;
+            code: string | null;
+            remission_guide_code: string | null;
+            notes: string | null;
+        } | null;
     };
     links: StockMovementDetailLinks;
 }
@@ -231,5 +241,8 @@ export interface StockMovementDetail {
     variationLabel: string;
     sku: string;
     user: string;
+    /** Código de guía de remisión y nota del ingreso. null si no hay. */
+    remissionGuideCode: string | null;
+    notes: string | null;
     links: StockMovementDetailLinks;
 }

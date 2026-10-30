@@ -132,7 +132,21 @@ const MovementsDetailModal = ({ movementId, onClose }: MovementsDetailModalProps
                                         value={`#${detail.vinculatedMovementId}`}
                                     />
                                 )}
+                                {detail.remissionGuideCode && (
+                                    <InfoRow
+                                        label="Guía de remisión"
+                                        value={detail.remissionGuideCode}
+                                    />
+                                )}
                             </div>
+
+                            {/* Nota del ingreso: texto libre, va en su propio bloque */}
+                            {detail.notes && (
+                                <div className="px-6 pb-5 space-y-2 text-sm">
+                                    <SectionTitle>Nota</SectionTitle>
+                                    <p className="whitespace-pre-line break-words">{detail.notes}</p>
+                                </div>
+                            )}
 
                             {/* Pedidos vinculados */}
                             {detail.links.order_products.length > 0 && (
