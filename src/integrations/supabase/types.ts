@@ -16,6 +16,7 @@ export type Database = {
           created_at: string
           id: number
         }
+        ComputedFields: never
         Insert: {
           account_id: number
           account_type_id: number
@@ -68,6 +69,7 @@ export type Database = {
           show: boolean
           tenant_reference: string | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           document_number: string
@@ -108,6 +110,370 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_ref: string | null
+          actor_source: string
+          changed_fields: string[] | null
+          created_at: string
+          db_role: string | null
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string
+          table_name: string
+          tenant_id: number | null
+          txid: number
+        }
+        ComputedFields: never
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id: string
+          table_name: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source?: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string
+          table_name?: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Relationships: []
+      }
+      audit_log_default: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_ref: string | null
+          actor_source: string
+          changed_fields: string[] | null
+          created_at: string
+          db_role: string | null
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string
+          table_name: string
+          tenant_id: number | null
+          txid: number
+        }
+        ComputedFields: never
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id: string
+          table_name: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source?: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string
+          table_name?: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Relationships: []
+      }
+      audit_log_y2026m09: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_ref: string | null
+          actor_source: string
+          changed_fields: string[] | null
+          created_at: string
+          db_role: string | null
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string
+          table_name: string
+          tenant_id: number | null
+          txid: number
+        }
+        ComputedFields: never
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id: string
+          table_name: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source?: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string
+          table_name?: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Relationships: []
+      }
+      audit_log_y2026m10: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_ref: string | null
+          actor_source: string
+          changed_fields: string[] | null
+          created_at: string
+          db_role: string | null
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string
+          table_name: string
+          tenant_id: number | null
+          txid: number
+        }
+        ComputedFields: never
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id: string
+          table_name: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source?: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string
+          table_name?: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Relationships: []
+      }
+      audit_log_y2026m11: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_ref: string | null
+          actor_source: string
+          changed_fields: string[] | null
+          created_at: string
+          db_role: string | null
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string
+          table_name: string
+          tenant_id: number | null
+          txid: number
+        }
+        ComputedFields: never
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id: string
+          table_name: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source?: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string
+          table_name?: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Relationships: []
+      }
+      audit_log_y2026m12: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_ref: string | null
+          actor_source: string
+          changed_fields: string[] | null
+          created_at: string
+          db_role: string | null
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string
+          table_name: string
+          tenant_id: number | null
+          txid: number
+        }
+        ComputedFields: never
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id: string
+          table_name: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source?: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string
+          table_name?: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Relationships: []
+      }
+      audit_log_y2027m01: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_ref: string | null
+          actor_source: string
+          changed_fields: string[] | null
+          created_at: string
+          db_role: string | null
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string
+          table_name: string
+          tenant_id: number | null
+          txid: number
+        }
+        ComputedFields: never
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id: string
+          table_name: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_ref?: string | null
+          actor_source?: string
+          changed_fields?: string[] | null
+          created_at?: string
+          db_role?: string | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string
+          table_name?: string
+          tenant_id?: number | null
+          txid?: number
+        }
+        Relationships: []
+      }
       bar_codes: {
         Row: {
           created_at: string
@@ -119,6 +485,7 @@ export type Database = {
           sequence: number
           stock_movement_id: number | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string
@@ -185,6 +552,7 @@ export type Database = {
           ubigeo: string | null
           warehouse_id: number
         }
+        ComputedFields: never
         Insert: {
           address: string
           address_reference?: string | null
@@ -264,6 +632,7 @@ export type Database = {
           name: string
           total_amount: number
         }
+        ComputedFields: never
         Insert: {
           account_id?: number
           account_number?: number | null
@@ -329,6 +698,7 @@ export type Database = {
           name: string
           views: string[] | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -368,6 +738,7 @@ export type Database = {
           sale_price: number | null
           warehouse_id: number | null
         }
+        ComputedFields: never
         Insert: {
           cart_id: number
           id?: number
@@ -421,6 +792,7 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -477,6 +849,7 @@ export type Database = {
           name: string
           parent_category: number | null
         }
+        ComputedFields: never
         Insert: {
           description?: string | null
           id?: number
@@ -515,6 +888,7 @@ export type Database = {
           url: string | null
           warehouse_id: number
         }
+        ComputedFields: never
         Insert: {
           branch_id: number
           code: string
@@ -590,6 +964,7 @@ export type Database = {
           media_type: string | null
           media_url: string | null
           message: string | null
+          network: string | null
           phone_number: number | null
           status: string | null
           taken_at: string | null
@@ -598,6 +973,7 @@ export type Database = {
           whatsapp_user_id: string | null
           whatsapp_username: string | null
         }
+        ComputedFields: never
         Insert: {
           assigned_at?: string | null
           assigned_to?: string | null
@@ -612,6 +988,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           message?: string | null
+          network?: never
           phone_number?: number | null
           status?: string | null
           taken_at?: string | null
@@ -634,6 +1011,7 @@ export type Database = {
           media_type?: string | null
           media_url?: string | null
           message?: string | null
+          network?: never
           phone_number?: number | null
           status?: string | null
           taken_at?: string | null
@@ -701,6 +1079,7 @@ export type Database = {
           whatsapp_user_id: string | null
           whatsapp_username: string | null
         }
+        ComputedFields: never
         Insert: {
           account_id?: number | null
           address?: string | null
@@ -842,6 +1221,271 @@ export type Database = {
           },
         ]
       }
+      chatbot_prompt_blocks: {
+        Row: {
+          active: boolean
+          blank_after: number
+          block_key: string | null
+          content: string
+          created_at: string
+          heading_key: string
+          heading_level: number | null
+          id: number
+          in_source: boolean
+          kind: string
+          locked: boolean
+          origin: string
+          original_content: string | null
+          sort_order: number
+          tags: string[]
+          title: string
+          updated_at: string
+          updated_by: string | null
+          fn_chatbot_prompt_block_order: number | null
+        }
+        ComputedFields: "fn_chatbot_prompt_block_order"
+        Insert: {
+          active?: boolean
+          blank_after?: number
+          block_key?: string | null
+          content: string
+          created_at?: string
+          heading_key: string
+          heading_level?: number | null
+          id?: never
+          in_source?: boolean
+          kind?: string
+          locked?: boolean
+          origin: string
+          original_content?: string | null
+          sort_order?: number
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          blank_after?: number
+          block_key?: string | null
+          content?: string
+          created_at?: string
+          heading_key?: string
+          heading_level?: number | null
+          id?: never
+          in_source?: boolean
+          kind?: string
+          locked?: boolean
+          origin?: string
+          original_content?: string | null
+          sort_order?: number
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      chatbot_prompt_settings: {
+        Row: {
+          allowed_values: string[] | null
+          allows_multiple_values: boolean
+          description: string | null
+          display_name: string
+          display_order: number
+          draft_updated_at: string
+          draft_updated_by: string | null
+          draft_value: string | null
+          max_characters: number | null
+          option_labels: Json | null
+          published_at: string | null
+          published_by: string | null
+          published_value: string
+          setting_code: string
+          setting_type: string
+        }
+        ComputedFields: never
+        Insert: {
+          allowed_values?: string[] | null
+          allows_multiple_values?: boolean
+          description?: string | null
+          display_name: string
+          display_order?: number
+          draft_updated_at?: string
+          draft_updated_by?: string | null
+          draft_value?: string | null
+          max_characters?: number | null
+          option_labels?: Json | null
+          published_at?: string | null
+          published_by?: string | null
+          published_value?: string
+          setting_code: string
+          setting_type: string
+        }
+        Update: {
+          allowed_values?: string[] | null
+          allows_multiple_values?: boolean
+          description?: string | null
+          display_name?: string
+          display_order?: number
+          draft_updated_at?: string
+          draft_updated_by?: string | null
+          draft_value?: string | null
+          max_characters?: number | null
+          option_labels?: Json | null
+          published_at?: string | null
+          published_by?: string | null
+          published_value?: string
+          setting_code?: string
+          setting_type?: string
+        }
+        Relationships: []
+      }
+      chatbot_template_external_tags: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: number
+          name: string
+        }
+        ComputedFields: never
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      chatbot_template_tag_links: {
+        Row: {
+          tag_id: number
+          template_id: number
+        }
+        ComputedFields: never
+        Insert: {
+          tag_id: number
+          template_id: number
+        }
+        Update: {
+          tag_id?: number
+          template_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_template_tag_links_external_tag_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_template_external_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chatbot_template_tag_links_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "chatbot_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_template_tags: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: number
+          is_jev: boolean
+          name: string
+          sort_order: number
+        }
+        ComputedFields: never
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: never
+          is_jev?: boolean
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: never
+          is_jev?: boolean
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      chatbot_templates: {
+        Row: {
+          content: string
+          created_at: string
+          description: string | null
+          en_observacion: boolean
+          id: number
+          locked: boolean
+          name: string
+          origin: string
+          placeholders: string[]
+          required_placeholders: string[]
+          rol: string | null
+          sale_sola: boolean
+          status: string | null
+          topic: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        ComputedFields: never
+        Insert: {
+          content: string
+          created_at?: string
+          description?: string | null
+          en_observacion?: boolean
+          id?: never
+          locked?: boolean
+          name: string
+          origin?: string
+          placeholders?: string[]
+          required_placeholders?: string[]
+          rol?: string | null
+          sale_sola?: boolean
+          status?: string | null
+          topic?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          description?: string | null
+          en_observacion?: boolean
+          id?: never
+          locked?: boolean
+          name?: string
+          origin?: string
+          placeholders?: string[]
+          required_placeholders?: string[]
+          rol?: string | null
+          sale_sola?: boolean
+          status?: string | null
+          topic?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       cities: {
         Row: {
           country_id: number
@@ -851,6 +1495,7 @@ export type Database = {
           name: string
           state_id: number
         }
+        ComputedFields: never
         Insert: {
           country_id: number
           created_at?: string
@@ -879,7 +1524,7 @@ export type Database = {
       }
       classes: {
         Row: {
-          code: string
+          code: string | null
           created_at: string
           id: number
           is_active: boolean
@@ -887,8 +1532,9 @@ export type Database = {
           name: string
           parent_class_id: number | null
         }
+        ComputedFields: never
         Insert: {
-          code: string
+          code?: string | null
           created_at?: string
           id?: number
           is_active?: boolean
@@ -897,7 +1543,7 @@ export type Database = {
           parent_class_id?: number | null
         }
         Update: {
-          code?: string
+          code?: string | null
           created_at?: string
           id?: number
           is_active?: boolean
@@ -956,6 +1602,7 @@ export type Database = {
           status: string
           terms: boolean
         }
+        ComputedFields: never
         Insert: {
           address: string
           age: boolean
@@ -1073,6 +1720,7 @@ export type Database = {
           id: number
           notes_id: number
         }
+        ComputedFields: never
         Insert: {
           complaints_book_id: number
           id?: number
@@ -1108,6 +1756,7 @@ export type Database = {
           name: string
           phone_code: string | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           geo_map?: string | null
@@ -1132,6 +1781,7 @@ export type Database = {
           used_at: string
           user_id: string | null
         }
+        ComputedFields: never
         Insert: {
           discount_id: number
           id?: number
@@ -1198,6 +1848,7 @@ export type Database = {
           status_id: number
           whatsapp_user_id: string | null
         }
+        ComputedFields: never
         Insert: {
           channel_id: number
           created_at?: string
@@ -1281,6 +1932,7 @@ export type Database = {
           updated_at: string
           wamid: string
         }
+        ComputedFields: never
         Insert: {
           billable?: boolean | null
           channel_id: number
@@ -1352,6 +2004,7 @@ export type Database = {
           valid_from: string
           valid_to: string | null
         }
+        ComputedFields: never
         Insert: {
           country_code: string
           created_at?: string
@@ -1374,12 +2027,78 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_messaging_accounts: {
+        Row: {
+          connected_at: string
+          connected_by: string | null
+          external_id: string
+          id: number
+          name: string | null
+          network: string
+          status: string
+          updated_at: string
+          username: string | null
+        }
+        ComputedFields: never
+        Insert: {
+          connected_at?: string
+          connected_by?: string | null
+          external_id: string
+          id?: number
+          name?: string | null
+          network: string
+          status?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          connected_at?: string
+          connected_by?: string | null
+          external_id?: string
+          id?: number
+          name?: string | null
+          network?: string
+          status?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      crm_messaging_networks: {
+        Row: {
+          network: string
+          sale_type_id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        ComputedFields: never
+        Insert: {
+          network: string
+          sale_type_id: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          network?: string
+          sale_type_id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_messaging_networks_sale_type_id_fkey"
+            columns: ["sale_type_id"]
+            isOneToOne: true
+            referencedRelation: "sale_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_levels: {
         Row: {
           active: boolean
           color: string | null
           created_at: string
-          discount: number
           id: number
           image_url: string | null
           max_points: number | null
@@ -1389,11 +2108,11 @@ export type Database = {
           subtitle: string | null
           updated_at: string
         }
+        ComputedFields: never
         Insert: {
           active?: boolean
           color?: string | null
           created_at?: string
-          discount?: number
           id?: never
           image_url?: string | null
           max_points?: number | null
@@ -1407,7 +2126,6 @@ export type Database = {
           active?: boolean
           color?: string | null
           created_at?: string
-          discount?: number
           id?: never
           image_url?: string | null
           max_points?: number | null
@@ -1428,6 +2146,7 @@ export type Database = {
           note: string | null
           quantity: number
         }
+        ComputedFields: never
         Insert: {
           account_id: number
           created_at?: string
@@ -1470,6 +2189,7 @@ export type Database = {
           points: number | null
           preferences: string[] | null
         }
+        ComputedFields: never
         Insert: {
           activity?: string | null
           amount_spent?: number | null
@@ -1516,6 +2236,7 @@ export type Database = {
           valid_from: string | null
           valid_to: string | null
         }
+        ComputedFields: never
         Insert: {
           code: string
           created_at?: string
@@ -1563,6 +2284,7 @@ export type Database = {
           razon_social: string | null
           reason: string | null
         }
+        ComputedFields: never
         Insert: {
           apellido_materno?: string | null
           apellido_paterno?: string | null
@@ -1600,6 +2322,7 @@ export type Database = {
           person_type: number
           state_code: string | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -1630,6 +2353,7 @@ export type Database = {
           quantity: number
           variation_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           explosion_material_id: number
@@ -1667,13 +2391,16 @@ export type Database = {
           explosion_id: number
           id: number
           material_id: number
+          material_variation_id: number
           quantity: number | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           explosion_id: number
           id?: number
           material_id: number
+          material_variation_id: number
           quantity?: number | null
         }
         Update: {
@@ -1681,6 +2408,7 @@ export type Database = {
           explosion_id?: number
           id?: number
           material_id?: number
+          material_variation_id?: number
           quantity?: number | null
         }
         Relationships: [
@@ -1698,6 +2426,63 @@ export type Database = {
             referencedRelation: "materials"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "explosion_materials_material_variation_id_fkey"
+            columns: ["material_variation_id"]
+            isOneToOne: false
+            referencedRelation: "material_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      explosion_processes: {
+        Row: {
+          created_at: string
+          explosion_id: number
+          id: number
+          order: number
+          process_group_id: number
+          process_id: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          explosion_id: number
+          id?: number
+          order: number
+          process_group_id: number
+          process_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          explosion_id?: number
+          id?: number
+          order?: number
+          process_group_id?: number
+          process_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "explosion_processes_explosion_id_fkey"
+            columns: ["explosion_id"]
+            isOneToOne: false
+            referencedRelation: "explosions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "explosion_processes_process_group_id_fkey"
+            columns: ["process_group_id"]
+            isOneToOne: false
+            referencedRelation: "process_group"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "explosion_processes_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "processes"
+            referencedColumns: ["id"]
+          },
         ]
       }
       explosion_variations: {
@@ -1707,6 +2492,7 @@ export type Database = {
           id: number
           variation_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           explosion_id: number
@@ -1743,14 +2529,17 @@ export type Database = {
           description: string | null
           id: number
           model_code: string | null
+          product_id: number | null
           total: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by: string
           description?: string | null
           id?: number
           model_code?: string | null
+          product_id?: number | null
           total: number
         }
         Update: {
@@ -1759,6 +2548,7 @@ export type Database = {
           description?: string | null
           id?: number
           model_code?: string | null
+          product_id?: number | null
           total?: number
         }
         Relationships: [
@@ -1768,6 +2558,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "explosions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1784,6 +2581,7 @@ export type Database = {
           order: number | null
           parent_function: number | null
         }
+        ComputedFields: never
         Insert: {
           active?: boolean
           code?: string | null
@@ -1827,6 +2625,7 @@ export type Database = {
           invoice_id: number
           last_row: boolean
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           detail?: string | null
@@ -1866,6 +2665,7 @@ export type Database = {
           total: number
           unit_price: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           description: string
@@ -1910,6 +2710,7 @@ export type Database = {
           token: string
           url: string
         }
+        ComputedFields: never
         Insert: {
           branch_id: number
           created_at?: string
@@ -1949,6 +2750,7 @@ export type Database = {
           next_number: number
           serie: string | null
         }
+        ComputedFields: never
         Insert: {
           account_id: number
           created_at?: string
@@ -2017,6 +2819,7 @@ export type Database = {
           invoice_type_id: number
           pdf_url: string | null
           qr_data: string | null
+          reason: string | null
           tax_serie: string | null
           total_amount: number
           total_free: number | null
@@ -2025,6 +2828,7 @@ export type Database = {
           vinculated_invoice_id: number | null
           xml_url: string | null
         }
+        ComputedFields: never
         Insert: {
           cdr_url?: string | null
           client_address?: string | null
@@ -2041,6 +2845,7 @@ export type Database = {
           invoice_type_id: number
           pdf_url?: string | null
           qr_data?: string | null
+          reason?: string | null
           tax_serie?: string | null
           total_amount: number
           total_free?: number | null
@@ -2065,6 +2870,7 @@ export type Database = {
           invoice_type_id?: number
           pdf_url?: string | null
           qr_data?: string | null
+          reason?: string | null
           tax_serie?: string | null
           total_amount?: number
           total_free?: number | null
@@ -2125,6 +2931,7 @@ export type Database = {
           transportista_nombre: string | null
           transportista_ruc: string | null
         }
+        ComputedFields: never
         Insert: {
           conductor_apellidos?: string | null
           conductor_dni?: string | null
@@ -2182,6 +2989,7 @@ export type Database = {
           stock_movement_id: number
           stock_movement_request_id: number
         }
+        ComputedFields: never
         Insert: {
           approved?: boolean | null
           id?: number
@@ -2215,6 +3023,7 @@ export type Database = {
         Row: {
           "24939-0.webp": string | null
         }
+        ComputedFields: never
         Insert: {
           "24939-0.webp"?: string | null
         }
@@ -2228,15 +3037,18 @@ export type Database = {
           created_at: string
           id: number
           material_id: number
+          material_variation_id: number
           stock: number
           stock_type_id: number
           updated_by: string | null
           warehouse_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
           material_id: number
+          material_variation_id: number
           stock: number
           stock_type_id: number
           updated_by?: string | null
@@ -2246,6 +3058,7 @@ export type Database = {
           created_at?: string
           id?: number
           material_id?: number
+          material_variation_id?: number
           stock?: number
           stock_type_id?: number
           updated_by?: string | null
@@ -2257,6 +3070,13 @@ export type Database = {
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_stock_material_variation_id_fkey"
+            columns: ["material_variation_id"]
+            isOneToOne: false
+            referencedRelation: "material_variations"
             referencedColumns: ["id"]
           },
           {
@@ -2290,6 +3110,7 @@ export type Database = {
           id: number
           is_active: boolean
           material_id: number
+          material_variation_id: number
           movement_type: number
           production_order_id: number | null
           quantity: number
@@ -2300,6 +3121,7 @@ export type Database = {
           vinculated_movement_id: number | null
           warehouse_id: number
         }
+        ComputedFields: never
         Insert: {
           completed: boolean
           created_at?: string
@@ -2307,6 +3129,7 @@ export type Database = {
           id?: number
           is_active?: boolean
           material_id: number
+          material_variation_id: number
           movement_type: number
           production_order_id?: number | null
           quantity: number
@@ -2324,6 +3147,7 @@ export type Database = {
           id?: number
           is_active?: boolean
           material_id?: number
+          material_variation_id?: number
           movement_type?: number
           production_order_id?: number | null
           quantity?: number
@@ -2347,6 +3171,13 @@ export type Database = {
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_stock_movements_material_variation_id_fkey"
+            columns: ["material_variation_id"]
+            isOneToOne: false
+            referencedRelation: "material_variations"
             referencedColumns: ["id"]
           },
           {
@@ -2407,12 +3238,174 @@ export type Database = {
           },
         ]
       }
+      material_term_groups: {
+        Row: {
+          code: string
+          created_at: string
+          id: number
+          is_active: boolean
+          name: string
+        }
+        ComputedFields: never
+        Insert: {
+          code: string
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      material_terms: {
+        Row: {
+          created_at: string
+          id: number
+          is_active: boolean
+          material_term_group_id: number
+          name: string
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          material_term_group_id: number
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_active?: boolean
+          material_term_group_id?: number
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_terms_material_term_group_id_fkey"
+            columns: ["material_term_group_id"]
+            isOneToOne: false
+            referencedRelation: "material_term_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_variation_terms: {
+        Row: {
+          created_at: string
+          id: number
+          material_term_id: number
+          material_variation_id: number
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          id?: number
+          material_term_id: number
+          material_variation_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          material_term_id?: number
+          material_variation_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_variation_terms_material_term_id_fkey"
+            columns: ["material_term_id"]
+            isOneToOne: false
+            referencedRelation: "material_terms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_variation_terms_material_variation_id_fkey"
+            columns: ["material_variation_id"]
+            isOneToOne: false
+            referencedRelation: "material_variations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_variations: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: number
+          is_active: boolean
+          last_service_reference: number | null
+          material_id: number
+          supplier_id: number | null
+          unit_cost: number | null
+        }
+        ComputedFields: never
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          is_active?: boolean
+          last_service_reference?: number | null
+          material_id: number
+          supplier_id?: number | null
+          unit_cost?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          is_active?: boolean
+          last_service_reference?: number | null
+          material_id?: number
+          supplier_id?: number | null
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_variations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["UID"]
+          },
+          {
+            foreignKeyName: "material_variations_last_service_reference_fkey"
+            columns: ["last_service_reference"]
+            isOneToOne: false
+            referencedRelation: "supplier_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_variations_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_variations_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           created_at: string
           created_by: string
           id: number
           images: string[]
+          is_active: boolean
           last_service_reference: number | null
           material_class_id: number
           measurement_unit_id: number
@@ -2420,11 +3413,13 @@ export type Database = {
           supplier_id: number | null
           unit_cost: number | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by: string
           id?: number
           images?: string[]
+          is_active?: boolean
           last_service_reference?: number | null
           material_class_id: number
           measurement_unit_id: number
@@ -2437,6 +3432,7 @@ export type Database = {
           created_by?: string
           id?: number
           images?: string[]
+          is_active?: boolean
           last_service_reference?: number | null
           material_class_id?: number
           measurement_unit_id?: number
@@ -2494,6 +3490,7 @@ export type Database = {
           updated_at: string
           updated_by: string | null
         }
+        ComputedFields: never
         Insert: {
           channel_id: number
           created_at?: string
@@ -2540,6 +3537,7 @@ export type Database = {
           id: number
           name: string
         }
+        ComputedFields: never
         Insert: {
           code: string
           created_at?: string
@@ -2561,6 +3559,7 @@ export type Database = {
           invoice_id: number
           movement_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -2607,6 +3606,7 @@ export type Database = {
           payment_method_id: number
           user_id: string | null
         }
+        ComputedFields: never
         Insert: {
           amount: number
           branch_id: number
@@ -2694,6 +3694,7 @@ export type Database = {
           name: string
           state_id: number
         }
+        ComputedFields: never
         Insert: {
           city_id: number
           country_id: number
@@ -2742,6 +3743,7 @@ export type Database = {
           user_id: number | null
           vat: string | null
         }
+        ComputedFields: never
         Insert: {
           amount_paid?: number | null
           amount_total?: number | null
@@ -2795,6 +3797,7 @@ export type Database = {
           product_uom_qty: number | null
           sale_id: number | null
         }
+        ComputedFields: never
         Insert: {
           is_delivery?: boolean | null
           order_id?: number | null
@@ -2846,6 +3849,7 @@ export type Database = {
           woo_order_id: string | null
           woo_status: string | null
         }
+        ComputedFields: never
         Insert: {
           amount_total?: number | null
           branch_id_odoo?: number | null
@@ -2905,6 +3909,7 @@ export type Database = {
           message: string | null
           user_id: string | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -2937,6 +3942,7 @@ export type Database = {
           read_at: string
           user_id: string
         }
+        ComputedFields: never
         Insert: {
           notification_id: number
           read_at?: string
@@ -2968,6 +3974,7 @@ export type Database = {
           title: string
           type: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           entity_id?: string | null
@@ -3004,6 +4011,7 @@ export type Database = {
           name: string | null
           vat: string | null
         }
+        ComputedFields: never
         Insert: {
           id?: number | null
           name?: string | null
@@ -3026,6 +4034,7 @@ export type Database = {
           note: string | null
           order_id: number
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -3075,6 +4084,7 @@ export type Database = {
           invoice_id: number
           order_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -3124,6 +4134,7 @@ export type Database = {
           note_id: number
           order_id: number
         }
+        ComputedFields: never
         Insert: {
           id?: number
           note_id: number
@@ -3179,6 +4190,7 @@ export type Database = {
           updated_by: string | null
           voucher_url: string[] | null
         }
+        ComputedFields: never
         Insert: {
           amount: number
           business_acount_id: number
@@ -3275,6 +4287,7 @@ export type Database = {
           source: string
           unit_price: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string | null
@@ -3368,113 +4381,6 @@ export type Database = {
           },
         ]
       }
-      order_product_quantity_adjustments: {
-        Row: {
-          adjusted_quantity: number | null
-          created_at: string
-          delta: number | null
-          id: number
-          note: string | null
-          order_id: number
-          order_product_id: number
-          pending_request_id: number
-          received_quantity: number
-          resolved_at: string | null
-          resolved_by: string | null
-          sent_quantity: number
-          sku: string
-          status: string
-          stock_movement_id: number | null
-          tenant_reference: string | null
-        }
-        Insert: {
-          adjusted_quantity?: number | null
-          created_at?: string
-          delta?: number | null
-          id?: never
-          note?: string | null
-          order_id: number
-          order_product_id: number
-          pending_request_id: number
-          received_quantity: number
-          resolved_at?: string | null
-          resolved_by?: string | null
-          sent_quantity: number
-          sku: string
-          status?: string
-          stock_movement_id?: number | null
-          tenant_reference?: string | null
-        }
-        Update: {
-          adjusted_quantity?: number | null
-          created_at?: string
-          delta?: number | null
-          id?: never
-          note?: string | null
-          order_id?: number
-          order_product_id?: number
-          pending_request_id?: number
-          received_quantity?: number
-          resolved_at?: string | null
-          resolved_by?: string | null
-          sent_quantity?: number
-          sku?: string
-          status?: string
-          stock_movement_id?: number | null
-          tenant_reference?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "order_product_quantity_adjustments_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_product_quantity_adjustments_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "vw_rpt_order_customers"
-            referencedColumns: ["order_id"]
-          },
-          {
-            foreignKeyName: "order_product_quantity_adjustments_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "vw_rpt_orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_product_quantity_adjustments_order_product_id_fkey"
-            columns: ["order_product_id"]
-            isOneToOne: false
-            referencedRelation: "order_products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_product_quantity_adjustments_order_product_id_fkey"
-            columns: ["order_product_id"]
-            isOneToOne: false
-            referencedRelation: "vw_rpt_order_items"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_product_quantity_adjustments_pending_request_id_fkey"
-            columns: ["pending_request_id"]
-            isOneToOne: false
-            referencedRelation: "pending_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_product_quantity_adjustments_stock_movement_id_fkey"
-            columns: ["stock_movement_id"]
-            isOneToOne: false
-            referencedRelation: "stock_movements"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       order_products: {
         Row: {
           franchise_order_code: string[] | null
@@ -3493,6 +4399,7 @@ export type Database = {
           unit_cost: number | null
           warehouses_id: number
         }
+        ComputedFields: never
         Insert: {
           franchise_order_code?: string[] | null
           id?: number
@@ -3582,6 +4489,7 @@ export type Database = {
           situation_id: number
           status_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string | null
@@ -3683,6 +4591,7 @@ export type Database = {
           total: number
           user_id: string | null
         }
+        ComputedFields: never
         Insert: {
           address?: string | null
           address_reference?: string | null
@@ -3823,6 +4732,7 @@ export type Database = {
           name: string
           value: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -3844,6 +4754,7 @@ export type Database = {
           name: string
           value: string
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           id?: number
@@ -3864,6 +4775,7 @@ export type Database = {
           payment_method_id: number
           sale_type_id: number
         }
+        ComputedFields: never
         Insert: {
           id?: number
           payment_method_id: number
@@ -3902,8 +4814,10 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           name: string
+          requires_voucher: boolean
           time_to_cancel: number | null
         }
+        ComputedFields: never
         Insert: {
           active: boolean
           business_account_id?: number | null
@@ -3914,6 +4828,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name: string
+          requires_voucher?: boolean
           time_to_cancel?: number | null
         }
         Update: {
@@ -3926,6 +4841,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+          requires_voucher?: boolean
           time_to_cancel?: number | null
         }
         Relationships: [
@@ -3943,16 +4859,17 @@ export type Database = {
           created_at: string
           from_fn: string
           id: number
-          payload: Json
+          payload: NonNullable<Json>
           processed_at: string | null
           processed_by: string | null
           status: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           from_fn: string
           id?: never
-          payload: Json
+          payload: NonNullable<Json>
           processed_at?: string | null
           processed_by?: string | null
           status?: string
@@ -3961,7 +4878,7 @@ export type Database = {
           created_at?: string
           from_fn?: string
           id?: never
-          payload?: Json
+          payload?: NonNullable<Json>
           processed_at?: string | null
           processed_by?: string | null
           status?: string
@@ -3977,6 +4894,7 @@ export type Database = {
           parent_id: number | null
           type: Database["public"]["Enums"]["permission_type_enum"]
         }
+        ComputedFields: never
         Insert: {
           active?: boolean
           code: string
@@ -4024,6 +4942,7 @@ export type Database = {
           user_id: number | null
           vat: string | null
         }
+        ComputedFields: never
         Insert: {
           amount_paid?: number | null
           amount_total?: number | null
@@ -4073,6 +4992,7 @@ export type Database = {
           order_id: number
           pos_session_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -4137,6 +5057,7 @@ export type Database = {
           user_id: string
           warehouse_id: number
         }
+        ComputedFields: never
         Insert: {
           branch_id: number
           business_account: number
@@ -4230,6 +5151,7 @@ export type Database = {
           is_active: boolean
           name: string
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string | null
@@ -4248,10 +5170,12 @@ export type Database = {
       }
       price_rules: {
         Row: {
-          actions: Json
+          actions: NonNullable<Json>
           cart_message: string | null
+          cart_message_applied: string | null
+          cart_message_pending: string | null
           code: string | null
-          conditions: Json
+          conditions: NonNullable<Json>
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -4270,11 +5194,14 @@ export type Database = {
           valid_from: string | null
           valid_to: string | null
         }
+        ComputedFields: never
         Insert: {
-          actions?: Json
+          actions?: NonNullable<Json>
           cart_message?: string | null
+          cart_message_applied?: string | null
+          cart_message_pending?: string | null
           code?: string | null
-          conditions?: Json
+          conditions?: NonNullable<Json>
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -4294,10 +5221,12 @@ export type Database = {
           valid_to?: string | null
         }
         Update: {
-          actions?: Json
+          actions?: NonNullable<Json>
           cart_message?: string | null
+          cart_message_applied?: string | null
+          cart_message_pending?: string | null
           code?: string | null
-          conditions?: Json
+          conditions?: NonNullable<Json>
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -4342,6 +5271,7 @@ export type Database = {
           name: string
           source_process_id: number | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -4370,6 +5300,7 @@ export type Database = {
           parent_process_id: number | null
           process_group_id: number | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -4411,6 +5342,7 @@ export type Database = {
           id: number
           product_id: number
         }
+        ComputedFields: never
         Insert: {
           category_id: number
           id?: number
@@ -4444,6 +5376,7 @@ export type Database = {
           id: number
           product_id: number
         }
+        ComputedFields: never
         Insert: {
           channel_id: number
           id?: number
@@ -4478,6 +5411,7 @@ export type Database = {
           image_url: string
           product_id: number
         }
+        ComputedFields: never
         Insert: {
           id?: number
           image_order?: number
@@ -4508,6 +5442,7 @@ export type Database = {
           location: string
           product_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string
@@ -4547,6 +5482,7 @@ export type Database = {
           product_variation_id: number
           sale_price: number | null
         }
+        ComputedFields: never
         Insert: {
           id?: number
           price: number
@@ -4608,6 +5544,7 @@ export type Database = {
           write_date: string | null
           write_uid: number | null
         }
+        ComputedFields: never
         Insert: {
           active?: boolean | null
           applied_on: string
@@ -4676,6 +5613,7 @@ export type Database = {
           stock_type_id: number
           warehouse_id: number
         }
+        ComputedFields: never
         Insert: {
           id?: number
           product_variation_id: number
@@ -4721,6 +5659,7 @@ export type Database = {
           product_id: number
           tag_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -4767,6 +5706,7 @@ export type Database = {
           web: boolean | null
           woo_id: string | null
         }
+        ComputedFields: never
         Insert: {
           active?: boolean | null
           code?: string | null
@@ -4807,6 +5747,7 @@ export type Database = {
           term_order: number | null
           term_taxonomy_id: number | null
         }
+        ComputedFields: never
         Insert: {
           object_id?: number | null
           term_order?: number | null
@@ -4825,6 +5766,7 @@ export type Database = {
           woo_id: string | null
           woo_instance: number | null
         }
+        ComputedFields: never
         Insert: {
           product_template_id?: number | null
           woo_id?: string | null
@@ -4843,6 +5785,7 @@ export type Database = {
           product_image_id: number
           product_variation_id: number
         }
+        ComputedFields: never
         Insert: {
           id?: number
           product_image_id: number
@@ -4882,6 +5825,7 @@ export type Database = {
           production_order_id: number
           supplier_service_id: number | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -4943,6 +5887,7 @@ export type Database = {
           production_order_info_id: number
           production_order_item_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string | null
@@ -4987,16 +5932,19 @@ export type Database = {
           explosion_id: number | null
           id: number
           material_id: number
+          material_variation_id: number
           production_order_item_id: number
           quantity: number | null
           unit_cost: number | null
           variation_id: number | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           explosion_id?: number | null
           id?: number
           material_id: number
+          material_variation_id: number
           production_order_item_id: number
           quantity?: number | null
           unit_cost?: number | null
@@ -5007,6 +5955,7 @@ export type Database = {
           explosion_id?: number | null
           id?: number
           material_id?: number
+          material_variation_id?: number
           production_order_item_id?: number
           quantity?: number | null
           unit_cost?: number | null
@@ -5035,6 +5984,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "production_order_item_materials_material_variation_id_fkey"
+            columns: ["material_variation_id"]
+            isOneToOne: false
+            referencedRelation: "material_variations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "production_order_item_materials_variation_id_fkey"
             columns: ["variation_id"]
             isOneToOne: false
@@ -5054,6 +6010,7 @@ export type Database = {
           quantity: number
           variation_id: number | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           explosion_id?: number | null
@@ -5121,6 +6078,7 @@ export type Database = {
           updated_at: string | null
           updated_by: string | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -5199,6 +6157,7 @@ export type Database = {
           title: string
           web: boolean
         }
+        ComputedFields: never
         Insert: {
           active?: boolean
           code?: string | null
@@ -5260,6 +6219,7 @@ export type Database = {
           product_uom_qty: number | null
           sale_id: number | null
         }
+        ComputedFields: never
         Insert: {
           is_delivery?: boolean | null
           order_id?: number | null
@@ -5306,6 +6266,7 @@ export type Database = {
           user_name: string
           warehouse_id: number
         }
+        ComputedFields: never
         Insert: {
           account_id: number
           address?: string | null
@@ -5410,6 +6371,7 @@ export type Database = {
           meta_value: string | null
           post_id: number | null
         }
+        ComputedFields: never
         Insert: {
           meta_id?: number | null
           meta_key?: string | null
@@ -5514,6 +6476,7 @@ export type Database = {
           x_provincia: string | null
           zip: string | null
         }
+        ComputedFields: never
         Insert: {
           active?: boolean | null
           additional_info?: string | null
@@ -5706,6 +6669,7 @@ export type Database = {
           return_id: number
           voucher_url: string | null
         }
+        ComputedFields: never
         Insert: {
           amount: number
           created_at?: string
@@ -5777,6 +6741,7 @@ export type Database = {
           situation_id: number
           status_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string
@@ -5844,6 +6809,7 @@ export type Database = {
       }
       returns: {
         Row: {
+          code: string | null
           created_at: string | null
           created_by: string
           customer_document_number: string
@@ -5861,7 +6827,9 @@ export type Database = {
           total_order_amount: number | null
           total_refund_amount: number | null
         }
+        ComputedFields: never
         Insert: {
+          code?: string | null
           created_at?: string | null
           created_by: string
           customer_document_number: string
@@ -5880,6 +6848,7 @@ export type Database = {
           total_refund_amount?: number | null
         }
         Update: {
+          code?: string | null
           created_at?: string | null
           created_by?: string
           customer_document_number?: string
@@ -5997,6 +6966,7 @@ export type Database = {
           return_quantity: number
           stock_movement_id: number | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string | null
           id?: never
@@ -6072,6 +7042,7 @@ export type Database = {
           id: number
           role_id: number
         }
+        ComputedFields: never
         Insert: {
           capability_id: number
           id?: number
@@ -6105,6 +7076,7 @@ export type Database = {
           id: number
           role_id: number
         }
+        ComputedFields: never
         Insert: {
           function_id: number
           id?: number
@@ -6138,6 +7110,7 @@ export type Database = {
           permission_id: number
           role_id: number
         }
+        ComputedFields: never
         Insert: {
           id?: never
           permission_id: number
@@ -6172,6 +7145,7 @@ export type Database = {
           id: number
           name: string
         }
+        ComputedFields: never
         Insert: {
           admin?: boolean
           created_at?: string
@@ -6211,6 +7185,7 @@ export type Database = {
           woo_order_id: string | null
           woo_status: string | null
         }
+        ComputedFields: never
         Insert: {
           amount_total?: number | null
           branch_id_odoo?: number | null
@@ -6267,6 +7242,7 @@ export type Database = {
           id: number
           sale_type_id: number
         }
+        ComputedFields: never
         Insert: {
           branch_id: number
           id?: number
@@ -6307,6 +7283,7 @@ export type Database = {
           name: string
           pos_sale_type: boolean
         }
+        ComputedFields: never
         Insert: {
           boleta_serie_id: number
           business_acount_id?: number | null
@@ -6367,6 +7344,7 @@ export type Database = {
           applied_at: string | null
           name: string
         }
+        ComputedFields: never
         Insert: {
           applied_at?: string | null
           name: string
@@ -6389,6 +7367,7 @@ export type Database = {
           shipping_method_id: number
           state_id: number | null
         }
+        ComputedFields: never
         Insert: {
           city_id?: number | null
           cost: number
@@ -6456,6 +7435,7 @@ export type Database = {
           id: number
           name: string
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -6480,6 +7460,7 @@ export type Database = {
           order: number | null
           status_id: number
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -6523,6 +7504,7 @@ export type Database = {
           id: number
           name: string
         }
+        ComputedFields: never
         Insert: {
           country_id: number
           created_at?: string
@@ -6555,6 +7537,7 @@ export type Database = {
           module_id: number
           name: string
         }
+        ComputedFields: never
         Insert: {
           code: string
           created_at?: string
@@ -6586,15 +7569,20 @@ export type Database = {
           created_by: string
           id: number
           name: string | null
+          notes: string | null
           production_order_id: number | null
+          remission_guide_code: string | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
           created_by: string
           id?: number
           name?: string | null
+          notes?: string | null
           production_order_id?: number | null
+          remission_guide_code?: string | null
         }
         Update: {
           code?: string | null
@@ -6602,7 +7590,9 @@ export type Database = {
           created_by?: string
           id?: number
           name?: string | null
+          notes?: string | null
           production_order_id?: number | null
+          remission_guide_code?: string | null
         }
         Relationships: [
           {
@@ -6621,6 +7611,46 @@ export type Database = {
           },
         ]
       }
+      stock_movement_request_invoices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: number
+          invoice_id: number
+          stock_movement_request_id: number
+        }
+        ComputedFields: never
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          invoice_id: number
+          stock_movement_request_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          invoice_id?: number
+          stock_movement_request_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movement_request_invoices_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: true
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movement_request_invoices_stock_movement_request_id_fkey"
+            columns: ["stock_movement_request_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movement_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movement_request_situations: {
         Row: {
           created_at: string
@@ -6635,6 +7665,7 @@ export type Database = {
           stock_movement_request_id: number
           warehouse_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string
@@ -6708,6 +7739,7 @@ export type Database = {
           out_warehouse_id: number
           updated_at: string | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string
@@ -6752,10 +7784,12 @@ export type Database = {
           movement_type: number
           product_variation_id: number
           quantity: number
+          stock_entry_id: number | null
           stock_type_id: number | null
           vinculated_movement_id: number | null
           warehouse_id: number
         }
+        ComputedFields: never
         Insert: {
           completed: boolean
           created_at?: string | null
@@ -6766,6 +7800,7 @@ export type Database = {
           movement_type: number
           product_variation_id: number
           quantity: number
+          stock_entry_id?: number | null
           stock_type_id?: number | null
           vinculated_movement_id?: number | null
           warehouse_id: number
@@ -6780,6 +7815,7 @@ export type Database = {
           movement_type?: number
           product_variation_id?: number
           quantity?: number
+          stock_entry_id?: number | null
           stock_type_id?: number | null
           vinculated_movement_id?: number | null
           warehouse_id?: number
@@ -6804,6 +7840,13 @@ export type Database = {
             columns: ["product_variation_id"]
             isOneToOne: false
             referencedRelation: "variations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_stock_entry_id_fkey"
+            columns: ["stock_entry_id"]
+            isOneToOne: false
+            referencedRelation: "stock_entries"
             referencedColumns: ["id"]
           },
           {
@@ -6846,6 +7889,7 @@ export type Database = {
           write_date: string | null
           write_uid: number | null
         }
+        ComputedFields: never
         Insert: {
           company_id?: number | null
           create_date?: string | null
@@ -6887,6 +7931,7 @@ export type Database = {
           permission_id: number
           subscription_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -6925,6 +7970,7 @@ export type Database = {
           name: string
           number: number
         }
+        ComputedFields: never
         Insert: {
           active?: boolean
           code: string
@@ -6950,6 +7996,7 @@ export type Database = {
           supplier_class_id: number
           supplier_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -6985,13 +8032,16 @@ export type Database = {
           created_by: string | null
           id: number
           material_id: number
+          material_variation_id: number
           supplier_quotation_id: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string | null
           id?: number
           material_id: number
+          material_variation_id: number
           supplier_quotation_id: number
         }
         Update: {
@@ -6999,6 +8049,7 @@ export type Database = {
           created_by?: string | null
           id?: number
           material_id?: number
+          material_variation_id?: number
           supplier_quotation_id?: number
         }
         Relationships: [
@@ -7014,6 +8065,13 @@ export type Database = {
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_quotation_consumptions_material_variation_id_fkey"
+            columns: ["material_variation_id"]
+            isOneToOne: false
+            referencedRelation: "material_variations"
             referencedColumns: ["id"]
           },
           {
@@ -7037,6 +8095,7 @@ export type Database = {
           supplier_service_id: number | null
           voucher_url: string | null
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string
@@ -7113,6 +8172,7 @@ export type Database = {
           supplier_id: number
           warehouse_id: number | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -7183,6 +8243,7 @@ export type Database = {
           status_id: number
           supplier_service_id: number
         }
+        ComputedFields: never
         Insert: {
           bad_quantity?: number | null
           created_at?: string
@@ -7260,6 +8321,7 @@ export type Database = {
           supplier_service_id: number
           unit_cost: number
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           id?: number
@@ -7308,6 +8370,7 @@ export type Database = {
           description: string
           id: number
           material_id: number | null
+          material_variation_id: number | null
           module_id: number
           price_includes_tax: boolean | null
           production_order_id: number | null
@@ -7320,6 +8383,7 @@ export type Database = {
           supplier_quotation_id: number
           supplier_type_id: number
         }
+        ComputedFields: never
         Insert: {
           closed_short?: boolean
           code?: string | null
@@ -7327,6 +8391,7 @@ export type Database = {
           description: string
           id?: number
           material_id?: number | null
+          material_variation_id?: number | null
           module_id: number
           price_includes_tax?: boolean | null
           production_order_id?: number | null
@@ -7346,6 +8411,7 @@ export type Database = {
           description?: string
           id?: number
           material_id?: number | null
+          material_variation_id?: number | null
           module_id?: number
           price_includes_tax?: boolean | null
           production_order_id?: number | null
@@ -7364,6 +8430,13 @@ export type Database = {
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_services_material_variation_id_fkey"
+            columns: ["material_variation_id"]
+            isOneToOne: false
+            referencedRelation: "material_variations"
             referencedColumns: ["id"]
           },
           {
@@ -7422,16 +8495,17 @@ export type Database = {
           address: string | null
           code: string | null
           created_at: string
-          email: string
+          email: string | null
           id: number
           phone: number
           supplier_type_id: number
         }
+        ComputedFields: never
         Insert: {
           address?: string | null
           code?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           id: number
           phone: number
           supplier_type_id: number
@@ -7440,7 +8514,7 @@ export type Database = {
           address?: string | null
           code?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           id?: number
           phone?: number
           supplier_type_id?: number
@@ -7469,6 +8543,31 @@ export type Database = {
           },
         ]
       }
+      support_request_reads: {
+        Row: {
+          last_read_at: string
+          last_read_message_id: string | null
+          suggestion_id: string
+          updated_at: string
+          user_id: string
+        }
+        ComputedFields: never
+        Insert: {
+          last_read_at: string
+          last_read_message_id?: string | null
+          suggestion_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_read_at?: string
+          last_read_message_id?: string | null
+          suggestion_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           code: string
@@ -7477,6 +8576,7 @@ export type Database = {
           name: string
           type: string | null
         }
+        ComputedFields: never
         Insert: {
           code: string
           created_at?: string
@@ -7501,6 +8601,7 @@ export type Database = {
           is_active: boolean
           name: string
         }
+        ComputedFields: never
         Insert: {
           code: string
           description?: string | null
@@ -7524,6 +8625,7 @@ export type Database = {
           name: string
           term_group_id: number | null
         }
+        ComputedFields: never
         Insert: {
           id?: number
           is_active?: boolean | null
@@ -7555,6 +8657,7 @@ export type Database = {
           slug: string | null
           term_id: number | null
         }
+        ComputedFields: never
         Insert: {
           count?: number | null
           description?: string | null
@@ -7582,6 +8685,7 @@ export type Database = {
           module_id: number
           name: string
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -7614,6 +8718,7 @@ export type Database = {
           id: number
           user_id: string
         }
+        ComputedFields: never
         Insert: {
           capability_id: number
           id?: number
@@ -7647,6 +8752,7 @@ export type Database = {
           id: number
           user_id: string
         }
+        ComputedFields: never
         Insert: {
           function_id: number
           id: number
@@ -7694,6 +8800,7 @@ export type Database = {
           wp_hash: string | null
           wp_id: number | null
         }
+        ComputedFields: never
         Insert: {
           account_id?: number | null
           auth_user_id?: string | null
@@ -7754,6 +8861,7 @@ export type Database = {
           wp_hash: string | null
           wp_id: number | null
         }
+        ComputedFields: never
         Insert: {
           account_id?: number | null
           auth_user_id?: string | null
@@ -7800,6 +8908,7 @@ export type Database = {
           role_id: number
           user_id: string
         }
+        ComputedFields: never
         Insert: {
           id?: number
           role_id: number
@@ -7839,6 +8948,7 @@ export type Database = {
           valor_atributo: string | null
           valor_atributo_id: number | null
         }
+        ComputedFields: never
         Insert: {
           atributo?: string | null
           atributo_id?: number | null
@@ -7869,6 +8979,7 @@ export type Database = {
           product_variation_id: number
           term_id: number
         }
+        ComputedFields: never
         Insert: {
           id?: number
           product_variation_id: number
@@ -7906,6 +9017,7 @@ export type Database = {
           product_id: number
           sku: string | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           created_at?: string
@@ -7955,6 +9067,7 @@ export type Database = {
           updated_at: string | null
           updated_by: string | null
         }
+        ComputedFields: never
         Insert: {
           channel_id: number
           content_json?: string | null
@@ -7963,7 +9076,7 @@ export type Database = {
           draft_json?: string | null
           draft_updated_at?: string | null
           draft_updated_by?: string | null
-          has_pending_draft?: boolean | null
+          has_pending_draft?: never
           id?: number
           is_active?: boolean
           published_at?: string | null
@@ -7983,7 +9096,7 @@ export type Database = {
           draft_json?: string | null
           draft_updated_at?: string | null
           draft_updated_by?: string | null
-          has_pending_draft?: boolean | null
+          has_pending_draft?: never
           id?: number
           is_active?: boolean
           published_at?: string | null
@@ -8035,6 +9148,7 @@ export type Database = {
           name: string
           url: string
         }
+        ComputedFields: never
         Insert: {
           created_at?: string
           created_by?: string
@@ -8077,6 +9191,7 @@ export type Database = {
           state_id: number
           supplier_id: number | null
         }
+        ComputedFields: never
         Insert: {
           address: string
           address_reference?: string | null
@@ -8125,6 +9240,7 @@ export type Database = {
           SKU: string | null
           Tipo: string | null
         }
+        ComputedFields: never
         Insert: {
           ID?: number | null
           "Precio normal"?: number | null
@@ -8149,6 +9265,7 @@ export type Database = {
           woo_id: string | null
           woo_instance: number | null
         }
+        ComputedFields: never
         Insert: {
           code?: string | null
           product_id?: number | null
@@ -8174,6 +9291,7 @@ export type Database = {
           title: string
           woo_id: string | null
         }
+        ComputedFields: never
         Insert: {
           instance_id?: number | null
           name?: string | null
@@ -8205,6 +9323,7 @@ export type Database = {
           total_spent: number | null
           user_id: string | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "orders_user_id_fkey"
@@ -8230,6 +9349,7 @@ export type Database = {
           total_discount: number | null
           total_revenue: number | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "orders_branch_id_fkey"
@@ -8259,6 +9379,7 @@ export type Database = {
           total_quantity: number | null
           total_revenue: number | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "fk_order_products_product_variation_id_product_variations_id"
@@ -8296,6 +9417,7 @@ export type Database = {
           total_quantity_returned: number | null
           total_refund_amount: number | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "fk_product_variations_product_id_products_id"
@@ -8325,6 +9447,7 @@ export type Database = {
           order_id: number | null
           total_pagado: number | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "fk_order_payment_order_id_orders_id"
@@ -8358,6 +9481,7 @@ export type Database = {
           virtual_stock: number | null
           warehouse_id: number | null
         }
+        ComputedFields: never
         Insert: {
           id?: number | null
           product_variation_id?: number | null
@@ -8410,6 +9534,7 @@ export type Database = {
           orders_quantity: number | null
           points: number | null
         }
+        ComputedFields: never
         Relationships: []
       }
       vw_rpt_order_customers: {
@@ -8423,6 +9548,7 @@ export type Database = {
           order_id: number | null
           user_id: string | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "orders_document_type_fkey"
@@ -8456,6 +9582,7 @@ export type Database = {
           sku: string | null
           warehouse_id: number | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "fk_order_products_order_id_orders_id"
@@ -8511,6 +9638,7 @@ export type Database = {
           payment_method_id: number | null
           payment_method_name: string | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "fk_order_payment_order_id_orders_id"
@@ -8576,6 +9704,7 @@ export type Database = {
           total: number | null
           user_id: string | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "order_situations_situation_id_fkey"
@@ -8641,6 +9770,7 @@ export type Database = {
           status_id: number | null
           total_refund_amount: number | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "returns_created_by_fkey"
@@ -8706,6 +9836,7 @@ export type Database = {
           warehouse_id: number | null
           warehouse_name: string | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "fk_product_stock_product_variation_id_product_variations_id"
@@ -8746,6 +9877,7 @@ export type Database = {
           stock_total: number | null
           warehouse_ids: number[] | null
         }
+        ComputedFields: never
         Relationships: [
           {
             foreignKeyName: "fk_product_stock_product_variation_id_product_variations_id"
@@ -8793,7 +9925,22 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      cancel_expired_orders: { Args: never; Returns: undefined }
+      audit_log_ensure_partitions: {
+        Args: { p_months_ahead?: number }
+        Returns: string[]
+      }
+      audit_log_secure_partition: {
+        Args: { p_partition: unknown }
+        Returns: undefined
+      }
+      audit_set_actor: {
+        Args: { p_id?: string; p_ref?: string; p_source: string }
+        Returns: undefined
+      }
+      cancel_expired_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       comprueba_variacion: {
         Args: { p_term_ids: number[]; p_variation_id: number }
         Returns: boolean
@@ -8837,7 +9984,45 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_asignar_tipo_cli: {
+        Args: { p_account_id: number }
+        Returns: undefined
+      }
       fn_category_path: { Args: { p_category_id: number }; Returns: string }
+      fn_chatbot_prompt_block_check: {
+        Args: { p_original?: string; p_text: string }
+        Returns: Json
+      }
+      fn_chatbot_prompt_block_order: {
+        Args: {
+          p_row: Omit<
+            Database["public"]["Tables"]["chatbot_prompt_blocks"]["Row"],
+            Database["public"]["Tables"]["chatbot_prompt_blocks"]["ComputedFields"]
+          >
+        }
+        Returns: number
+      }
+      fn_chatbot_prompt_setting_check: {
+        Args: {
+          p_row: Omit<
+            Database["public"]["Tables"]["chatbot_prompt_settings"]["Row"],
+            Database["public"]["Tables"]["chatbot_prompt_settings"]["ComputedFields"]
+          >
+          p_value: string
+        }
+        Returns: Json
+      }
+      fn_chatbot_template_keys: { Args: { p_text: string }; Returns: string[] }
+      fn_chatbot_template_set_tags: {
+        Args: { p_tags: string[]; p_template_id: number; p_topic: string }
+        Returns: string
+      }
+      fn_chatbot_template_slug: { Args: { p_text: string }; Returns: string }
+      fn_chatbot_template_tag_names: {
+        Args: { p_template_id: number }
+        Returns: string[]
+      }
+      fn_chatbot_template_when: { Args: { p_text: string }; Returns: string }
       fn_chbot_active_session: {
         Args: {
           p_channel_id: number
@@ -8885,9 +10070,17 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      fn_chbot_cart_ttl: { Args: never; Returns: string }
+      fn_chbot_cart_ttl: { Args: Record<PropertyKey, never>; Returns: string }
+      fn_chbot_category_sizes: {
+        Args: { p_stock_type_id: number; p_warehouse_id: number }
+        Returns: {
+          category_id: number
+          con_talla: number
+          sin_talla: number
+        }[]
+      }
       fn_chbot_channel_config: {
-        Args: never
+        Args: Record<PropertyKey, never>
         Returns: {
           branch_id: number
           price_list_id: number
@@ -8904,7 +10097,31 @@ export type Database = {
         }
         Returns: number
       }
+      fn_chbot_modelo_foto: { Args: { p_html: string }; Returns: Json }
       fn_chbot_plain_detail: { Args: { p_html: string }; Returns: string }
+      fn_chbot_prompt_blocks: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      fn_chbot_prompt_blocks_sync: { Args: { p_blocks: Json }; Returns: Json }
+      fn_chbot_prompt_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      fn_chbot_size_guide_referencias: {
+        Args: { p_cat_ids?: number[]; p_guias: string[] }
+        Returns: Json
+      }
+      fn_chbot_templates: { Args: Record<PropertyKey, never>; Returns: Json }
+      fn_create_franchise_merchandise_return: {
+        Args: {
+          p_order_id: number
+          p_order_situation_id: number
+          p_payload: Json
+          p_user_id: string
+        }
+        Returns: Json
+      }
       fn_create_notification_for_permissions: {
         Args: {
           p_entity_id: string
@@ -8923,7 +10140,6 @@ export type Database = {
           active: boolean
           color: string | null
           created_at: string
-          discount: number
           id: number
           image_url: string | null
           max_points: number | null
@@ -8940,9 +10156,21 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      fn_crew_next_level_threshold: {
+        Args: { p_points: number }
+        Returns: number
+      }
       fn_crew_points_to_next_level: {
         Args: { p_points: number }
         Returns: number
+      }
+      fn_crm_bot_network_enabled: {
+        Args: { p_channel_code?: string; p_network: string }
+        Returns: boolean
+      }
+      fn_crm_bot_networks: {
+        Args: { p_channel_code?: string }
+        Returns: string[]
       }
       fn_crm_bot_should_answer: {
         Args: {
@@ -8968,8 +10196,37 @@ export type Database = {
         }
         Returns: string
       }
+      fn_crm_messaging_account_disconnect: {
+        Args: { p_external_id: string; p_network: string }
+        Returns: boolean
+      }
+      fn_crm_messaging_account_upsert: {
+        Args: { p_accounts: Json; p_actor: string }
+        Returns: Json
+      }
+      fn_crm_messaging_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      fn_crm_network_sale_types: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          configured: boolean
+          is_primary: boolean
+          network: string
+          sale_type_id: number
+        }[]
+      }
+      fn_crm_sale_type_channel: {
+        Args: { p_code: string; p_name: string }
+        Returns: string
+      }
       fn_current_user_has_any_permission: {
         Args: { p_codes: string[] }
+        Returns: boolean
+      }
+      fn_current_user_is_admin: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
       fn_ec_stock: {
@@ -8983,29 +10240,141 @@ export type Database = {
           warehouse_id: number
         }[]
       }
+      fn_explosion_check_copy: {
+        Args: {
+          p_source_ids: number[]
+          p_target_id: number
+          p_target_model_code: string
+        }
+        Returns: undefined
+      }
+      fn_explosion_check_exceptions: {
+        Args: { p_explosion_id: number }
+        Returns: undefined
+      }
       fn_explosion_description: {
         Args: { p_explosion_id: number }
         Returns: string
+      }
+      fn_explosion_for_variation: {
+        Args: { p_variation_id: number }
+        Returns: number
       }
       fn_explosion_material_quantity: {
         Args: { p_explosion_material_id: number; p_variation_id: number }
         Returns: number
       }
+      fn_explosion_pending_ids: {
+        Args: { p_product_id: number }
+        Returns: number[]
+      }
+      fn_explosion_resolve_product: {
+        Args: {
+          p_product_id: number
+          p_self: number
+          p_variation_ids: number[]
+        }
+        Returns: number
+      }
+      fn_explosion_sync_variations: {
+        Args: { p_explosion_id: number }
+        Returns: undefined
+      }
+      fn_fch_allocate_return_lines: {
+        Args: {
+          p_exclude_return_id?: number
+          p_order_id: number
+          p_products: Json
+        }
+        Returns: Json
+      }
+      fn_fch_append_note: {
+        Args: { p_current: string; p_note: string }
+        Returns: string
+      }
       fn_fch_credit_business_account: {
         Args: { p_account_id: number }
         Returns: number
+      }
+      fn_fch_error: {
+        Args: {
+          p_error_code: string
+          p_extra?: Json
+          p_message: string
+          p_status: number
+        }
+        Returns: Json
+      }
+      fn_fch_franchise_user: {
+        Args: { p_account_id: number; p_order_id: number }
+        Returns: string
+      }
+      fn_fch_lima_iso: { Args: { p_ts: string }; Returns: string }
+      fn_fch_merchandise_return_json: {
+        Args: { p_return_id: number }
+        Returns: Json
+      }
+      fn_fch_order_product_available: {
+        Args: { p_exclude_return_id?: number; p_order_product_id: number }
+        Returns: number
+      }
+      fn_fch_return_type_id: { Args: { p_order_id: number }; Returns: number }
+      fn_fch_rtu_situation: {
+        Args: { p_code: string }
+        Returns: {
+          module_id: number
+          situation_id: number
+          status_id: number
+        }[]
+      }
+      fn_fch_validate_return_products: {
+        Args: { p_products: Json }
+        Returns: Json
+      }
+      fn_franchise_returned_qty: {
+        Args: { p_exclude_return_id?: number; p_order_product_id: number }
+        Returns: {
+          in_transit_qty: number
+          returned_qty: number
+        }[]
       }
       fn_get_supplier_profile_id_by_document: {
         Args: { p_doc_number: string; p_doc_type_code: string }
         Returns: number
       }
+      fn_get_support_request_reads: { Args: { p_ids: string[] }; Returns: Json }
       fn_is_credit_business_account: {
         Args: { p_business_account_id: number }
         Returns: boolean
       }
-      fn_low_stock_threshold: { Args: never; Returns: number }
-      fn_min_stock_external_channel_codes: { Args: never; Returns: string[] }
-      fn_min_stock_external_default: { Args: never; Returns: number }
+      fn_low_stock_threshold: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      fn_material_single_variation: {
+        Args: { p_material_id: number }
+        Returns: number
+      }
+      fn_material_variation_fingerprint: {
+        Args: { p_material_variation_id: number }
+        Returns: string
+      }
+      fn_material_variation_label: {
+        Args: { p_material_variation_id: number }
+        Returns: string
+      }
+      fn_material_variation_terms_label: {
+        Args: { p_material_variation_id: number }
+        Returns: string
+      }
+      fn_min_stock_external_channel_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
+      fn_min_stock_external_default: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       fn_move_service_material_stock: {
         Args: {
           p_from_material_id: number
@@ -9013,6 +10382,18 @@ export type Database = {
           p_to_material_id: number
         }
         Returns: undefined
+      }
+      fn_move_service_material_variation_stock: {
+        Args: {
+          p_from_variation_id: number
+          p_service_id: number
+          p_to_variation_id: number
+        }
+        Returns: undefined
+      }
+      fn_next_material_variation_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       fn_next_production_order_code: {
         Args: { p_class_id: number }
@@ -9022,7 +10403,12 @@ export type Database = {
         Args: { p_prefix: string }
         Returns: string
       }
+      fn_normalizar_documento: {
+        Args: { p_document_number: string }
+        Returns: string
+      }
       fn_normalize_pe_phone: { Args: { p_raw: string }; Returns: string }
+      fn_pe_phone_local: { Args: { p_phone: number }; Returns: number }
       fn_permission_min_level: { Args: { p_code: string }; Returns: number }
       fn_production_order_code_prefix: {
         Args: { p_class_id: number }
@@ -9060,6 +10446,10 @@ export type Database = {
         Args: { p_item_id: number }
         Returns: number
       }
+      fn_production_order_item_recipe_stale: {
+        Args: { p_item_id: number }
+        Returns: string
+      }
       fn_production_order_item_route_done: {
         Args: { p_order_id: number }
         Returns: {
@@ -9068,6 +10458,10 @@ export type Database = {
         }[]
       }
       fn_production_order_item_snapshot_materials: {
+        Args: { p_item_id: number }
+        Returns: undefined
+      }
+      fn_production_order_item_snapshot_processes: {
         Args: { p_item_id: number }
         Returns: undefined
       }
@@ -9105,6 +10499,10 @@ export type Database = {
           steps_total: number
         }[]
       }
+      fn_production_order_stale_items: {
+        Args: { p_production_order_id: number }
+        Returns: Json
+      }
       fn_production_order_status: {
         Args: { p_order_id: number }
         Returns: string
@@ -9138,7 +10536,10 @@ export type Database = {
           supplier_service_id: number
         }[]
       }
-      fn_refresh_report_mviews: { Args: never; Returns: undefined }
+      fn_refresh_report_mviews: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       fn_register_service_material_stock: {
         Args: { p_situation_id: number; p_warehouse_id: number }
         Returns: undefined
@@ -9146,6 +10547,10 @@ export type Database = {
       fn_replace_explosion_materials: {
         Args: { p_explosion_id: number; p_materials: Json }
         Returns: number
+      }
+      fn_replace_explosion_processes: {
+        Args: { p_explosion_id: number; p_processes: Json }
+        Returns: undefined
       }
       fn_replace_production_order_items: {
         Args: {
@@ -9172,7 +10577,15 @@ export type Database = {
         }
         Returns: boolean
       }
-      fn_rpt_default_return_situations: { Args: never; Returns: number[] }
+      fn_rpt_codes: {
+        Args: { p_code: string; p_codes: string[] }
+        Returns: string[]
+      }
+      fn_rpt_default_return_situations: {
+        Args: Record<PropertyKey, never>
+        Returns: number[]
+      }
+      fn_rpt_ids: { Args: { p_id: number; p_ids: number[] }; Returns: number[] }
       fn_subscription_permissions_materialize: {
         Args: { p_permission_id: number }
         Returns: number
@@ -9181,7 +10594,10 @@ export type Database = {
         Args: { p_quotation_id: number }
         Returns: string
       }
-      fn_supplier_service_done_order: { Args: never; Returns: number }
+      fn_supplier_service_done_order: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       fn_supplier_service_has_advanced: {
         Args: { p_service_id: number }
         Returns: boolean
@@ -9218,15 +10634,50 @@ export type Database = {
         Args: { p_service_id: number }
         Returns: number
       }
-      fn_supplier_service_payable_order: { Args: never; Returns: number }
+      fn_supplier_service_payable_order: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       fn_supplier_service_requested_quantity: {
         Args: { p_service_id: number }
         Returns: number
       }
-      fn_supplier_service_stock_situation_code: { Args: never; Returns: string }
+      fn_supplier_service_stock_situation_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       fn_sync_production_order_material_consumption: {
         Args: { p_production_id: number }
         Returns: undefined
+      }
+      fn_update_franchise_merchandise_return: {
+        Args: { p_payload: Json; p_return_id: number; p_user_id: string }
+        Returns: Json
+      }
+      fn_usage_month_rows: {
+        Args: { p_month: string; p_tenant_id?: number }
+        Returns: {
+          dim: string
+          extra: Json
+          is_snapshot: boolean
+          metric: string
+          month: string
+          tenant_code: string
+          tenant_is_active: boolean
+          tenant_name: string
+          value: number
+        }[]
+      }
+      fn_usage_tenants: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          code: string
+          is_active: boolean
+          name: string
+          plan_code: string
+          plan_ends_at: string
+          plan_name: string
+        }[]
       }
       fn_users_with_permissions: {
         Args: { p_permission_codes: string[] }
@@ -9285,6 +10736,7 @@ export type Database = {
           p_brand_id?: number
           p_category?: number
           p_category_ids?: number[]
+          p_has_promotional_img?: boolean
           p_max_price?: number
           p_maxstock?: number
           p_min_price?: number
@@ -9299,7 +10751,7 @@ export type Database = {
         }
         Returns: Json
       }
-      get_sales_form_data: { Args: never; Returns: Json }
+      get_sales_form_data: { Args: Record<PropertyKey, never>; Returns: Json }
       get_stock_movement_requests: {
         Args: {
           p_page?: number
@@ -9368,6 +10820,7 @@ export type Database = {
           p_code?: string
           p_description: string
           p_material_id?: number
+          p_material_variation_id?: number
           p_measurement_unit?: string
           p_new_material?: Json
           p_price?: number
@@ -9397,6 +10850,19 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_adjust_customer_points: {
+        Args: {
+          p_account_id: number
+          p_note?: string
+          p_quantity?: number
+          p_target?: number
+        }
+        Returns: Json
+      }
+      sp_assign_explosion_to_products: {
+        Args: { p_explosion_id: number; p_product_ids: number[] }
+        Returns: Json
+      }
       sp_change_order_products: {
         Args: {
           p_branch_id: number
@@ -9422,7 +10888,10 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_chbot_cleanup_expired_sessions: { Args: never; Returns: undefined }
+      sp_chbot_cleanup_expired_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       sp_chbot_get_cart: {
         Args: {
           p_channel_id: number
@@ -9476,6 +10945,10 @@ export type Database = {
           p_phone_number?: number
           p_whatsapp_user_id?: string
         }
+        Returns: Json
+      }
+      sp_chbot_get_size_guide: {
+        Args: { p_busqueda?: string; p_product_id?: number }
         Returns: Json
       }
       sp_chbot_get_user:
@@ -9633,9 +11106,12 @@ export type Database = {
       }
       sp_create_explosion: {
         Args: {
+          p_copied_from_ids?: number[]
           p_description?: string
           p_materials?: Json
           p_model_code?: string
+          p_processes?: Json
+          p_product_id?: number
           p_variation_ids?: number[]
         }
         Returns: Json
@@ -9658,6 +11134,14 @@ export type Database = {
           p_items: Json
           p_user_warehouse_id?: number
         }
+        Returns: Json
+      }
+      sp_create_material_term: {
+        Args: { p_group_id: number; p_name: string }
+        Returns: Json
+      }
+      sp_create_material_term_group: {
+        Args: { p_code: string; p_name: string }
         Returns: Json
       }
       sp_create_movement: {
@@ -9709,7 +11193,10 @@ export type Database = {
         Args: {
           p_active?: boolean
           p_business_account_id: number
+          p_description?: string
+          p_image_url?: string
           p_name: string
+          p_requires_voucher?: boolean
         }
         Returns: Json
       }
@@ -9790,12 +11277,30 @@ export type Database = {
         Args: {
           p_created_by: string
           p_items: Json
+          p_notes?: string
+          p_remission_guide_code?: string
           p_user_warehouse_id?: number
         }
         Returns: Json
       }
       sp_create_stock_type: {
         Args: { p_code: string; p_name: string }
+        Returns: Json
+      }
+      sp_create_supplier: {
+        Args: {
+          p_address?: string
+          p_class_ids?: number[]
+          p_document_number: string
+          p_document_type_id: number
+          p_email?: string
+          p_last_name?: string
+          p_last_name2?: string
+          p_middle_name?: string
+          p_name: string
+          p_phone: number
+          p_supplier_type_id?: number
+        }
         Returns: Json
       }
       sp_create_supplier_quotation: {
@@ -9815,6 +11320,7 @@ export type Database = {
           p_code?: string
           p_description: string
           p_material_id?: number
+          p_material_variation_id?: number
           p_measurement_unit?: string
           p_new_material?: Json
           p_price?: number
@@ -9838,6 +11344,7 @@ export type Database = {
           p_code?: string
           p_description: string
           p_material_id?: number
+          p_material_variation_id?: number
           p_measurement_unit?: string
           p_new_material?: Json
           p_price?: number
@@ -9916,6 +11423,106 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_crm_chatbot_prompt_block_create: {
+        Args: {
+          p_content: string
+          p_heading_key: string
+          p_tags?: string[]
+          p_title: string
+        }
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_block_delete: {
+        Args: { p_id: number }
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_block_history: {
+        Args: { p_id: number }
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_block_restore: {
+        Args: { p_id: number }
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_block_save: {
+        Args: {
+          p_content: string
+          p_expected_updated_at?: string
+          p_id: number
+          p_tags?: string[]
+          p_title?: string
+        }
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_block_set_active: {
+        Args: { p_active: boolean; p_id: number }
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_blocks_list: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_setting_history: {
+        Args: { p_setting_code: string }
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_setting_save_draft: {
+        Args: {
+          p_expected_updated_at?: string
+          p_setting_code: string
+          p_value: string
+        }
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_settings_discard: {
+        Args: { p_setting_code?: string }
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_settings_list: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      sp_crm_chatbot_prompt_settings_publish: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      sp_crm_chatbot_tags_list: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      sp_crm_chatbot_template_create: {
+        Args: {
+          p_content: string
+          p_en_observacion?: boolean
+          p_name: string
+          p_tags?: string[]
+          p_topic: string
+        }
+        Returns: Json
+      }
+      sp_crm_chatbot_template_delete: { Args: { p_id: number }; Returns: Json }
+      sp_crm_chatbot_template_set_observacion: {
+        Args: { p_en_observacion: boolean; p_id: number }
+        Returns: Json
+      }
+      sp_crm_chatbot_template_set_sale_sola: {
+        Args: { p_id: number; p_sale_sola: boolean }
+        Returns: Json
+      }
+      sp_crm_chatbot_template_update: {
+        Args: {
+          p_content: string
+          p_expected_updated_at?: string
+          p_id: number
+          p_tags?: string[]
+          p_topic?: string
+        }
+        Returns: Json
+      }
+      sp_crm_chatbot_templates_list: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       sp_crm_conversation_thread: {
         Args: {
           p_before_id?: number
@@ -9939,12 +11546,14 @@ export type Database = {
         Args: {
           p_assigned_to?: string
           p_channel_code?: string
+          p_network?: string
           p_page?: number
           p_search?: string
           p_situation_id?: number
           p_size?: number
           p_taken?: boolean
           p_unassigned?: boolean
+          p_window_open?: boolean
         }
         Returns: Json
       }
@@ -9966,6 +11575,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_crm_messaging_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       sp_crm_send_precheck: {
         Args: {
           p_channel_id: number
@@ -9984,6 +11597,14 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_crm_set_network_bot_enabled: {
+        Args: { p_enabled: boolean; p_network: string }
+        Returns: Json
+      }
+      sp_crm_set_network_sale_type: {
+        Args: { p_network: string; p_sale_type_id?: number }
+        Returns: Json
+      }
       sp_crm_take_conversation: {
         Args: {
           p_channel_id: number
@@ -9997,7 +11618,6 @@ export type Database = {
         Args: {
           p_active?: boolean
           p_color?: string
-          p_discount?: number
           p_id?: number
           p_image_url?: string
           p_max_points?: number
@@ -10009,6 +11629,10 @@ export type Database = {
         Returns: Json
       }
       sp_delete_business_account: { Args: { p_id: number }; Returns: Json }
+      sp_delete_material: { Args: { p_material_id: number }; Returns: Json }
+      sp_delete_material_class: { Args: { p_class_id: number }; Returns: Json }
+      sp_delete_material_term: { Args: { p_id: number }; Returns: Json }
+      sp_delete_material_term_group: { Args: { p_id: number }; Returns: Json }
       sp_delete_payment_method: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_list: { Args: { p_id: number }; Returns: Json }
       sp_delete_price_rules: { Args: { p_ids: number[] }; Returns: Json }
@@ -10213,11 +11837,67 @@ export type Database = {
       sp_fch_apply_franchise_sale: { Args: { p_items: Json }; Returns: Json }
       sp_fch_apply_quantity_adjustment: {
         Args: {
-          p_action: string
+          p_cause: string
           p_note?: string
           p_pending_request_id: number
           p_user_id: string
         }
+        Returns: Json
+      }
+      sp_fch_cancel_merchandise_return: {
+        Args: { p_code: string; p_note?: string }
+        Returns: Json
+      }
+      sp_fch_get_customer: {
+        Args: { p_document_number: string; p_document_type_code: string }
+        Returns: Json
+      }
+      sp_fch_get_merchandise_returns: {
+        Args: { p_codes: string[] }
+        Returns: Json
+      }
+      sp_fch_get_order_quantity_adjustments: {
+        Args: { p_order_id: number; p_skus?: string[] }
+        Returns: Json
+      }
+      sp_fch_get_quantity_adjustments_list: {
+        Args: { p_page?: number; p_size?: number; p_status?: string }
+        Returns: Json
+      }
+      sp_fch_register_merchandise_return: {
+        Args: {
+          p_code: string
+          p_note?: string
+          p_order_id: number
+          p_products: Json
+          p_return_date?: string
+          p_tenant_reference: string
+        }
+        Returns: Json
+      }
+      sp_fch_request_quantity_adjustment: {
+        Args: {
+          p_order_id: number
+          p_order_product_id: number
+          p_received_quantity: number
+          p_sent_quantity: number
+          p_sku: string
+          p_tenant_reference: string
+        }
+        Returns: Json
+      }
+      sp_fch_return_results_claim: { Args: { p_limit?: number }; Returns: Json }
+      sp_fch_return_results_mark: {
+        Args: {
+          p_error?: string
+          p_id: number
+          p_outcome: string
+          p_warning?: string
+        }
+        Returns: Json
+      }
+      sp_fch_update_merchandise_return: {
+        Args: { p_code: string; p_note?: string; p_products: Json }
         Returns: Json
       }
       sp_fch_upsert_franchisee_account: {
@@ -10243,6 +11923,28 @@ export type Database = {
           p_show?: boolean
           p_size?: number
         }
+        Returns: Json
+      }
+      sp_get_audit_log: {
+        Args: {
+          p_action?: string
+          p_actor_id?: string
+          p_actor_source?: string
+          p_end_date?: string
+          p_entity?: string
+          p_entity_id?: string
+          p_page?: number
+          p_row_id?: string
+          p_search?: string
+          p_size?: number
+          p_start_date?: string
+          p_table?: string
+          p_txid?: number
+        }
+        Returns: Json
+      }
+      sp_get_audit_log_actors: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       sp_get_birthday_notifications: {
@@ -10338,7 +12040,7 @@ export type Database = {
         Args: { p_page?: number; p_search?: string; p_size?: number }
         Returns: Json
       }
-      sp_get_dashboard: { Args: never; Returns: Json }
+      sp_get_dashboard: { Args: Record<PropertyKey, never>; Returns: Json }
       sp_get_document_products: {
         Args: { p_order_id?: number; p_return_id?: number }
         Returns: Json
@@ -10353,6 +12055,32 @@ export type Database = {
           p_size?: number
           p_variation_id?: number
           p_without_variation?: boolean
+        }
+        Returns: Json
+      }
+      sp_get_franchise_pending_payments: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_franchise_names?: string[]
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_status?: string
+        }
+        Returns: Json
+      }
+      sp_get_franchise_pending_reception_items: {
+        Args: { p_order_id: number }
+        Returns: Json
+      }
+      sp_get_franchise_pending_receptions: {
+        Args: {
+          p_account_ids?: number[]
+          p_only_pending?: boolean
+          p_page?: number
+          p_search?: string
+          p_size?: number
         }
         Returns: Json
       }
@@ -10434,35 +12162,21 @@ export type Database = {
         Returns: Json
       }
       sp_get_invoice_for_emit: { Args: { p_invoice_id: number }; Returns: Json }
-      sp_get_invoices:
-        | {
-            Args: {
-              p_declared?: boolean
-              p_end_date?: string
-              p_max_mount?: number
-              p_min_mount?: number
-              p_order?: string
-              p_page?: number
-              p_search?: string
-              p_size?: number
-              p_start_date?: string
-              p_type?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_declared?: boolean
-              p_max_mount?: number
-              p_min_mount?: number
-              p_order?: string
-              p_page?: number
-              p_search?: string
-              p_size?: number
-              p_type?: number
-            }
-            Returns: Json
-          }
+      sp_get_invoices: {
+        Args: {
+          p_declared?: boolean
+          p_end_date?: string
+          p_max_mount?: number
+          p_min_mount?: number
+          p_order?: string
+          p_page?: number
+          p_search?: string
+          p_size?: number
+          p_start_date?: string
+          p_types?: number[]
+        }
+        Returns: Json
+      }
       sp_get_invoices_series: {
         Args: { p_page?: number; p_search?: string; p_size?: number }
         Returns: Json
@@ -10533,6 +12247,19 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_get_material_terms: {
+        Args: { p_include_inactive?: boolean; p_search?: string }
+        Returns: Json
+      }
+      sp_get_material_variation_options: {
+        Args: {
+          p_ids?: number[]
+          p_material_id?: number
+          p_search?: string
+          p_size?: number
+        }
+        Returns: Json
+      }
       sp_get_materials: {
         Args: {
           p_material_class_id?: number
@@ -10579,7 +12306,7 @@ export type Database = {
         Args: { p_page?: number; p_search?: string; p_size?: number }
         Returns: Json
       }
-      sp_get_permissions: { Args: never; Returns: Json }
+      sp_get_permissions: { Args: Record<PropertyKey, never>; Returns: Json }
       sp_get_pos_session_close_details: {
         Args: { p_business_account_id: number; p_opened_at: string }
         Returns: Json
@@ -10673,6 +12400,16 @@ export type Database = {
           p_search?: string
           p_size?: number
           p_variation?: number
+        }
+        Returns: Json
+      }
+      sp_get_products_recipes: {
+        Args: {
+          p_category_id?: number
+          p_page?: number
+          p_recipe_state?: string
+          p_search?: string
+          p_size?: number
         }
         Returns: Json
       }
@@ -10911,7 +12648,10 @@ export type Database = {
         Args: { p_page?: number; p_search?: string; p_size?: number }
         Returns: Json
       }
-      sp_get_tenant_subscription: { Args: never; Returns: Json }
+      sp_get_tenant_subscription: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       sp_get_terms: {
         Args: {
           p_group?: number
@@ -10929,8 +12669,11 @@ export type Database = {
         Returns: Json
       }
       sp_get_user_details_by_uid: { Args: { p_uid: string }; Returns: Json }
-      sp_get_user_permissions: { Args: never; Returns: Json }
-      sp_get_user_views: { Args: never; Returns: Json }
+      sp_get_user_permissions: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      sp_get_user_views: { Args: Record<PropertyKey, never>; Returns: Json }
       sp_get_users: {
         Args: {
           p_branches?: number
@@ -11017,10 +12760,21 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_mark_all_notifications_read: { Args: never; Returns: undefined }
+      sp_mark_all_notifications_read: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       sp_mark_notification_read: {
         Args: { p_notification_id: number }
         Returns: undefined
+      }
+      sp_mark_support_request_read: {
+        Args: {
+          p_message_at?: string
+          p_message_id?: string
+          p_suggestion_id: string
+        }
+        Returns: Json
       }
       sp_open_pos_session: {
         Args: {
@@ -11043,20 +12797,32 @@ export type Database = {
           p_bad_stock_type_id?: number
           p_bad_warehouse_id?: number
           p_items?: Json
+          p_notes?: string
           p_production_order_id: number
+          p_remission_guide_code?: string
           p_stock_type_id?: number
           p_warehouse_id: number
         }
         Returns: Json
       }
+      sp_refresh_production_order_recipe: {
+        Args: { p_item_ids?: number[]; p_production_order_id: number }
+        Returns: Json
+      }
+      sp_register_coupon_usage: {
+        Args: { p_discount_id: number; p_order_id: number; p_user_id?: string }
+        Returns: Json
+      }
       sp_rpt_cashflow_over_time: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_business_account?: number
           p_end_date?: string
           p_granularity?: string
           p_movement_class_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_start_date?: string
         }
         Returns: Json
@@ -11064,13 +12830,17 @@ export type Database = {
       sp_rpt_customers_by_branch: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11080,13 +12850,17 @@ export type Database = {
       sp_rpt_customers_by_loyalty: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11096,13 +12870,17 @@ export type Database = {
       sp_rpt_customers_by_sale_type: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11112,13 +12890,17 @@ export type Database = {
       sp_rpt_customers_geo_distribution: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11128,13 +12910,17 @@ export type Database = {
       sp_rpt_customers_kpis: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11144,13 +12930,17 @@ export type Database = {
       sp_rpt_customers_new_vs_returning: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11160,13 +12950,17 @@ export type Database = {
       sp_rpt_customers_pareto: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11176,13 +12970,17 @@ export type Database = {
       sp_rpt_customers_purchase_frequency: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11192,13 +12990,17 @@ export type Database = {
       sp_rpt_customers_recency: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11218,16 +13020,24 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_rpt_dispatch_errors: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: Json
+      }
       sp_rpt_export_customers: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11237,10 +13047,12 @@ export type Database = {
       sp_rpt_export_financial_movements: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_business_account?: number
           p_end_date?: string
           p_movement_class_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_start_date?: string
         }
         Returns: Json
@@ -11256,13 +13068,17 @@ export type Database = {
       sp_rpt_export_products_by_category: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11272,13 +13088,17 @@ export type Database = {
       sp_rpt_export_products_by_product: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11288,15 +13108,19 @@ export type Database = {
       sp_rpt_export_returns: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_return_situation_ids?: number[]
           p_return_type_ids?: number[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_start_date?: string
           p_state_id?: number
         }
@@ -11305,13 +13129,17 @@ export type Database = {
       sp_rpt_export_sales: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11321,13 +13149,17 @@ export type Database = {
       sp_rpt_export_sales_detail: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11337,27 +13169,36 @@ export type Database = {
       sp_rpt_export_sellers_orders: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
         }
         Returns: Json
       }
-      sp_rpt_financial_accounts_balances: { Args: never; Returns: Json }
+      sp_rpt_financial_accounts_balances: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       sp_rpt_financial_by_branch: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_business_account?: number
           p_end_date?: string
           p_movement_class_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_start_date?: string
         }
         Returns: Json
@@ -11365,10 +13206,12 @@ export type Database = {
       sp_rpt_financial_by_class: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_business_account?: number
           p_end_date?: string
           p_movement_class_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_start_date?: string
         }
         Returns: Json
@@ -11376,10 +13219,12 @@ export type Database = {
       sp_rpt_financial_by_payment_method: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_business_account?: number
           p_end_date?: string
           p_movement_class_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_start_date?: string
         }
         Returns: Json
@@ -11387,10 +13232,12 @@ export type Database = {
       sp_rpt_financial_kpis: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_business_account?: number
           p_end_date?: string
           p_movement_class_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_start_date?: string
         }
         Returns: Json
@@ -11398,6 +13245,7 @@ export type Database = {
       sp_rpt_financial_margin_by_product: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
@@ -11405,8 +13253,11 @@ export type Database = {
           p_neighborhood_id?: number
           p_only_active_products?: boolean
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11416,11 +13267,17 @@ export type Database = {
       sp_rpt_financial_profit_kpis: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_end_date?: string
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
         }
+        Returns: Json
+      }
+      sp_rpt_franchise_stock_value: {
+        Args: { p_items: Json; p_tenant_reference?: string }
         Returns: Json
       }
       sp_rpt_inventory_summary: {
@@ -11448,13 +13305,17 @@ export type Database = {
       sp_rpt_price_rules_report: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11464,14 +13325,19 @@ export type Database = {
       sp_rpt_product_detail: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
-          p_product_id: number
+          p_price_list_codes?: string[]
+          p_product_id?: number
+          p_product_ids?: number[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11485,13 +13351,17 @@ export type Database = {
       sp_rpt_products_by_category: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11501,14 +13371,18 @@ export type Database = {
       sp_rpt_products_category_over_time: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_granularity?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11518,13 +13392,17 @@ export type Database = {
       sp_rpt_products_kpis: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11534,14 +13412,18 @@ export type Database = {
       sp_rpt_products_pareto: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_limit?: number
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11551,13 +13433,17 @@ export type Database = {
       sp_rpt_products_sales_by_size: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11567,15 +13453,19 @@ export type Database = {
       sp_rpt_returns_by_reason: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_return_situation_ids?: number[]
           p_return_type_ids?: number[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_start_date?: string
           p_state_id?: number
         }
@@ -11584,15 +13474,19 @@ export type Database = {
       sp_rpt_returns_by_type: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_return_situation_ids?: number[]
           p_return_type_ids?: number[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_start_date?: string
           p_state_id?: number
         }
@@ -11601,15 +13495,19 @@ export type Database = {
       sp_rpt_returns_kpis: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_return_situation_ids?: number[]
           p_return_type_ids?: number[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_start_date?: string
           p_state_id?: number
         }
@@ -11618,16 +13516,20 @@ export type Database = {
       sp_rpt_returns_over_time: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_granularity?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_return_situation_ids?: number[]
           p_return_type_ids?: number[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_start_date?: string
           p_state_id?: number
         }
@@ -11636,6 +13538,7 @@ export type Database = {
       sp_rpt_sales_by_dimension: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_dimension?: string
@@ -11644,9 +13547,12 @@ export type Database = {
           p_min_total?: number
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_product_id?: number
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11656,6 +13562,7 @@ export type Database = {
       sp_rpt_sales_geo_heatmap: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
@@ -11663,8 +13570,11 @@ export type Database = {
           p_map_state_id?: number
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11674,6 +13584,7 @@ export type Database = {
       sp_rpt_sales_kpis: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
@@ -11681,9 +13592,12 @@ export type Database = {
           p_min_total?: number
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_product_id?: number
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11693,6 +13607,7 @@ export type Database = {
       sp_rpt_sales_over_time: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
@@ -11701,9 +13616,12 @@ export type Database = {
           p_min_total?: number
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_product_id?: number
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11713,13 +13631,17 @@ export type Database = {
       sp_rpt_sellers_by_branch: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11729,13 +13651,17 @@ export type Database = {
       sp_rpt_sellers_kpis: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11745,14 +13671,18 @@ export type Database = {
       sp_rpt_sellers_over_time: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_granularity?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11762,13 +13692,17 @@ export type Database = {
       sp_rpt_sellers_summary: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11812,14 +13746,18 @@ export type Database = {
       sp_rpt_top_customers: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_limit?: number
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11829,6 +13767,7 @@ export type Database = {
       sp_rpt_top_products_by_category: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_category_id?: number
           p_city_id?: number
           p_country_id?: number
@@ -11836,8 +13775,11 @@ export type Database = {
           p_limit?: number
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11847,6 +13789,7 @@ export type Database = {
       sp_rpt_top_products_sales: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
@@ -11854,8 +13797,11 @@ export type Database = {
           p_metric?: string
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_situation_ids?: number[]
           p_start_date?: string
           p_state_id?: number
@@ -11865,19 +13811,27 @@ export type Database = {
       sp_rpt_top_returned_products: {
         Args: {
           p_branch_id?: number
+          p_branch_ids?: number[]
           p_city_id?: number
           p_country_id?: number
           p_end_date?: string
           p_limit?: number
           p_neighborhood_id?: number
           p_payment_method_id?: number
+          p_payment_method_ids?: number[]
           p_price_list_code?: string
+          p_price_list_codes?: string[]
           p_return_situation_ids?: number[]
           p_return_type_ids?: number[]
           p_sale_type_id?: number
+          p_sale_type_ids?: number[]
           p_start_date?: string
           p_state_id?: number
         }
+        Returns: Json
+      }
+      sp_save_material: {
+        Args: { p_material: Json; p_variations?: Json }
         Returns: Json
       }
       sp_save_role: {
@@ -11908,6 +13862,7 @@ export type Database = {
       sp_set_quotation_consumptions: {
         Args: {
           p_material_ids?: number[]
+          p_material_variation_ids?: number[]
           p_quotation_id: number
           p_warehouse_id?: number
         }
@@ -11919,6 +13874,19 @@ export type Database = {
       }
       sp_set_supplier_classes: {
         Args: { p_class_ids?: number[]; p_supplier_id: number }
+        Returns: Json
+      }
+      sp_support_broadcast_reply: {
+        Args: {
+          p_created_at?: string
+          p_message_id?: string
+          p_suggestion_code?: number
+          p_suggestion_id: string
+        }
+        Returns: undefined
+      }
+      sp_unify_explosion: {
+        Args: { p_explosion_id: number; p_product_id: number }
         Returns: Json
       }
       sp_unlink_service_from_production_order: {
@@ -11940,6 +13908,7 @@ export type Database = {
       sp_update_business_account: {
         Args: {
           p_account_branch_id?: number
+          p_account_id?: number
           p_account_number: number
           p_bank: string
           p_branch_id: number
@@ -11953,10 +13922,13 @@ export type Database = {
       }
       sp_update_explosion: {
         Args: {
+          p_copied_from_ids?: number[]
           p_description?: string
           p_id: number
           p_materials?: Json
           p_model_code?: string
+          p_processes?: Json
+          p_product_id?: number
           p_variation_ids?: number[]
         }
         Returns: Json
@@ -11995,6 +13967,14 @@ export type Database = {
             }
             Returns: undefined
           }
+      sp_update_material_term: {
+        Args: { p_id: number; p_name: string }
+        Returns: Json
+      }
+      sp_update_material_term_group: {
+        Args: { p_code: string; p_id: number; p_name: string }
+        Returns: Json
+      }
       sp_update_order_chanel_type: {
         Args: {
           p_code: string
@@ -12014,8 +13994,11 @@ export type Database = {
         Args: {
           p_active?: boolean
           p_business_account_id?: number
+          p_description?: string
           p_id: number
+          p_image_url?: string
           p_name?: string
+          p_requires_voucher?: boolean
         }
         Returns: Json
       }
@@ -12148,6 +14131,7 @@ export type Database = {
           p_description?: string
           p_id: number
           p_material_id?: number
+          p_material_variation_id?: number
           p_new_material?: Json
           p_promised_date?: string
           p_received_date?: string
@@ -12158,9 +14142,18 @@ export type Database = {
         }
         Returns: Json
       }
-      sp_validate_erp_access: { Args: never; Returns: Json }
-      tenant_allowed_permission_ids: { Args: never; Returns: number[] }
-      tenant_subscription_ids: { Args: never; Returns: number[] }
+      sp_validate_erp_access: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      tenant_allowed_permission_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: number[]
+      }
+      tenant_subscription_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: number[]
+      }
       unaccent: { Args: { "": string }; Returns: string }
       update_stock_movement_request: {
         Args: {
@@ -12191,12 +14184,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -12220,11 +14213,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -12245,11 +14238,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -12270,11 +14263,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -12287,11 +14280,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -12307,4 +14300,3 @@ export const Constants = {
     },
   },
 } as const
-
