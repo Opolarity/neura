@@ -1,4 +1,4 @@
-import { Loader2, SquarePen } from "lucide-react";
+import { Loader2, SquarePen, Trash } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ interface MaterialsTableProps {
   materials: Material[];
   loading: boolean;
   onEdit: (material: Material) => void;
+  onDelete: (material: Material) => void;
 }
 
 const formatCost = (value: number | null) =>
@@ -29,6 +30,7 @@ export const MaterialsTable = ({
   materials,
   loading,
   onEdit,
+  onDelete,
 }: MaterialsTableProps) => {
   return (
     <Table>
@@ -47,7 +49,7 @@ export const MaterialsTable = ({
           <TableHead>Unidad</TableHead>
           <TableHead className="text-right">Costo unit.</TableHead>
           <TableHead>Creado</TableHead>
-          <TableHead className="w-16" />
+          <TableHead className="w-28" />
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -137,14 +139,25 @@ export const MaterialsTable = ({
               </TableCell>
               <TableCell>{formatDate(material.createdAt)}</TableCell>
               <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(material)}
-                  aria-label={`Editar ${material.name}`}
-                >
-                  <SquarePen className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(material)}
+                    aria-label={`Editar ${material.name}`}
+                  >
+                    <SquarePen className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onDelete(material)}
+                    title="Eliminar material"
+                    aria-label={`Eliminar ${material.name}`}
+                  >
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))

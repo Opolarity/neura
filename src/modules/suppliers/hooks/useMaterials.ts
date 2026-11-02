@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "@/shared/hooks/use-toast";
+import { toastError } from "@/shared/utils/toastError";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { Material, MaterialsFilters } from "../types/materials.types";
-import { materialsListApi } from "../services/materials.service";
+import { deleteMaterialApi, materialsListApi } from "../services/materials.service";
 
 export const useMaterials = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -13,6 +14,8 @@ export const useMaterials = () => {
   });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Material | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [filters, setFilters] = useState<MaterialsFilters>({
     search: "",
     material_class_id: null,
@@ -69,6 +72,23 @@ export const useMaterials = () => {
     setPagination((prev) => ({ ...prev, p_size: size, p_page: 1 }));
   };
 
+  // ---- Eliminar (baja lógica) ---------------------------------------------
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      await deleteMaterialApi(deleteTarget.id);
+      toast({ title: "Material eliminado", variant: "success" });
+      setDeleteTarget(null);
+      await fetchMaterials();
+    } catch (error) {
+      toastError(error, "No se pudo eliminar el material");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return {
     materials,
     pagination,
@@ -81,5 +101,9 @@ export const useMaterials = () => {
     handlePageChange,
     handlePageSizeChange,
     reload: fetchMaterials,
+    deleteTarget,
+    setDeleteTarget,
+    deleting,
+    confirmDelete,
   };
 };
