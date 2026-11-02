@@ -1,1 +1,0 @@
-DROP FUNCTION IF EXISTS public.sp_get_sale_products(integer, integer, text, bigint, bigint);
