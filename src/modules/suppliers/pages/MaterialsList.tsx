@@ -21,6 +21,7 @@ import {
   SupplierOption,
 } from "../types/materials.types";
 import MaterialsHeader from "../components/materials/MaterialsHeader";
+import { MaterialDeleteDialog } from "../components/materials/MaterialDeleteDialog";
 
 const MaterialsList = () => {
   const navigate = useNavigate();
@@ -40,7 +41,10 @@ const MaterialsList = () => {
     handleApplyFilters,
     handlePageChange,
     handlePageSizeChange,
-    reload,
+    deleteTarget,
+    setDeleteTarget,
+    deleting,
+    confirmDelete,
   } = useMaterials();
 
   // Catálogos para la barra de filtros
@@ -86,6 +90,7 @@ const MaterialsList = () => {
             materials={materials}
             loading={loading}
             onEdit={openEdit}
+            onDelete={setDeleteTarget}
           />
         </CardContent>
 
@@ -105,6 +110,13 @@ const MaterialsList = () => {
         filters={filters}
         classes={classes}
         suppliers={suppliers}
+      />
+
+      <MaterialDeleteDialog
+        target={deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        deleting={deleting}
       />
 
     </div>

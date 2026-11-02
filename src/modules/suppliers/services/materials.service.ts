@@ -289,6 +289,20 @@ export const deleteMaterialClassApi = async (id: number): Promise<void> => {
   if (error) throw new Error(error.message);
 };
 
+/**
+ * Eliminar un material: baja logica (`materials.is_active = false`).
+ *
+ * Deja de salir en la lista y en los selectores; sus variaciones, stock,
+ * recetas e historial no se tocan. Si ya estaba eliminado, el SP lo rechaza.
+ */
+export const deleteMaterialApi = async (id: number): Promise<void> => {
+  const { error } = await (supabase as any).rpc("sp_delete_material", {
+    p_material_id: id,
+  });
+
+  if (error) throw new Error(error.message);
+};
+
 /** Proveedores disponibles para asignar al material. */
 export const supplierOptionsApi = async (
   search?: string | null
