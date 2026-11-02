@@ -1,8 +1,22 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {Dialog,DialogContent,DialogHeader,DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  ColorField,
+  parseColor,
+  rgbaToHex6,
+} from "@/modules/ecommerce/editor/components/color-field";
+
+// EL SELECTOR DEL EDITOR DEVUELVE rgba(...). UN COLOR OPACO SE GUARDA EN HEX,
+// QUE ES LO QUE LEE EL SELECTOR NATIVO DE LA FICHA DEL PRODUCTO; SOLO UN COLOR
+// CON TRANSPARENCIA SE GUARDA EN rgba, PORQUE EL HEX DE SEIS DIGITOS NO LA LLEVA.
+const toStoredColor = (value: string) => {
+  const rgba = parseColor(value);
+  return rgba.a < 1 ? value : `#${rgbaToHex6(rgba)}`;
+};
 
 // TIPOS DE DATOS QUE EL MODAL RECIBE DESDE LA PAGINA
 interface PromotionalTextModalProps {
@@ -49,31 +63,29 @@ const PromotionalTextModal = ({
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
-          {/* INPUT DE TEXTO + SELECTORES DE COLOR */}
-          <div className="flex items-center gap-3">
-            <Input
-              value={promoText}
-              onChange={(e) => setPromoText(e.target.value)} //TEXTO EN TIEMPO REAL
-              placeholder="TEXTO PROMOCIONAL"
-            />
-            <label className="flex items-center gap-1 text-sm whitespace-nowrap">
-              Fondo
-              <input
-                type="color"
+          {/* INPUT DE TEXTO */}
+          <Input
+            value={promoText}
+            onChange={(e) => setPromoText(e.target.value)} //TEXTO EN TIEMPO REAL
+            placeholder="TEXTO PROMOCIONAL"
+          />
+
+          {/* SELECTORES DE COLOR — LOS MISMOS DEL EDITOR DE SITIO */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-sm">Fondo</Label>
+              <ColorField
                 value={bgColor}
-                onChange={(e) => setBgColor(e.target.value)} //CTUALIZA COLOR DE FONDO
-                className="w-8 h-8 cursor-pointer rounded border"
+                onChange={(val) => setBgColor(toStoredColor(val))} //ACTUALIZA COLOR DE FONDO
               />
-            </label>
-            <label className="flex items-center gap-1 text-sm whitespace-nowrap">
-              Texto
-              <input
-                type="color"
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm">Texto</Label>
+              <ColorField
                 value={textColor}
-                onChange={(e) => setTextColor(e.target.value)} //ACTUALIZA COLOR DE TEXTO
-                className="w-8 h-8 cursor-pointer rounded border"
+                onChange={(val) => setTextColor(toStoredColor(val))} //ACTUALIZA COLOR DE TEXTO
               />
-            </label>
+            </div>
           </div>
 
           {/* PREVIEW EN VIVO — USA LOS ESTADOS PARA MOSTRAR COMO QUEDARA */}

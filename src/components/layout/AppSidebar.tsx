@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronDown, EllipsisVertical, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Store, Ticket, User } from "lucide-react";
+import { BookOpen, ChevronDown, EllipsisVertical, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Store, Ticket, User, UserPen } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { APP_PERMISSIONS_CONFIG, getFilterSidebar } from "@/app/data/permissions";
@@ -405,6 +405,17 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
                 </div>
 
                 <div className="my-1 h-px bg-white/10" />
+
+                {/* Mi perfil: sin permiso, cada usuario edita el suyo. */}
+                <Link
+                  to="/profile"
+                  onClick={() => setOpenPopoverCode(null)}
+                  data-active={pathname === "/profile"}
+                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
+                >
+                  <UserPen className="size-4" />
+                  <span>Mi perfil</span>
+                </Link>
 
                 {/* Soporte dejó de ser una pantalla y pasó a ser un grupo. El
                     título usa el mismo estilo que las etiquetas de grupo del
