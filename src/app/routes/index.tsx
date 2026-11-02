@@ -12,6 +12,7 @@ import ProtectedLayout from "./ProtectedLayout";
 import { APP_PERMISSIONS_CONFIG, getRoutes } from "@/app/data/permissions";
 import { supportRoutes } from "@/modules/support";
 import { trainingRoutes } from "@/modules/training";
+import { profileRoutes } from "@/modules/profile";
 import ReportsLayout from "@/modules/reports/pages/ReportsLayout";
 import SplashPage from "@/shared/components/splash/SplashPage";
 
@@ -82,6 +83,8 @@ export const router = createBrowserRouter([
       // Soporte queda fuera del sistema de permisos, pero sigue requiriendo sesión.
       ...supportRoutes,
       ...trainingRoutes,
+      // Mi perfil: también sin permiso, cada usuario edita el suyo.
+      ...profileRoutes,
       { path: "*", element: <NotFound /> },
     ],
   },
