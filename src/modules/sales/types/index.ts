@@ -215,6 +215,7 @@ export interface CreateOrderRequest {
   saleType: string;
   priceListId: string | null;
   shippingMethod: string | null;
+  shippingMethodId: number | null;
   shippingCost: number | null;
   countryId: string | null;
   stateId: string | null;

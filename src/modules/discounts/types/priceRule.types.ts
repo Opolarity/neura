@@ -47,6 +47,9 @@ export interface Condition {
   // franquiciados que participan en la promo de consignación, o de los que
   // quedan excluidos de la regla. Ausente o vacío = todos los franquiciados.
   tenant_references?: string[];
+  // category_in_cart / min_category_quantity
+  category_ids?: number[];
+  include_descendants?: boolean;
   [key: string]: unknown;
 }
 

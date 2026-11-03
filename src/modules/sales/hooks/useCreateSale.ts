@@ -1655,7 +1655,6 @@ export const useCreateSale = () => {
     ]);
 
     setProductsTablePage(1);
-    setSearchQuery("");
     setSelectedVariation(null);
     return { added: true };
   }, [selectedVariation, formData.priceListId, selectedStockTypeId, products, productsTableSize, salesData?.stockTypes, toast]);

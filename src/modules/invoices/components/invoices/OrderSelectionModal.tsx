@@ -28,10 +28,22 @@ interface OrderSelectionModalProps {
   onClose: () => void;
   mode?: "create" | "link";
   currentInvoiceId?: number;
+  // Con onSelect (vincular desde el formulario del comprobante) se devuelve el
+  // pedido elegido y no se navega; sin él, se abre un comprobante nuevo.
+  onSelect?: (orderId: number) => void;
 }
 
-const OrderSelectionModal = ({ isOpen, onClose, mode = "create", currentInvoiceId }: OrderSelectionModalProps) => {
+const OrderSelectionModal = ({ isOpen, onClose, mode = "create", currentInvoiceId, onSelect }: OrderSelectionModalProps) => {
   const navigate = useNavigate();
+
+  const selectOrder = (orderId: number) => {
+    if (onSelect) {
+      onSelect(orderId);
+    } else {
+      navigate(`/invoices/add?orderId=${orderId}`);
+    }
+    onClose();
+  };
   const [search, setSearch] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -97,8 +109,7 @@ const OrderSelectionModal = ({ isOpen, onClose, mode = "create", currentInvoiceI
       if (otherInvoices.length > 0) {
         setShowWarning(true);
       } else {
-        navigate(`/invoices/add?orderId=${order.id}`);
-        onClose();
+        selectOrder(order.id);
       }
     } catch (error) {
       console.error("Error checking invoices:", error);
@@ -109,8 +120,7 @@ const OrderSelectionModal = ({ isOpen, onClose, mode = "create", currentInvoiceI
 
   const handleConfirmSelection = () => {
     if (selectedOrder) {
-      navigate(`/invoices/add?orderId=${selectedOrder.id}`);
-      onClose();
+      selectOrder(selectedOrder.id);
     }
   };
 

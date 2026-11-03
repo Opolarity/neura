@@ -14,7 +14,12 @@ export const getCustomerPointsApi = async (
 
   if (error) throw error;
 
-  return (data as CustomerPointsApiResponse) ?? { page: { page: 1, size: 20, total: 0 }, data: [] };
+  // Cada fila trae total_rows: el total sin paginar.
+  const rows = data ?? [];
+  return {
+    page: { page, size, total: rows[0]?.total_rows ?? 0 },
+    data: rows,
+  };
 };
 
 export const getCustomerPointsMovementsApi = async (

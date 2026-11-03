@@ -40,7 +40,7 @@ export const GetPaymentMethodDetails = async (id: number): Promise<{ paymentMeth
     return { paymentMethod: {} as PaymentMethod }; // Placeholder
 };
 
-export const CreatePaymentMethod = async (paymentMethod: Omit<PaymentMethod, 'id'>): Promise<any> => {
+export const CreatePaymentMethod = async (paymentMethod: Omit<PaymentMethod, 'id' | 'is_active' | 'code'>): Promise<any> => {
     const data = await invokeFunction("create-payments-methods", {
         method: "POST",
         body: paymentMethod,

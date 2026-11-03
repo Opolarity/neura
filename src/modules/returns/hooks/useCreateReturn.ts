@@ -13,6 +13,7 @@ import {
     ReturnType,
     Situation,
     ReturnPayment,
+    DocumentHeader,
 } from "../types/Returns.types";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 import { toastError } from "@/shared/utils/toastError";
@@ -216,7 +217,7 @@ export const useCreateReturn = () => {
                 : await returnsService.getDocumentProducts({ order_id: selectedOrder.id });
 
             const products = response?.products ?? [];
-            const header = response?.header ?? {};
+            const header: Partial<DocumentHeader> = response?.header ?? {};
 
             const orderProductsData: OrderProduct[] = products.map((p: any) => ({
                 id: p.id,
@@ -231,7 +232,7 @@ export const useCreateReturn = () => {
 
             setOrderProducts(orderProductsData);
             setDocumentType((header.document_type || selectedOrder.document_type).toString());
-            setDocumentNumber(header.document_number || selectedOrder.document_number);
+            setDocumentNumber(header.customer_document_number || selectedOrder.document_number);
             setShippingCost(header.shipping_cost || 0);
             setOrderTotal(header.total || orderTotal);
 
