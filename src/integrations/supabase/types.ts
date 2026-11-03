@@ -12038,7 +12038,20 @@ export type Database = {
       }
       sp_get_customer_points: {
         Args: { p_page?: number; p_search?: string; p_size?: number }
-        Returns: Json
+        Returns: {
+          created_at: string
+          document_number: string
+          document_type_name: string
+          email: string
+          id: number
+          last_name: string
+          last_name2: string
+          middle_name: string
+          name: string
+          orders_quantity: number
+          points: number
+          total_rows: number
+        }[]
       }
       sp_get_dashboard: { Args: Record<PropertyKey, never>; Returns: Json }
       sp_get_document_products: {
@@ -13083,7 +13096,12 @@ export type Database = {
           p_start_date?: string
           p_state_id?: number
         }
-        Returns: Json
+        Returns: {
+          category_name: string
+          product_count: number
+          total_quantity: number
+          total_revenue: number
+        }[]
       }
       sp_rpt_export_products_by_product: {
         Args: {
@@ -13103,7 +13121,18 @@ export type Database = {
           p_start_date?: string
           p_state_id?: number
         }
-        Returns: Json
+        Returns: {
+          branch_name: string
+          brand: string
+          categories: string
+          price_list_name: string
+          product_id: number
+          product_title: string
+          sku: string
+          tags: string
+          total_quantity: number
+          total_revenue: number
+        }[]
       }
       sp_rpt_export_returns: {
         Args: {
