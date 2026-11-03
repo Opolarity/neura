@@ -210,7 +210,7 @@ export const createQuickOrderApi = async (
       ? (await getQuickOrderCatalogsApi()).shippingCosts.find((sc) => sc.id === s.shippingCostId) ?? null
       : null;
 
-  const request: CreateOrderRequest & { shippingMethodId: string | null } = {
+  const request: CreateOrderRequest = {
     documentType: String(c.documentTypeId ?? ""),
     documentNumber: c.documentNumber.trim(),
     customerName: c.firstName.trim(),
@@ -222,7 +222,7 @@ export const createQuickOrderApi = async (
     saleType: String(draft.saleTypeId ?? ""),
     priceListId: draft.priceListId ? String(draft.priceListId) : null,
     shippingMethod: draft.withShipping && s.shippingCostId ? String(s.shippingCostId) : null,
-    shippingMethodId: shippingCost?.shippingMethodId ? String(shippingCost.shippingMethodId) : null,
+    shippingMethodId: shippingCost?.shippingMethodId ?? null,
     shippingCost: draft.withShipping ? s.cost : null,
     countryId: draft.withShipping && s.countryId ? String(s.countryId) : null,
     stateId: draft.withShipping && s.stateId ? String(s.stateId) : null,

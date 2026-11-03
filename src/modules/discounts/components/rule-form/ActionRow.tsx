@@ -148,7 +148,7 @@ const TargetFilterEditor = ({
 
 export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
   const handleTypeChange = (type: ActionType) => {
-    const base: Record<string, unknown> = { type };
+    const base: ActionConfig = { type };
     switch (type) {
       case "fixed_discount_subtotal":
       case "percent_discount_subtotal":
@@ -175,7 +175,7 @@ export const ActionRow = ({ action, onChange, onRemove }: ActionRowProps) => {
       case "free_shipping":
         break;
     }
-    onChange(base as ActionConfig);
+    onChange(base);
   };
 
   const updateField = (key: string, value: unknown) => {

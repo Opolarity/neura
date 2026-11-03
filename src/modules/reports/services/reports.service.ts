@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 import { buildEndpoint } from '@/shared/utils/utils';
 import type {
   ReportsFilters,
@@ -116,8 +117,11 @@ export function multi<T>(values: T[] | null | undefined): T[] | undefined {
   return values && values.length > 0 ? values : undefined;
 }
 
-async function rpc<T>(fn: string, params?: Record<string, unknown>): Promise<T> {
-  const { data, error } = await supabase.rpc(fn, params);
+type RpcName = keyof Database['public']['Functions'];
+
+// Cada llamador arma sus params; el nombre sí se valida contra Database.
+async function rpc<T>(fn: RpcName, params?: Record<string, unknown>): Promise<T> {
+  const { data, error } = await supabase.rpc(fn, params as never);
   if (error) throw error;
   return data as T;
 }

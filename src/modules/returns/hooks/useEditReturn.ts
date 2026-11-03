@@ -8,6 +8,7 @@ import {
     ReturnProduct,
     ExchangeProduct,
     ReturnPayment,
+    DocumentHeader,
 } from '../types/Returns.types';
 import { toastError } from "@/shared/utils/toastError";
 
@@ -72,7 +73,7 @@ export const useEditReturn = () => {
 
             const response = await returnsService.getDocumentProducts({ order_id: details.order_id });
             const rawOrderProducts = response?.products ?? [];
-            const header = response?.header ?? {};
+            const header: Partial<DocumentHeader> = response?.header ?? {};
 
             const returnProductsMap = new Map(
                 (details.return_products || []).map((rp: any) => [rp.product_variation_id, rp.order_quantity])
