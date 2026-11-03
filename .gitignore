@@ -23,9 +23,15 @@ dist-ssr
 *.sln
 *.sw?
 
-#supabase edge functions
-supabase/functions
 .env
 
-# Worktrees de agentes (temporales, no aportan una vez cumplido su proposito)
-.claude/worktrees/
+# Backend: vive en neura-backend, la carpeta supabase/ no es parte de este repo
+/supabase/
+
+# Herramientas de agentes (Claude Code, Lovable): config e historial locales
+.claude/
+.lovable/
+
+# Produccion instala con npm ci (package-lock.json): los lockfiles de bun no se versionan
+bun.lock
+bun.lockb

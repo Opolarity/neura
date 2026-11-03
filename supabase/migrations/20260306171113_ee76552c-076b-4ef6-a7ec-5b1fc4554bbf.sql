@@ -1,1 +1,0 @@
-ALTER TABLE public.invoices ADD COLUMN qr_data text;
