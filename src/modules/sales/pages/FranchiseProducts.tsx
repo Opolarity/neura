@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Boxes, Download, ListFilter, Loader2, RefreshCw, Search } from "lucide-react";
+import { Boxes, Download, ListFilter, Loader2, RefreshCw, Search, SquarePen } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
 import { FRANCHISE_MODAL_PARAM, type FranchiseModal } from "../utils/salesDeepLinks";
 import { PagosConfirmarModal } from "../components/PagosConfirmarModal";
 import { CantidadesConfirmarModal } from "../components/CantidadesConfirmarModal";
 import { ErroresDespachoModal } from "../components/ErroresDespachoModal";
+import { AjustarPrecioVentaModal } from "../components/AjustarPrecioVentaModal";
 import { fetchQuantityAdjustments } from "../services/PendingQuantityAdjustments.service";
 import FranchiseFilterModal, {
   type FranchiseFilterValues,
@@ -48,6 +49,9 @@ import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import { toastError } from "@/shared/utils/toastError";
 import { ComponentPermission } from "@/shared/components/component-permission";
+
+// Solo Overtake ajusta precios: las franquicias no entran a este ERP.
+const ADJUST_PRICE_CODES = ["sales_franchise.adjust_price"];
 
 const formatCurrency = (value: number | null): string => {
   if (value === null) return "-";
@@ -116,6 +120,7 @@ const FranchiseProducts = () => {
   const [pagosModalOpen, setPagosModalOpen] = useState(false);
   const [cantidadesModalOpen, setCantidadesModalOpen] = useState(false);
   const [erroresModalOpen, setErroresModalOpen] = useState(false);
+  const [adjustingProduct, setAdjustingProduct] = useState<FranchiseProductRow | null>(null);
   // Diferencias de cantidad que esperan la confirmación del proveedor.
   const [pendingAdjustments, setPendingAdjustments] = useState(0);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
@@ -574,12 +579,15 @@ const FranchiseProducts = () => {
                 <TableHead className="text-right">Total pagado</TableHead>
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead>Franquiciado</TableHead>
+                <ComponentPermission codeIn={ADJUST_PRICE_CODES}>
+                  <TableHead>Acciones</TableHead>
+                </ComponentPermission>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-8 text-center">
+                  <TableCell colSpan={10} className="py-8 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Cargando productos...
@@ -589,7 +597,7 @@ const FranchiseProducts = () => {
               ) : error ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={10}
                     className="py-8 text-center text-destructive"
                   >
                     {error}
@@ -598,7 +606,7 @@ const FranchiseProducts = () => {
               ) : products.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={9}
+                    colSpan={10}
                     className="py-8 text-center text-muted-foreground"
                   >
                     No hay productos recibidos por franquicia.
@@ -647,6 +655,20 @@ const FranchiseProducts = () => {
                     <TableCell className="min-w-[180px]">
                       {item.franchiseName ?? "-"}
                     </TableCell>
+                    <ComponentPermission codeIn={ADJUST_PRICE_CODES}>
+                      <TableCell>
+                        {item.isFranchisee && (item.soldByFranchise ?? 0) > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            title="Ajustar precio de venta"
+                            onClick={() => setAdjustingProduct(item)}
+                          >
+                            <SquarePen className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </ComponentPermission>
                   </TableRow>
                 ))
               )}
@@ -677,6 +699,9 @@ const FranchiseProducts = () => {
                     {formatCurrency(totals.total)}
                   </TableCell>
                   <TableCell />
+                  <ComponentPermission codeIn={ADJUST_PRICE_CODES}>
+                    <TableCell />
+                  </ComponentPermission>
                 </TableRow>
               </TableFooter>
             )}
@@ -706,6 +731,13 @@ const FranchiseProducts = () => {
       <ErroresDespachoModal
         open={erroresModalOpen}
         onOpenChange={setErroresModalOpen}
+      />
+
+      <AjustarPrecioVentaModal
+        orderProductId={adjustingProduct?.id ?? null}
+        productName={adjustingProduct?.productName ?? ""}
+        onClose={() => setAdjustingProduct(null)}
+        onAdjusted={handleRefresh}
       />
 
       <FranchiseFilterModal
