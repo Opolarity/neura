@@ -25,6 +25,7 @@ import CustomerLevels from "@/modules/customers/pages/CustomerLevels";
 import Sales from "@/modules/sales/pages/Sales";
 import FranchiseProducts from "@/modules/sales/pages/FranchiseProducts";
 import FranchiseStock from "@/modules/sales/pages/FranchiseStock";
+import FranchiseReconciliation from "@/modules/sales/pages/FranchiseReconciliation";
 import FranchisePendingReception from "@/modules/sales/pages/FranchisePendingReception";
 import CreateSale from "@/modules/sales/pages/CreateSale";
 import SalesPOS from "@/modules/sales/pages/POS";
@@ -205,6 +206,7 @@ export const APP_PERMISSIONS_CONFIG = [
           { name: "Ventas de franquiciados", path: "/sales/products/franchise", code: "sales_franchise.list", element: <FranchiseProducts />, showSidebar: true, node: [] },
           { name: "Pendientes de aceptar", path: "/sales/products/franchise/pending", code: "franchise_pending_reception.list", element: <FranchisePendingReception />, showSidebar: true, node: [] },
           { name: "Stock de franquicias", path: "/stock/products/franchise", code: "franchise_stock.list", element: <FranchiseStock />, showSidebar: false, node: [] },
+          { name: "Conciliación de retornos", path: "/sales/products/franchise/reconciliation", code: "franchise_reconciliation.list", element: <FranchiseReconciliation />, showSidebar: true, node: [] },
           { name: "Añadir venta", path: "/sales/create", code: "sales.create", element: <CreateSale />, showSidebar: true, node: [] },
           { name: "Editar venta", path: "/sales/edit/:id", code: "sales.edit", element: <CreateSale />, showSidebar: false, node: [] },
           { name: "Sesiones de caja", path: "/pos", code: "pos.list", element: <POSList />, showSidebar: true, node: [] },
