@@ -60,6 +60,18 @@ export const searchClientByDocument = async (
   return data;
 };
 
+// Ficha del cliente: su UID y los datos de contacto y dirección guardados
+export const getClientProfile = async (accountId: number) => {
+  const { data } = await supabase
+    .from("profiles")
+    .select(
+      "UID, phone, phone_whatsapp, country_id, state_id, city_id, neighborhood_id, address, address_reference",
+    )
+    .eq("account_id", accountId)
+    .maybeSingle();
+  return data;
+};
+
 // Create new order
 export const createOrder = async (orderData: CreateOrderRequest) => {
   const fullLastname = [orderData.customerLastname, orderData.customerLastname2]

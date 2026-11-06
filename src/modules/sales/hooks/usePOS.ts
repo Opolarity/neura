@@ -40,12 +40,15 @@ import {
   adaptSalesFormData,
   adaptShippingCosts,
   adaptClientSearchResult,
+  adaptClientContact,
+  mergeClientPrefill,
   getIdInventoryTypeAdapter,
 } from "../adapters";
 import {
   fetchSalesFormData,
   fetchShippingCosts,
   searchClientByDocument,
+  getClientProfile,
   lookupDocument,
   fetchSaleProducts,
   getIdInventoryTypeApi,
@@ -83,6 +86,22 @@ const DEFAULT_SHIPPING: POSShippingData = {
   shippingMethodId: "",
   shippingCost: 0,
 };
+
+const CUSTOMER_PREFILL_FIELDS = ["email", "phone"] as const;
+
+const SHIPPING_PREFILL_FIELDS = [
+  "countryId",
+  "stateId",
+  "cityId",
+  "neighborhoodId",
+  "address",
+  "addressReference",
+] as const;
+
+type POSClientPrefill = Partial<
+  Pick<POSCustomerData, (typeof CUSTOMER_PREFILL_FIELDS)[number]> &
+    Pick<POSShippingData, (typeof SHIPPING_PREFILL_FIELDS)[number]>
+>;
 
 export const usePOS = () => {
   const navigate = useNavigate();
@@ -154,6 +173,7 @@ export const usePOS = () => {
   const [isAnonymousPurchase, setIsAnonymousPurchase] = useState(false);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
   const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
+  const clientPrefillRef = useRef<POSClientPrefill>({});
 
   // Shipping (Step 4)
   const [shipping, setShipping] = useState<POSShippingData>(DEFAULT_SHIPPING);
@@ -658,6 +678,25 @@ export const usePOS = () => {
     []
   );
 
+  const applyClientPrefill = useCallback((values: POSClientPrefill) => {
+    const previous = clientPrefillRef.current;
+    clientPrefillRef.current = values;
+    setCustomer((prev) =>
+      mergeClientPrefill(prev, CUSTOMER_PREFILL_FIELDS, values, previous),
+    );
+    setShipping((prev) => {
+      const next = mergeClientPrefill(
+        prev,
+        SHIPPING_PREFILL_FIELDS,
+        values,
+        previous,
+      );
+      return next.neighborhoodId === prev.neighborhoodId
+        ? next
+        : { ...next, shippingMethodId: "", shippingCost: 0 };
+    });
+  }, []);
+
   const searchClient = useCallback(async () => {
     if (!customer.documentTypeId || !customer.documentNumber) return;
 
@@ -679,20 +718,20 @@ export const usePOS = () => {
           customerName: client.name,
           customerLastname: client.lastName,
           customerLastname2: client.lastName2 || "",
-          email: client.email || "",
-          phone: client.phone || "",
           isExistingClient: true,
         }));
-        // Obtener UID del cliente desde profiles
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("UID")
-          .eq("account_id", client.id)
-          .maybeSingle();
+        // Obtener UID y datos de contacto del cliente desde profiles
+        const profileData = await getClientProfile(client.id);
         setCustomerUserId(profileData?.UID ?? null);
         setCustomerAccountId(client.id);
+        applyClientPrefill({
+          email: client.email ?? "",
+          ...adaptClientContact(profileData),
+        });
         return;
       }
+
+      applyClientPrefill({});
 
       // Try external lookup for DNI/RUC
       const docType = formData?.documentTypes.find(
@@ -738,7 +777,7 @@ export const usePOS = () => {
     } finally {
       setSearchingClient(false);
     }
-  }, [customer.documentTypeId, customer.documentNumber, formData]);
+  }, [customer.documentTypeId, customer.documentNumber, formData, applyClientPrefill]);
 
   // =============================================
   // ANONYMOUS PURCHASE
@@ -773,10 +812,11 @@ export const usePOS = () => {
     setClientFound(false);
     setCustomerUserId(null);
     setCustomerAccountId(null);
+    applyClientPrefill({});
 
     // Advance to products step
     setCurrentStep(3);
-  }, []);
+  }, [applyClientPrefill]);
 
   // =============================================
   // SHIPPING (STEP 4)
