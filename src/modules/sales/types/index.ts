@@ -286,6 +286,18 @@ export interface ClientSearchResult {
   phone: string | null;
 }
 
+// Datos guardados en la ficha del cliente, listos para rellenar una venta
+export interface ClientContactData {
+  phone: string;
+  phoneWhatsapp: string;
+  countryId: string;
+  stateId: string;
+  cityId: string;
+  neighborhoodId: string;
+  address: string;
+  addressReference: string;
+}
+
 // Local Note for chat-style notes (before saving)
 export interface LocalNote {
   id: string;

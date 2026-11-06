@@ -21,11 +21,13 @@ import type {
   ProductForSearch,
   ProductVariation,
   ClientSearchResult,
+  ClientContactData,
   ModuleTypeApiResponse,
   OrdersSituationsByIdApiResponse,
   OrdersSituationsById,
 } from "../types";
 import type { SaleReturn, CurrentSituation } from "../types/Sales.types";
+import type { Tables } from "@/integrations/supabase/types";
 
 // Adapt document types from API
 export const adaptDocumentTypes = (data: any[]): DocumentType[] => {
@@ -214,6 +216,44 @@ export const adaptClientSearchResult = (
   };
 };
 
+// La ubicación solo cuenta si hay dirección o departamento: un perfil con solo
+// el país no es una dirección de envío.
+export const adaptClientContact = (
+  profile: Partial<Tables<"profiles">> | null,
+): ClientContactData => {
+  const hasAddress = Boolean(profile?.address?.trim() || profile?.state_id);
+  const location = (value: unknown) =>
+    hasAddress ? (value?.toString() ?? "") : "";
+  return {
+    phone: profile?.phone?.toString() ?? "",
+    phoneWhatsapp: profile?.phone_whatsapp?.toString() ?? "",
+    countryId: location(profile?.country_id),
+    stateId: location(profile?.state_id),
+    cityId: location(profile?.city_id),
+    neighborhoodId: location(profile?.neighborhood_id),
+    address: location(profile?.address),
+    addressReference: location(profile?.address_reference),
+  };
+};
+
+// Rellena una venta con los datos del cliente. Respeta lo que el vendedor
+// escribió, pero reemplaza lo rellenado para el documento anterior: si corrige
+// el documento, no debe quedar la dirección de otro cliente.
+export const mergeClientPrefill = <F extends string, T extends Record<F, string>>(
+  current: T,
+  fields: readonly F[],
+  values: Partial<Record<F, string>>,
+  previous: Partial<Record<F, string>>,
+): T => {
+  const next = { ...current };
+  for (const field of fields) {
+    if (!current[field] || current[field] === previous[field]) {
+      next[field] = (values[field] ?? "") as T[F];
+    }
+  }
+  return next;
+};
+
 export const getIdInventoryTypeAdapter = (
   response: ModuleTypeApiResponse,
 ): number => {
@@ -306,6 +346,7 @@ export const adaptSaleById = (data: any) => {
       addressReference: data.order.address_reference || "",
       receptionPerson: data.order.reception_person || "",
       receptionPhone: data.order.reception_phone?.toString() || "",
+      // null = sin envío; 0 = envío gratis
       withShipping: data.order.shipping_cost != null,
       employeeSale: false,
       notes: "",

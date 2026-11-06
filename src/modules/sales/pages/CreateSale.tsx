@@ -1248,7 +1248,7 @@ const CreateSale = () => {
           </Card>
 
           {/* Shipping Address - Conditional */}
-          {formData.withShipping && (
+          {(formData.withShipping || orderId) && (
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
@@ -1259,7 +1259,8 @@ const CreateSale = () => {
               <CardContent
                 className={cn(
                   "space-y-4",
-                  isPhySituation && "opacity-50 pointer-events-none",
+                  (isPhySituation || !formData.withShipping) &&
+                    "opacity-50 pointer-events-none",
                 )}
               >
                 <div className="grid grid-cols-2 gap-4">

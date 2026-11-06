@@ -29,6 +29,8 @@ import {
   adaptSalesFormData,
   adaptShippingCosts,
   adaptClientSearchResult,
+  adaptClientContact,
+  mergeClientPrefill,
   adaptPriceLists,
   getIdInventoryTypeAdapter,
   getOrdersSituationsByIdAdapter,
@@ -39,6 +41,7 @@ import {
   fetchSalesFormData,
   fetchShippingCosts,
   searchClientByDocument,
+  getClientProfile,
   lookupDocument,
   createOrder,
   updateOrder,
@@ -104,6 +107,22 @@ const INITIAL_FORM_DATA: SaleFormData = {
   employeeSale: false,
   notes: "",
 };
+
+const CLIENT_PREFILL_FIELDS = [
+  "email",
+  "phone",
+  "phoneWhatsapp",
+  "countryId",
+  "stateId",
+  "cityId",
+  "neighborhoodId",
+  "address",
+  "addressReference",
+] as const;
+
+type ClientPrefill = Partial<
+  Pick<SaleFormData, (typeof CLIENT_PREFILL_FIELDS)[number]>
+>;
 
 const createEmptyPayment = (): SalePayment => ({
   id: crypto.randomUUID(),
@@ -191,6 +210,7 @@ export const useCreateSale = () => {
   const [clientTenantReference, setClientTenantReference] = useState<string | null>(null);
   const [customerUserId, setCustomerUserId] = useState<string | null>(null);
   const [customerAccountId, setCustomerAccountId] = useState<number | null>(null);
+  const clientPrefillRef = useRef<ClientPrefill>({});
   const [cartGifts, setCartGifts] = useState<GiftItem[]>([]);
   const [appliedRules, setAppliedRules] = useState<{ message: string; rule_name: string }[]>([]);
   // T-360: regla de envío del motor (envío gratis, descuento o precio fijo de envío).
@@ -866,6 +886,16 @@ export const useCreateSale = () => {
         setAppliedRules([]);
       }
 
+      // Sin envío no hay costo: si quedara, seguiría sumando al total
+      if (field === "withShipping" && !value) {
+        setFormData((prev) => ({
+          ...prev,
+          shippingMethod: "",
+          shippingMethodId: "",
+          shippingCost: "",
+        }));
+      }
+
       // When shipping method changes, update the cost
       if (field === "shippingMethod" && value) {
         const selectedCost = allShippingCosts.find(
@@ -897,6 +927,18 @@ export const useCreateSale = () => {
       }
     },
     [allShippingCosts, salesData?.documentTypes],
+  );
+
+  const applyClientPrefill = useCallback(
+    (values: ClientPrefill) => {
+      if (orderId) return;
+      const previous = clientPrefillRef.current;
+      clientPrefillRef.current = values;
+      setFormData((prev) =>
+        mergeClientPrefill(prev, CLIENT_PREFILL_FIELDS, values, previous),
+      );
+    },
+    [orderId],
   );
 
   // Handle anonymous purchase toggle
@@ -934,8 +976,9 @@ export const useCreateSale = () => {
       setClientHasTenantReference(false);
       setClientTenantReference(null);
       setIsConsignment(false);
+      applyClientPrefill({});
     }
-  }, []);
+  }, [applyClientPrefill]);
 
   // Handle consignment toggle
   const handleConsignmentToggle = useCallback((checked: boolean) => {
@@ -1451,18 +1494,19 @@ export const useCreateSale = () => {
             customerLastname: client.lastName,
             customerLastname2: client.lastName2 || "",
           }));
-          // Obtener UID del cliente desde profiles
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("UID")
-            .eq("account_id", client.id)
-            .maybeSingle();
+          // Obtener UID y datos de contacto del cliente desde profiles
+          const profileData = await getClientProfile(client.id);
           setCustomerUserId(profileData?.UID ?? null);
           setCustomerAccountId(client.id);
           setClientHasTenantReference(data?.tenant_reference != null);
           setClientTenantReference(data?.tenant_reference ?? null);
           if (data?.tenant_reference == null) setIsConsignment(false);
+          applyClientPrefill({
+            email: client.email ?? "",
+            ...adaptClientContact(profileData),
+          });
         } else {
+          applyClientPrefill({});
           setIsExistingClient(false); // Not in accounts table
           setClientHasTenantReference(false);
           setClientTenantReference(null);
@@ -1560,6 +1604,7 @@ export const useCreateSale = () => {
       formData.documentNumber,
       salesData?.documentTypes,
       toast,
+      applyClientPrefill,
     ],
   );
 
@@ -2087,19 +2132,23 @@ export const useCreateSale = () => {
           phoneWhatsapp: formData.phoneWhatsapp || null,
           saleType: formData.saleType,
           priceListId: formData.priceListId || null,
-          shippingMethod: formData.shippingMethod || null,
-          shippingMethodId: formData.shippingMethodId ? parseInt(formData.shippingMethodId) : null,
-          shippingCost: formData.shippingCost
-            ? parseFloat(formData.shippingCost)
+          shippingMethod: (formData.withShipping && formData.shippingMethod) || null,
+          shippingMethodId:
+            formData.withShipping && formData.shippingMethodId
+              ? parseInt(formData.shippingMethodId)
+              : null,
+          // null = sin envío; 0 = envío gratis
+          shippingCost: formData.withShipping
+            ? parseFloat(formData.shippingCost) || 0
             : null,
-          countryId: formData.countryId || null,
-          stateId: formData.stateId || null,
-          cityId: formData.cityId || null,
-          neighborhoodId: formData.neighborhoodId || null,
-          address: formData.address || null,
-          addressReference: formData.addressReference || null,
-          receptionPerson: formData.receptionPerson || null,
-          receptionPhone: formData.receptionPhone || null,
+          countryId: (formData.withShipping && formData.countryId) || null,
+          stateId: (formData.withShipping && formData.stateId) || null,
+          cityId: (formData.withShipping && formData.cityId) || null,
+          neighborhoodId: (formData.withShipping && formData.neighborhoodId) || null,
+          address: (formData.withShipping && formData.address) || null,
+          addressReference: (formData.withShipping && formData.addressReference) || null,
+          receptionPerson: (formData.withShipping && formData.receptionPerson) || null,
+          receptionPhone: (formData.withShipping && formData.receptionPhone) || null,
           withShipping: formData.withShipping,
           employeeSale: formData.employeeSale,
           notes: formData.notes || null,
