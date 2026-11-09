@@ -11,6 +11,7 @@ import {
   resolveGuideCompanyHeader,
 } from "@/shared/utils/document-templates/pdfHeader";
 import { formatDateDisplay, nowIso } from "@/shared/utils/date";
+import { openRemisionGuidePdf } from "@/shared/utils/remisionGuidePdf";
 
 export interface RemisionGuideData {
   customerName: string;
@@ -36,14 +37,69 @@ export interface RemisionGuideData {
 }
 
 /**
- * Guía de remisión de una venta, con la plantilla de documentos (T-1013): logo,
- * teléfono y correo según RemisionGuideShowPhone/Email y pie configurable.
+ * Guía de remisión de una venta, con su plantilla de impresión
+ * (sale_remision_guide: la personalizada en uso o la del sistema). El logo, el
+ * teléfono y el correo según RemisionGuideShowPhone/Email y el pie los pone la
+ * plantilla con los datos de la empresa de la sesión.
  *
- * Sin datos de respaldo escritos en el código: antes se completaban con los de
- * PERCEPTION, y una empresa sin parámetros emitía la guía con el RUC de otra.
- * Si faltan razón social o RUC, no se genera y se avisa.
+ * Aquí queda lo que es de ventas: el nombre del cliente troceado en tres
+ * campos, la dirección compuesta de país, región, ciudad y barrio, la serie
+ * `T001` con el id del pedido, el motivo «Venta» y el método de envío como
+ * transportista.
+ *
+ * Sin datos de respaldo escritos en el código: si faltan razón social o RUC,
+ * no se genera y se avisa.
  */
 export async function generateRemisionGuide(data: RemisionGuideData): Promise<void> {
+  const template = await getRemisionGuideTemplateConfig();
+  if (!template.company.name || !template.company.documentNumber) {
+    toast({ title: MISSING_ISSUER_MESSAGE, variant: "destructive" });
+    return;
+  }
+
+  const recipientName = [
+    data.customerName,
+    data.customerLastname,
+    data.customerLastname2,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const destinationAddress = [
+    data.countryName,
+    data.stateName,
+    data.cityName,
+    data.neighborhoodName,
+    data.address,
+  ]
+    .filter(Boolean)
+    .join(" / ");
+
+  await openRemisionGuidePdf(
+    {
+      // La serie de ventas, con el pedido como correlativo. Producción usa la
+      // suya para que las dos no se pisen.
+      guideNumber: `T001-${String(data.orderId || 0).padStart(8, "0")}`,
+      recipientName,
+      // Un cliente suele ser persona natural; el que venga en la venta manda.
+      documentType: data.documentType || "DNI",
+      documentNumber: data.documentNumber,
+      destinationAddress,
+      transferReason: "Venta",
+      // La dirección del local que vende; sin ella, la de partida de la empresa.
+      originAddress: data.direccionPartida || template.company.departureAddress,
+      carrierName: data.shippingMethodName,
+      items: data.items,
+    },
+    "sale",
+  );
+}
+
+/**
+ * La guía de venta dibujada con jsPDF y abierta en una pestaña nueva: el PDF de
+ * antes de las plantillas de impresión. Queda sin uso.
+ */
+export async function generateRemisionGuideLegacy(data: RemisionGuideData): Promise<void> {
   const template = await getRemisionGuideTemplateConfig();
   if (!template.company.name || !template.company.documentNumber) {
     toast({ title: MISSING_ISSUER_MESSAGE, variant: "destructive" });

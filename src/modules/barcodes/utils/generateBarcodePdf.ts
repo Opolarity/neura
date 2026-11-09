@@ -6,6 +6,8 @@ import {
   getLabelWidth,
   normalizeLabelLayout,
 } from "../constants/labelLayouts";
+import type { PrintData } from "@/modules/print-templates/editor/lib/print-data";
+import { printDocument } from "@/modules/print-templates/print/printDocument";
 
 /**
  * Alto del diseño original de la etiqueta. Si la fila es más alta (p. ej. papeles de
@@ -98,13 +100,14 @@ const drawLabel = (
 };
 
 /**
- * Genera un PDF con etiquetas de código de barras.
+ * Genera un PDF con etiquetas de código de barras (el PDF de antes de las
+ * plantillas de impresión; generateBarcodePdf ya no lo usa).
  *
  * El papel se describe con `layout`: cada página del PDF es una fila del rollo, con
  * tantas etiquetas como columnas tenga el papel. Con `columns: 1` (default) el
  * resultado es una página por etiqueta, igual que la ticketera de una sola columna.
  */
-export const generateBarcodePdf = (
+export const openBarcodeLabelsPdf = (
   ticketData: BarcodeTicketData,
   quantity: number,
   layout: BarcodeLabelLayout = DEFAULT_LABEL_LAYOUT
@@ -152,4 +155,43 @@ export const generateBarcodePdf = (
   const pdfBlob = doc.output("blob");
   const url = URL.createObjectURL(pdfBlob);
   window.open(url, "_blank");
+};
+
+/** El producto y, entre paréntesis, la variación («Negro-M»), como drawLabel. */
+const labelTitle = (ticketData: BarcodeTicketData) =>
+  ticketData.variationTerms
+    ? `${ticketData.productTitle} (${ticketData.variationTerms.replace(/,\s*/g, "-")})`
+    : ticketData.productTitle;
+
+/**
+ * Los datos de una etiqueta para su plantilla (fuente barcode_label de
+ * print-templates), con el mismo formato que drawLabel. El lote sale de
+ * `sequence` (ver el comentario de drawLabel).
+ */
+export const barcodeLabelPrintData = (ticketData: BarcodeTicketData): PrintData => ({
+  barcode_label: {
+    values: {
+      title: labelTitle(ticketData),
+      barcodeValue: ticketData.barcodeValue,
+      skuLot: ticketData.sku
+        ? `${ticketData.sku}-${ticketData.sequence}`
+        : ticketData.barcodeValue,
+      // Sin el «S/.»: lo pone el diseño.
+      price: ticketData.price.toFixed(2),
+    },
+  },
+});
+
+/**
+ * Imprime las etiquetas con su plantilla (la personalizada en uso o la del
+ * sistema): una etiqueta por unidad pedida, todas en un PDF, que siguen de
+ * corrido en las columnas del rollo, como antes. Las medidas, las columnas y
+ * los tamaños los da la plantilla barcode_label, no el modal.
+ */
+export const generateBarcodePdf = (ticketData: BarcodeTicketData, quantity: number) => {
+  if (quantity <= 0) return Promise.resolve(false);
+  const records = Array.from({ length: quantity }, () => barcodeLabelPrintData(ticketData));
+  return printDocument("barcode_label", records, {
+    fileName: `Etiqueta ${ticketData.sku || ticketData.barcodeValue}`,
+  });
 };

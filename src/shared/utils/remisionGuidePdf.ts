@@ -112,7 +112,7 @@ const GUIDE_TEMPLATES: Record<
 /**
  * Qué guía es, por lo que manda cada envoltorio: la de ingreso, su título;
  * producción y material, su bloque propio con su título; la que queda es la
- * de traslado. La de ventas no pasa por aquí (generateRemisionGuide).
+ * de traslado. La de ventas la pide generateRemisionGuide con `kind: "sale"`.
  */
 const guideKindOf = (data: RemisionGuideData): RemisionGuideKind => {
   if (data.title === "GUÍA DE INGRESO") return "intake";
@@ -166,11 +166,11 @@ const itemDescription = (item: RemisionGuideItem) =>
   `${item.sku ? `[${item.sku}] ` : ""}${item.productName}${item.variationName ? ` - ${item.variationName}` : ""}`;
 
 /**
- * Los datos de la guía para su plantilla (fuentes transfer_guide,
- * production_guide, intake_guide y material_guide de print-templates), con
- * los mismos textos que el PDF de antes. Las mayúsculas las pone la
- * plantilla; la empresa (y, en traslado e ingreso, el destinatario) sale de
- * la sesión.
+ * Los datos de la guía para su plantilla (fuentes remision_guide,
+ * transfer_guide, production_guide, intake_guide y material_guide de
+ * print-templates), con los mismos textos que el PDF de antes. Las
+ * mayúsculas las pone la plantilla; la empresa (y, en traslado e ingreso, el
+ * destinatario) sale de la sesión.
  *
  * `departureAddress` es la dirección de partida de la empresa, la que va
  * cuando el envío no trae la suya.

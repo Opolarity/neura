@@ -68,8 +68,9 @@ const invoiceA4Template = (kind: InvoiceKind): SystemPrintTemplate => ({
  */
 // Personalizado: sin los documentos de la planta que este ERP no tiene
 // (tickets y hoja de paquetes, fotocheck de operario, operaciones del estilo,
-// comprobante de registro) ni la orden de servicio de cliente. Sus fuentes de
-// datos y diseños se quedan en el módulo, igual que en multicliente.
+// comprobante de registro), la orden de servicio de cliente ni la guía de
+// traslado (aquí el traslado lleva la guía electrónica del PSE). Sus fuentes
+// de datos y diseños se quedan en el módulo, igual que en multicliente.
 export const SYSTEM_PRINT_TEMPLATES: readonly SystemPrintTemplate[] = [
   // Comprobantes: uno por tipo (constants/invoiceKinds), en ticket y en A4.
   ...INVOICE_KIND_IDS.flatMap((kind) => [
@@ -141,17 +142,6 @@ export const SYSTEM_PRINT_TEMPLATES: readonly SystemPrintTemplate[] = [
     multiPage: true,
     pagePaddingMm: { top: 14, right: 14, bottom: 14, left: 14 },
     dataSources: ["remision_guide"],
-  },
-  {
-    code: "transfer_remision_guide",
-    section: "Guía de traslado",
-    area: "Guías",
-    paperWidthMm: 210,
-    paperHeightMm: 297,
-    hasDesign: true,
-    multiPage: true,
-    pagePaddingMm: { top: 14, right: 14, bottom: 14, left: 14 },
-    dataSources: ["transfer_guide"],
   },
   {
     code: "production_remision_guide",
