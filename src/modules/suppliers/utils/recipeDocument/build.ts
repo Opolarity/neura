@@ -69,7 +69,7 @@ export interface RecipePdfData {
   total: number;
 }
 
-const money = (value: number | null) =>
+export const money = (value: number | null) =>
   value === null || value === undefined
     ? "—"
     : `S/ ${new Intl.NumberFormat("es-PE", {
@@ -82,7 +82,7 @@ const money = (value: number | null) =>
  * y con dos decimales se imprime «S/ 0.00», que se lee como gratis. Por debajo
  * del céntimo se abren decimales hasta que el número diga algo.
  */
-const unitMoney = (value: number | null) => {
+export const unitMoney = (value: number | null) => {
   if (value === null || value === undefined) return "—";
   const decimales = value !== 0 && Math.abs(value) < 0.01 ? 4 : 2;
   const numero = new Intl.NumberFormat("es-PE", {
@@ -92,13 +92,13 @@ const unitMoney = (value: number | null) => {
   return `S/ ${numero}`;
 };
 
-const qty = (value: number | null) =>
+export const qty = (value: number | null) =>
   value === null || value === undefined
     ? "—"
     : new Intl.NumberFormat("es-PE", { maximumFractionDigits: 3 }).format(value);
 
 /** Las líneas sin clase van juntas al final, no desperdigadas. */
-const SIN_CLASE = "SIN CLASE";
+export const SIN_CLASE = "SIN CLASE";
 
 /**
  * Deja el grupo sin clase al final y respeta el resto tal como llegó.
@@ -107,7 +107,7 @@ const SIN_CLASE = "SIN CLASE";
  * salen en el orden en que aparece su primer material: el orden en que se armó
  * la receta.
  */
-const sinClaseAlFinal = (a: string, b: string): number => {
+export const sinClaseAlFinal = (a: string, b: string): number => {
   if (a === SIN_CLASE) return 1;
   if (b === SIN_CLASE) return -1;
   return 0;
@@ -135,7 +135,7 @@ const conValor = (
  * cero pasa a ser indistinguible de una que usa el consumo general. Se acepta
  * a propósito -- la pantalla sigue enseñando las dos cosas.
  */
-const porPrenda = (variations: RecipePdfMaterialVariation[]): string =>
+export const porPrenda = (variations: RecipePdfMaterialVariation[]): string =>
   variations
     .filter((v) => v.quantity > 0)
     .map((v) => `${v.label}: ${qty(v.quantity)}`)

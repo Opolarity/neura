@@ -15,10 +15,12 @@ import {
   CLOSING_MESSAGE,
   FOOTER_TITLE,
   FREE_TRANSFER_LEGEND,
-  renderInvoiceA4,
   type InvoicePrintData,
   type InvoicePrintExtraLine,
 } from "@/shared/utils/document-templates/invoiceA4Pdf";
+import type { PrintData } from "@/modules/print-templates/editor/lib/print-data";
+import { renderDocumentPdf } from "@/modules/print-templates/print/printDocument";
+import { invoiceKindOf, invoiceTemplateCode } from "@/modules/print-templates/constants/invoiceKinds";
 import { hasShippingItem } from "../utils/shippingItem";
 
 interface InvoiceData {
@@ -105,10 +107,20 @@ export interface InvoicePdfOptions {
 /**
  * Lee el comprobante y lo resuelve con la plantilla. Es la única consulta de
  * los PDF de comprobante: el ticket y el A4 dibujan lo mismo.
+ * Además devuelve el IGV y el texto del QR tal como están guardados, que son
+ * los que pide la plantilla de impresión (invoicePrintData). Con
+ * `withImages: false` no carga el logo ni dibuja el QR: la plantilla los
+ * resuelve sola.
  */
 export async function loadInvoicePrintData(
   invoiceId: number,
-): Promise<{ data: InvoicePrintData; template: InvoiceTemplateConfig }> {
+  { withImages = true }: { withImages?: boolean } = {},
+): Promise<{
+  data: InvoicePrintData;
+  template: InvoiceTemplateConfig;
+  totalTaxes: number | null;
+  qrCode: string | null;
+}> {
   const [invoiceRes, itemsRes, branchRes, template] = await Promise.all([
     supabase
       .from("invoices")
@@ -164,10 +176,10 @@ export async function loadInvoicePrintData(
 
   const establishmentAddress = order?.branches?.address + " " + neighborhood?.data?.name || "";
 
-  const logo = await loadDocumentLogo(template.logoUrl);
+  const logo = withImages ? await loadDocumentLogo(template.logoUrl) : null;
 
   let qrDataUrl: string | null = null;
-  if (invoice.qr_data) {
+  if (withImages && invoice.qr_data) {
     try { qrDataUrl = await QRCode.toDataURL(invoice.qr_data, { width: 200, margin: 1 }); } catch {}
   }
 
@@ -227,7 +239,80 @@ export async function loadInvoicePrintData(
     footerMessage: template.footerMessage || DEFAULT_RETURN_POLICY,
   };
 
-  return { data, template };
+  return { data, template, totalTaxes: invoice.total_taxes, qrCode: invoice.qr_data };
+}
+
+/** Redondea a céntimos: evita restos como 249.74999 en las operaciones. */
+const cents = (value: number) => Math.round(value * 100) / 100;
+
+/**
+ * Los datos del comprobante para su plantilla (fuente invoice_items de
+ * print-templates), con lo mismo que imprimían renderInvoiceTicket y
+ * renderInvoiceA4. Los importes y cantidades van como número: la plantilla
+ * los escribe con dos decimales, igual que el generador viejo.
+ *
+ * Como el ticket de antes, todo va gravado: OP. GRAVADAS = total - IGV (este
+ * ERP no tiene la región selva, así que no hay operaciones exoneradas).
+ */
+export function invoicePrintData(
+  data: InvoicePrintData,
+  totalTaxes: number | null,
+  qrCode: string | null,
+): PrintData {
+  const taxes = totalTaxes || 0;
+
+  return {
+    invoice_items: {
+      rows: [
+        ...data.items.map((item) => ({
+          quantity: item.quantity,
+          unit: item.unit || null,
+          description: item.description,
+          unitPrice: item.unitPrice,
+          // Sin descuento sale «—».
+          discount: item.discount || null,
+          total: item.total,
+        })),
+        // Envío de comprobantes antiguos y descuentos del pedido: solo la
+        // descripción y su importe (en P.U. en el ticket, en Importe en el A4).
+        ...data.extraLines.map((line) => ({
+          quantity: null,
+          unit: null,
+          description: line.description,
+          unitPrice: line.amount,
+          discount: "",
+          total: line.amount,
+        })),
+      ],
+      values: {
+        establishmentAddress: data.company.establishmentAddress || "",
+        documentType: (data.typeName || "COMPROBANTE").toUpperCase(),
+        serieNumber: [data.serie, data.number].filter(Boolean).join(" - "),
+        orderNumber: data.orderId,
+        issuedAt: data.issuedAt,
+        customerName: data.customer.name,
+        customerDocumentType: data.customer.documentTypeName,
+        // Vacío oculta la fila (boletas por debajo del monto, según la plantilla).
+        customerDocument: data.customer.showDocument ? data.customer.documentNumber : "",
+        customerAddress: data.customer.showAddress && data.customer.address ? data.customer.address : "",
+        modifiedDocument: data.modifiedDocument,
+        noteReason: data.noteReason ?? "",
+        cashier: data.cashierName,
+        totalQuantity: data.totalQuantity,
+        taxedAmount: cents(data.totalAmount - taxes),
+        exemptAmount: 0,
+        igv: cents(taxes),
+        // En cero se oculta la fila «OP. GRATUITAS».
+        freeAmount: data.freeAmount > 0 ? data.freeAmount : 0,
+        totalAmount: data.totalAmount,
+        amountInWords: data.amountInWords,
+        qrCode: qrCode || "",
+        // Una por línea, como el ticket de antes.
+        legends: [...data.legends, ...(data.freeAmount > 0 ? [FREE_TRANSFER_LEGEND] : [])].join("\n"),
+        footerMessage: data.footerMessage,
+      },
+    },
+  };
 }
 
 /** Ticket térmico de 80 mm. El alto se ajusta al contenido. */
@@ -420,17 +505,23 @@ export function renderInvoiceTicket(data: InvoicePrintData): jsPDF {
 }
 
 /**
- * El PDF del comprobante. Por defecto es el ticket de 80 mm (POS, comprobantes
- * de la venta y WhatsApp); con { format: "configured" } usa el formato de la
- * plantilla.
+ * El PDF del comprobante, con la plantilla de impresión de su tipo (la
+ * personalizada en uso o la del sistema). Por defecto es el ticket de 80 mm
+ * (POS, comprobantes de la venta y WhatsApp); con { format: "configured" } usa
+ * el formato de la plantilla del comprobante (InvoicePrintFormat).
+ * renderInvoiceTicket y renderInvoiceA4 quedan sin uso.
  */
 export async function generateInvoicePdfBlob(
   invoiceId: number,
   options: InvoicePdfOptions = {},
 ): Promise<Blob> {
-  const { data, template } = await loadInvoicePrintData(invoiceId);
+  const { data, template, totalTaxes, qrCode } = await loadInvoicePrintData(invoiceId, { withImages: false });
   const useA4 = options.format === "configured" && template.format === "A4";
-  return (useA4 ? renderInvoiceA4(data) : renderInvoiceTicket(data)).output("blob");
+  const code = invoiceTemplateCode(invoiceKindOf(data.typeCode), useA4 ? "a4" : "ticket");
+  const fileName = [data.serie, data.number].filter(Boolean).join("-") || `comprobante-${invoiceId}`;
+  const pdf = await renderDocumentPdf(code, invoicePrintData(data, totalTaxes, qrCode), fileName);
+  if (!pdf) throw new Error("No se pudo generar el PDF del comprobante");
+  return pdf;
 }
 
 async function generateInvoicePdf(invoiceId: number, options: InvoicePdfOptions = {}): Promise<string> {

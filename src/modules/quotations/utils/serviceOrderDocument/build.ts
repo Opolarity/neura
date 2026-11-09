@@ -112,7 +112,7 @@ export interface ServiceOrderData {
 
 
 
-const qty = (value: number | null | undefined) =>
+export const qty = (value: number | null | undefined) =>
   value === null || value === undefined
     ? "—"
     : new Intl.NumberFormat("es-PE", { maximumFractionDigits: 3 }).format(value);
@@ -122,7 +122,7 @@ const qty = (value: number | null | undefined) =>
  * entre la cantidad, igual que lo calculan los SPs. Sin cantidad no hay entre
  * qué dividir.
  */
-const unitPrice = (line: { price: number | null; quantity: number | null }) =>
+export const unitPrice = (line: { price: number | null; quantity: number | null }) =>
   line.price === null || !line.quantity ? null : line.price / line.quantity;
 
 /** Deja fuera los rótulos sin valor: un hueco se lee como un dato que falta. */

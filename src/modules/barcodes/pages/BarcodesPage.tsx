@@ -16,7 +16,6 @@ const BarcodesPage = () => {
     sequence,
     quantities,
     price,
-    labelLayout,
     loading,
     initialLoading,
     listLoading,
@@ -25,7 +24,6 @@ const BarcodesPage = () => {
     setQuantities,
     setSequence,
     setModalOpen,
-    setLabelLayout,
     handleVariationChange,
     handleStockMovementChange,
     handleProductClear,
@@ -67,7 +65,6 @@ const BarcodesPage = () => {
         sequence={sequence}
         quantities={quantities}
         price={price}
-        labelLayout={labelLayout}
         loading={loading}
         initialLoading={initialLoading}
         productLocked={productLocked}
@@ -77,7 +74,6 @@ const BarcodesPage = () => {
         onPriceListChange={handlePriceListChange}
         onQuantitiesChange={setQuantities}
         onSequenceChange={setSequence}
-        onLabelLayoutChange={setLabelLayout}
         onSubmit={handleSubmit}
       />
     </div>

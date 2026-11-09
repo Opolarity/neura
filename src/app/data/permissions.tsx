@@ -62,6 +62,7 @@ import ReportsSellersPage from "@/modules/reports/pages/SellersPage";
 
 import StockTypePage from "@/modules/settings/pages/StockTypePage";
 import BusinessParametersPage from "@/modules/settings/pages/BusinessParametersPage";
+import PrintTemplatesPage from "@/modules/print-templates/pages/PrintTemplatesPage";
 import PriceListPage from "@/modules/settings/pages/PriceListPage";
 import PaymentMethodsList from "@/modules/settings/pages/PaymentMethodsList";
 import BusinessAccountPage from "@/modules/settings/pages/BusinessAccountPage";
@@ -367,6 +368,9 @@ export const APP_PERMISSIONS_CONFIG = [
           {
             code: "settings.group", name: "Configuración", node: [
               { name: "Negocio", path: "/settings/business", code: "business_parameters.list", element: <BusinessParametersPage />, showSidebar: true, node: [] },
+              // Diseño de los PDF del ERP. print_templates.edit entra con el editor
+              // (/settings/print-templates/edit/:id); se asigna desde Roles.
+              { name: "Plantillas de impresión", path: "/settings/print-templates", code: "print_templates.list", element: <PrintTemplatesPage />, showSidebar: true, node: [] },
               { name: "Tipos de inventario de productos", path: "/settings/stock-types", code: "stock_types.list", element: <StockTypePage />, showSidebar: true, node: [] },
               { name: "Precios", path: "/settings/price-list", code: "price_lists.list", element: <PriceListPage />, showSidebar: true, node: [] },
               { name: "Envíos", path: "/shipping", code: "shipments.list", element: <Shipping />, showSidebar: true, node: [] },
