@@ -62,14 +62,16 @@ export async function applyPriceRules<T extends CartItemForRules>(
   appliedRules: AppliedRule[];
   discounts: DiscountResult[];
   shippingRule: ShippingRule | null;
-  /** T-340: id del cupón válido (para registrar su uso al crear la orden). */
+  /** T-340: id del cupón (para registrar su uso al crear la orden); solo llega si el cupón cambió el carrito. */
   couponDiscountId: number | null;
   /** T-340: motivo por el que el motor rechazó el cupón. */
   couponError: string | null;
+  /** true si no se pudo consultar al motor: los ítems vuelven sin cambios. */
+  failed: boolean;
 }> {
   const empty = { gifts: [], appliedRules: [], discounts: [], shippingRule: null, couponDiscountId: null, couponError: null };
   try {
-    if (items.length === 0) return { items, ...empty };
+    if (items.length === 0) return { items, ...empty, failed: false };
 
     // Mapear campos de Neura → formato que espera la EF
     const payloadItems = items.map((item) => ({
@@ -105,7 +107,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       });
     } catch (error) {
       console.error("Error calling process-price-rules:", error);
-      return { items, ...empty };
+      return { items, ...empty, failed: true };
     }
 
     const returnedItems = (data?.items || []) as any[];
@@ -157,10 +159,11 @@ export async function applyPriceRules<T extends CartItemForRules>(
       shippingRule,
       couponDiscountId: data?.couponDiscountId ?? null,
       couponError: data?.couponError ?? null,
+      failed: false,
     };
 
   } catch (err) {
     console.error("Error in applyPriceRules:", err);
-    return { items, ...empty };
+    return { items, ...empty, failed: true };
   }
 }

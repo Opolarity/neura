@@ -11,6 +11,13 @@ import {
   type OrderDiscountRule,
 } from "../rules/applyPriceRules";
 import { applyShippingRule, type ShippingRule } from "../rules/shippingRule";
+import {
+  COUPON_PENDING_MESSAGE,
+  couponErrorFromSave,
+  couponRejectionReason,
+  couponRemovedOnSaveMessage,
+  normalizeCouponCode,
+} from "../rules/coupon";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { measure } from "@/lib/rum";
@@ -162,10 +169,15 @@ export const usePOS = () => {
   const [ruleDiscounts, setRuleDiscounts] = useState<OrderDiscountRule[]>([]);
   // T-360: regla de envío del motor; ajusta el costo del método elegido.
   const [shippingRule, setShippingRule] = useState<ShippingRule | null>(null);
-  // T-340: cupón aplicado (código que viaja al motor) y lo que el motor respondió.
+  // T-340: cupón aplicado (código que viaja al motor), id que el motor devolvió
+  // para registrar el uso y motivo del último rechazo. Un cupón rechazado no queda
+  // aplicado: se suelta el código y el motivo se muestra hasta aplicar otro o
+  // editar el campo.
   const [couponCode, setCouponCode] = useState<string | null>(null);
   const [couponDiscountId, setCouponDiscountId] = useState<number | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
+  // Corrida vigente del motor: una respuesta vieja no pisa a la última.
+  const rulesRunRef = useRef(0);
 
   // Customer (Step 3)
   const [customer, setCustomer] = useState<POSCustomerData>(DEFAULT_CUSTOMER);
@@ -230,6 +242,7 @@ export const usePOS = () => {
 
   // Apply price rules whenever cart changes
   useEffect(() => {
+    const runId = ++rulesRunRef.current;
     const regularItems = cart.filter(item => !item.isGift);
 
     if (regularItems.length === 0 || !configuration?.priceListId) {
@@ -238,8 +251,9 @@ export const usePOS = () => {
       setAppliedRules([]);
       setRuleDiscounts([]);
       setShippingRule(null);
+      // Sin carrito no hay nada que validar: el código se conserva y se vuelve a
+      // validar al agregar productos.
       setCouponDiscountId(null);
-      setCouponError(null);
       return;
     }
 
@@ -252,6 +266,7 @@ export const usePOS = () => {
         shippingRule: rule,
         couponDiscountId: couponId,
         couponError: couponErr,
+        failed,
       } = await applyPriceRules(
         regularItems,
         configuration.priceListId,
@@ -261,11 +276,30 @@ export const usePOS = () => {
         couponCode
       );
 
-      setCouponDiscountId(couponCode ? couponId : null);
-      setCouponError(couponCode ? couponErr : null);
+      // El carrito o el cupón cambiaron mientras tanto: manda la corrida nueva.
+      if (runId !== rulesRunRef.current) return;
+
+      if (couponCode) {
+        const rejection = couponRejectionReason({ couponDiscountId: couponId, couponError: couponErr, failed });
+        if (rejection) {
+          // Rechazado (expirado, inexistente, sin cumplir condiciones, ya no aplica
+          // tras cambiar el carrito o el motor no respondió): se suelta el código,
+          // con lo que el motor vuelve a correr sin él y recalcula precios, reglas
+          // y total. El motivo queda visible; esa corrida sin cupón no lo borra.
+          setCouponCode(null);
+          setCouponDiscountId(null);
+          setCouponError(rejection);
+        } else {
+          setCouponDiscountId(couponId);
+        }
+      } else {
+        setCouponDiscountId(null);
+      }
 
       setAppliedRules(rules.map((r) => ({ message: r.message, rule_name: r.rule_name })));
       setShippingRule(rule);
+      // Quedan exactamente las filas de esta respuesta: una regla que el motor deja de
+      // devolver (p. ej. el % del cupón retirado) se cae y el total se recalcula sin ella.
       setRuleDiscounts(
         discounts
           .filter((d) => !isFranchiseRow(d.code))
@@ -658,6 +692,9 @@ export const usePOS = () => {
 
   const clearCart = useCallback(() => {
     setCart([]);
+    setCouponCode(null);
+    setCouponDiscountId(null);
+    setCouponError(null);
   }, []);
 
   // =============================================
@@ -1106,6 +1143,17 @@ export const usePOS = () => {
       return null;
     }
 
+    // Cupón aplicado que el motor aún no confirmó: guardar ahora lo dejaría sin
+    // registrar su uso.
+    if (couponCode && !couponDiscountId) {
+      toast({
+        title: "Error",
+        description: COUPON_PENDING_MESSAGE,
+        variant: "destructive",
+      });
+      return null;
+    }
+
     setSaving(true);
     try {
       // RUM: se mide la operacion completa (varias llamadas)
@@ -1224,6 +1272,20 @@ export const usePOS = () => {
       });
     } catch (error: unknown) {
       console.error("Error creating order:", error);
+      const couponReason = couponErrorFromSave(error);
+      if (couponReason) {
+        // create-order no creó la venta porque el cupón ya no se puede usar. Se
+        // retira (el motor recalcula sin él) y la venta sigue en pantalla.
+        setCouponCode(null);
+        setCouponDiscountId(null);
+        setCouponError(couponReason);
+        toast({
+          title: "Cupón retirado",
+          description: couponRemovedOnSaveMessage(couponReason),
+          variant: "destructive",
+        });
+        return null;
+      }
       const errorMessage =
         error instanceof Error ? error.message : "No se pudo crear la venta";
       toastError(error, errorMessage);
@@ -1246,6 +1308,10 @@ export const usePOS = () => {
     discountAmount,
     total,
     formData,
+    orderDiscounts,
+    ruleDiscounts,
+    couponCode,
+    couponDiscountId,
     toast,
   ]);
 
@@ -1255,6 +1321,8 @@ export const usePOS = () => {
     setCartGifts([]);
     setOrderDiscounts([]);
     setCouponCode(null);
+    setCouponDiscountId(null);
+    setCouponError(null);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
@@ -1294,6 +1362,8 @@ export const usePOS = () => {
     setCartGifts([]);
     setOrderDiscounts([]);
     setCouponCode(null);
+    setCouponDiscountId(null);
+    setCouponError(null);
     setCustomer(DEFAULT_CUSTOMER);
     setShipping(DEFAULT_SHIPPING);
     setPayments([]);
@@ -1463,8 +1533,18 @@ export const usePOS = () => {
     shippingRule,
     couponCode,
     couponError,
-    applyCoupon: (code: string) => setCouponCode(code.trim().toUpperCase() || null),
-    removeCoupon: () => setCouponCode(null),
+    // Aplicar uno nuevo descarta el motivo del rechazo anterior.
+    applyCoupon: (code: string) => {
+      setCouponError(null);
+      setCouponDiscountId(null);
+      setCouponCode(normalizeCouponCode(code));
+    },
+    removeCoupon: () => {
+      setCouponCode(null);
+      setCouponDiscountId(null);
+      setCouponError(null);
+    },
+    clearCouponError: () => setCouponError(null),
     productDiscountAmount,
     handleProductPageChange: (page: number) => {
       setProductPage(page);

@@ -115,6 +115,7 @@ export default function POS() {
                 couponError={pos.couponError}
                 onApplyCoupon={pos.applyCoupon}
                 onRemoveCoupon={pos.removeCoupon}
+                onClearCouponError={pos.clearCouponError}
                 customerName={pos.customer.customerName}
                 customerLastname={pos.customer.customerLastname}
                 customerDocumentNumber={pos.customer.documentNumber}
