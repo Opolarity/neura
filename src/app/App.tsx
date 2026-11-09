@@ -7,6 +7,7 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryProvider } from "./providers/QueryProvider";
 import MaintenancePage from "@/components/MaintenancePage";
+import { PrintHost } from "@/modules/print-templates/print/PrintHost";
 
 const IS_MAINTENANCE_MODE = false;
 
@@ -20,6 +21,8 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <AuthProvider>
+          {/* Los documentos que se imprimen con su plantilla (printDocument). */}
+          <PrintHost />
           <NotificationsProvider>
             <SupportUnreadProvider>
               <RouterProvider router={router} />

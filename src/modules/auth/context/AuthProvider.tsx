@@ -4,8 +4,29 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { setUser as setRumUser } from "@/lib/rum";
 import { getHeaderUserData } from "@/shared/services/service";
-import { getParameter } from "@/modules/settings/services/Parameters.service";
+import { getParameter, getParameters } from "@/modules/settings/services/Parameters.service";
 import { AppUser, TenantSubscription } from "../types";
+
+/**
+ * Los parámetros de la empresa que imprimen los documentos: los usa el editor
+ * de plantillas para mostrarlos sin escribirlos.
+ */
+const DOCUMENT_PARAMETERS = [
+  "CompanyName",
+  "CompanyDocumentNumber",
+  "CompanyAddress",
+  "CompanyPhoneNumber",
+  "CompanyEmail",
+  "CompanyShortName",
+  "InvoiceLogoUrl",
+  "CompanyWebsite",
+  "CompanyDireccionPartida",
+  "RemisionGuideFooterMessage",
+  "RemisionGuideShowPhone",
+  "RemisionGuideShowEmail",
+];
+
+const EMPTY_PARAMETERS: Record<string, string> = {};
 
 // sp_get_user_permissions está tipado como Json: puede llegar como array plano
 // de códigos, como array de objetos ({ code }) o envuelto en un objeto
@@ -60,6 +81,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [appUserLoading, setAppUserLoading] = useState(true);
   const [companyShortName, setCompanyShortName] = useState("");
   const [companyShortNameLoading, setCompanyShortNameLoading] = useState(true);
+  const [documentParameters, setDocumentParameters] =
+    useState<Record<string, string>>(EMPTY_PARAMETERS);
   const [signingOut, setSigningOut] = useState(false);
   // Evita recargar permisos cuando cambia el token (tab switch) sin cambio de usuario
   const lastFetchedUserId = useRef<string | null>('__unset__');
@@ -164,6 +187,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       .finally(() => setCompanyShortNameLoading(false));
   }, []);
 
+  // Los parámetros de los documentos, con la dirección de la sucursal: la
+  // primera activa, como la cabecera de las hojas (getCompanyDocumentHeader).
+  // Cuelgan del usuario: sin sesión no se leen.
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (!userId) {
+      setDocumentParameters(EMPTY_PARAMETERS);
+      return;
+    }
+    let cancelled = false;
+    Promise.all([
+      getParameters(DOCUMENT_PARAMETERS),
+      supabase
+        .from("branches")
+        .select("address")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle(),
+    ])
+      .then(([values, branch]) => {
+        if (cancelled) return;
+        setDocumentParameters({
+          ...Object.fromEntries(
+            DOCUMENT_PARAMETERS.map((name) => [name, values[name] ?? ""]),
+          ),
+          BranchAddress: branch?.data?.address ?? "",
+        });
+      })
+      .catch((error) => {
+        console.error("[AuthProvider] getParameters(documentos) falló:", error);
+        if (!cancelled) setDocumentParameters(EMPTY_PARAMETERS);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
   useEffect(() => {
     const {
       data: { subscription },
@@ -259,6 +319,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       appUserLoading,
       companyShortName,
       companyShortNameLoading,
+      documentParameters,
       signingOut,
       signIn,
       signOut,
@@ -276,6 +337,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       appUserLoading,
       companyShortName,
       companyShortNameLoading,
+      documentParameters,
       signingOut,
       signIn,
       signOut,

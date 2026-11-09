@@ -19,6 +19,13 @@ import SplashPage from "@/shared/components/splash/SplashPage";
 // El editor visual del ecommerce va aparte: trae craft.js, CodeMirror y los
 // iconos de Font Awesome, que no tienen por qué cargarse con el resto del ERP.
 const EditorPage = lazy(() => import("@/modules/ecommerce/editor/pages/EditorPage"));
+// El editor de plantillas de impresión también trae craft.js.
+const PrintTemplateEditorPage = lazy(
+  () => import("@/modules/print-templates/editor/pages/PrintTemplateEditorPage")
+);
+const PrintTemplateViewPage = lazy(
+  () => import("@/modules/print-templates/editor/pages/PrintTemplateViewPage")
+);
 
 // Único archivo de rutas. La navegación del sidebar es data aparte
 // (`src/app/data/permissions.tsx`); un enlace del sidebar puede apuntar a un
@@ -64,6 +71,36 @@ export const router = createBrowserRouter([
         <ProtectedRoute code="ecommerce_editor.edit">
           <Suspense fallback={<SplashPage message="Cargando editor..." />}>
             <EditorPage />
+          </Suspense>
+        </ProtectedRoute>
+      </ProtectedLayout>
+    ),
+  },
+  // Editor de una plantilla de impresión: a pantalla completa, como el del
+  // ecommerce. El listado está en Configuración (app/data/permissions.tsx).
+  {
+    path: "/settings/print-templates/edit/:id",
+    errorElement: <RouteError />,
+    element: (
+      <ProtectedLayout>
+        <ProtectedRoute code="print_templates.edit">
+          <Suspense fallback={<SplashPage message="Cargando editor..." />}>
+            <PrintTemplateEditorPage />
+          </Suspense>
+        </ProtectedRoute>
+      </ProtectedLayout>
+    ),
+  },
+  // Una plantilla del sistema, solo para verla: el editor sin edición. La ve
+  // quien ve el listado.
+  {
+    path: "/settings/print-templates/view/:code",
+    errorElement: <RouteError />,
+    element: (
+      <ProtectedLayout>
+        <ProtectedRoute code="print_templates.list">
+          <Suspense fallback={<SplashPage message="Cargando plantilla..." />}>
+            <PrintTemplateViewPage />
           </Suspense>
         </ProtectedRoute>
       </ProtectedLayout>

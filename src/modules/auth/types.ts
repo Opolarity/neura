@@ -35,6 +35,12 @@ export interface AuthContextType {
   appUserLoading: boolean;
   companyShortName: string;
   companyShortNameLoading: boolean;
+  /**
+   * Los parámetros de la empresa que imprimen los documentos (razón social,
+   * RUC, domicilio fiscal, teléfono, correo y logo), por nombre, más la
+   * dirección de la sucursal (BranchAddress); "" si no tiene.
+   */
+  documentParameters: Record<string, string>;
   /** Cierre de sesión en vuelo: ProtectedLayout tapa con el splash mientras dura. */
   signingOut: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
