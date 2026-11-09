@@ -446,7 +446,6 @@ const ExplosionDetail = () => {
           onOpenChange={setCopyOpen}
           currentId={isNew ? null : Number(id)}
           hasLines={lines.some((line) => line.materialId)}
-          modelCode={modelCode}
           onCopy={copyLines}
         />
       )}
