@@ -111,11 +111,11 @@ export interface ProductionOrderPdfData {
   images?: SheetImage[];
 }
 
-const qty = (value: number) =>
+export const qty = (value: number) =>
   new Intl.NumberFormat("es-PE", { maximumFractionDigits: 3 }).format(value);
 
 /** Lo que hay, unido. Vacío devuelve null y el campo no se pinta. */
-const lista = (values: string[]): string | null =>
+export const lista = (values: string[]): string | null =>
   values.filter(Boolean).join(", ") || null;
 
 /** Solo los campos con valor: un rótulo sobre un guion no informa de nada. */

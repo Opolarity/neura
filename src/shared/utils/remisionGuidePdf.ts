@@ -1,5 +1,11 @@
 import jsPDF from "jspdf";
 import { getParameters } from "@/modules/settings/services/Parameters.service";
+import type { PrintData } from "@/modules/print-templates/editor/lib/print-data";
+import type {
+  PrintDataRow,
+  PrintDataSourceId,
+} from "@/modules/print-templates/constants/printDataSources";
+import { printDocument } from "@/modules/print-templates/print/printDocument";
 
 /**
  * La guía de remisión: el papel que acompaña a la mercadería cuando sale.
@@ -81,7 +87,164 @@ export interface RemisionGuideData {
   items: RemisionGuideItem[];
 }
 
+/**
+ * Qué guía es: cada una tiene su plantilla de impresión (code de
+ * print-templates/constants/systemPrintTemplates) y su fuente de datos.
+ */
+export type RemisionGuideKind =
+  | "sale"
+  | "transfer"
+  | "production"
+  | "intake"
+  | "material";
+
+const GUIDE_TEMPLATES: Record<
+  RemisionGuideKind,
+  { code: string; source: PrintDataSourceId }
+> = {
+  sale: { code: "sale_remision_guide", source: "remision_guide" },
+  transfer: { code: "transfer_remision_guide", source: "transfer_guide" },
+  production: { code: "production_remision_guide", source: "production_guide" },
+  intake: { code: "production_intake_guide", source: "intake_guide" },
+  material: { code: "material_remision_guide", source: "material_guide" },
+};
+
+/**
+ * Qué guía es, por lo que manda cada envoltorio: la de ingreso, su título;
+ * producción y material, su bloque propio con su título; la que queda es la
+ * de traslado. La de ventas no pasa por aquí (generateRemisionGuide).
+ */
+const guideKindOf = (data: RemisionGuideData): RemisionGuideKind => {
+  if (data.title === "GUÍA DE INGRESO") return "intake";
+  if (data.extraSection?.title === "Servicio") return "production";
+  if (data.extraSection?.title === "Envío de material") return "material";
+  return "transfer";
+};
+
+/**
+ * La clave de cada dato del bloque propio en la fuente de la plantilla, por
+ * su rótulo: los envoltorios lo mandan ya redactado y sin los que no traen
+ * dato (en la plantilla, el que no llega se oculta).
+ */
+const EXTRA_KEYS: Partial<Record<RemisionGuideKind, Record<string, string>>> = {
+  production: {
+    "Orden de producción": "orderCode",
+    "Proceso destino": "processName",
+    Servicio: "service",
+    "Lo realiza": "serviceSupplier",
+    "Viene de": "comesFrom",
+    "Fecha de envío": "sentDate",
+  },
+  material: {
+    "Orden de producción": "orderCode",
+    Cotización: "quotation",
+    Servicio: "service",
+    "Lo realiza": "serviceSupplier",
+    "Almacén de destino": "destinationWarehouse",
+    "Sale de": "originWarehouse",
+    "Despachado por": "dispatchedBy",
+    "Fecha de envío": "sentDate",
+  },
+};
+
+/** Vacío = null: la plantilla escribe «-» o lo oculta. */
+const orNull = (value: string | null | undefined) => value || null;
+
+/** La fecha del papel: la de emisión, que es también la de inicio del traslado. */
+const guideDate = (issueDate?: string) =>
+  new Date(issueDate ?? Date.now()).toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+/**
+ * «[SKU] Producto - Variación», como la del PDF de antes. Sin SKU (los
+ * materiales) no lleva los corchetes vacíos.
+ */
+const itemDescription = (item: RemisionGuideItem) =>
+  `${item.sku ? `[${item.sku}] ` : ""}${item.productName}${item.variationName ? ` - ${item.variationName}` : ""}`;
+
+/**
+ * Los datos de la guía para su plantilla (fuentes transfer_guide,
+ * production_guide, intake_guide y material_guide de print-templates), con
+ * los mismos textos que el PDF de antes. Las mayúsculas las pone la
+ * plantilla; la empresa (y, en traslado e ingreso, el destinatario) sale de
+ * la sesión.
+ *
+ * `departureAddress` es la dirección de partida de la empresa, la que va
+ * cuando el envío no trae la suya.
+ */
+export const remisionGuidePrintData = (
+  data: RemisionGuideData,
+  kind: RemisionGuideKind = guideKindOf(data),
+  departureAddress = "",
+): PrintData => {
+  const extraKeys = EXTRA_KEYS[kind] ?? {};
+  const extra: PrintDataRow = {};
+  for (const field of data.extraSection?.fields ?? []) {
+    const key = extraKeys[field.label];
+    if (key) extra[key] = orNull(field.value);
+  }
+  return {
+    [GUIDE_TEMPLATES[kind].source]: {
+      // Las prendas o los materiales, uno por fila: lo que llegue con su
+      // talla ya unida al nombre va en la descripción, como antes.
+      rows: data.items.map((item, idx) => ({
+        index: String(idx + 1),
+        description: itemDescription(item),
+        unit: item.unit ?? "Unidades",
+        quantity: item.quantity.toFixed(3),
+      })),
+      values: {
+        guideNumber: data.guideNumber,
+        recipientName: orNull(data.recipientName),
+        documentType: orNull(data.documentType),
+        documentNumber: orNull(data.documentNumber),
+        destinationAddress: orNull(data.destinationAddress),
+        issueDate: guideDate(data.issueDate),
+        transferReason: orNull(data.transferReason),
+        originAddress: orNull(data.originAddress || departureAddress),
+        originName: orNull(data.originName),
+        carrierName: orNull(data.carrierName),
+        ...extra,
+      },
+    },
+  };
+};
+
+/**
+ * Imprime la guía con su plantilla (la personalizada en uso o la del
+ * sistema). Qué guía es lo dice `kind`; sin él, se deduce de lo que manda el
+ * envoltorio.
+ *
+ * La empresa ya no se pide aquí (sale de la sesión); solo la dirección de
+ * partida por defecto, que la plantilla no tiene: el parámetro
+ * `CompanyDireccionPartida`.
+ */
 export async function openRemisionGuidePdf(
+  data: RemisionGuideData,
+  kind: RemisionGuideKind = guideKindOf(data),
+): Promise<void> {
+  const departureAddress = data.originAddress
+    ? ""
+    : ((await getParameters(["CompanyDireccionPartida"]))[
+        "CompanyDireccionPartida"
+      ] ?? "");
+
+  const name = kind === "intake" ? "Guía de ingreso" : "Guía de remisión";
+  await printDocument(
+    GUIDE_TEMPLATES[kind].code,
+    remisionGuidePrintData(data, kind, departureAddress),
+    { fileName: `${name} ${data.guideNumber}` },
+  );
+}
+
+/**
+ * La guía dibujada con jsPDF y abierta en una pestaña nueva: el PDF de antes
+ * de las plantillas de impresión. Queda sin uso.
+ */
+export async function openRemisionGuidePdfLegacy(
   data: RemisionGuideData,
 ): Promise<void> {
   const params = await getParameters([

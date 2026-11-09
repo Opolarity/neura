@@ -67,13 +67,13 @@ export interface MaterialRequirementPdfData {
   estimatedTotalCost: number;
 }
 
-const qty = (value: number) =>
+export const qty = (value: number) =>
   new Intl.NumberFormat("es-PE", { maximumFractionDigits: 3 }).format(value);
 
-const money = (value: number) => `S/ ${value.toFixed(2)}`;
+export const money = (value: number) => `S/ ${value.toFixed(2)}`;
 
 /** Lo que hay, unido. Vacío devuelve null y el campo no se pinta. */
-const lista = (values: string[]): string | null =>
+export const lista = (values: string[]): string | null =>
   values.filter(Boolean).join(", ") || null;
 
 /** Solo los campos con valor: un rótulo sobre un guion no informa de nada. */
@@ -97,10 +97,10 @@ const conValor = (
  * `Map` conserva el orden de insercion, asi que basta con no reordenar: lo
  * unico que se mueve es el grupo sin clase, que va al final.
  */
-const SIN_CLASIFICAR = "SIN CLASIFICAR";
+export const SIN_CLASIFICAR = "SIN CLASIFICAR";
 
 /** Deja el grupo sin clase al final y respeta el resto tal como llego. */
-const sinClaseAlFinal = (a: string, b: string): number => {
+export const sinClaseAlFinal = (a: string, b: string): number => {
   if (a === SIN_CLASIFICAR) return 1;
   if (b === SIN_CLASIFICAR) return -1;
   return 0;
