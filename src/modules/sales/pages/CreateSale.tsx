@@ -232,6 +232,7 @@ const CreateSale = () => {
     couponError,
     applyCoupon,
     removeCoupon,
+    clearCouponError,
     isDirty,
     // Returns
     orderReturns,
@@ -1661,6 +1662,7 @@ const CreateSale = () => {
                     error={couponError}
                     onApply={applyCoupon}
                     onRemove={removeCoupon}
+                    onClearError={clearCouponError}
                   />
                 )}
 

@@ -61,6 +61,7 @@ interface ProductsStepProps {
   couponError: string | null;
   onApplyCoupon: (code: string) => void;
   onRemoveCoupon: () => void;
+  onClearCouponError: () => void;
   customerName?: string;
   customerLastname?: string;
   customerDocumentNumber?: string;
@@ -95,6 +96,7 @@ export default function ProductsStep({
   couponError,
   onApplyCoupon,
   onRemoveCoupon,
+  onClearCouponError,
   customerName,
   customerLastname,
   customerDocumentNumber,
@@ -437,6 +439,7 @@ export default function ProductsStep({
                     error={couponError}
                     onApply={onApplyCoupon}
                     onRemove={onRemoveCoupon}
+                    onClearError={onClearCouponError}
                   />
 
                   {/* Reglas de precio aplicadas por el motor (T-358) */}
