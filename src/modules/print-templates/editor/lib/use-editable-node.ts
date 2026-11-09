@@ -98,6 +98,16 @@ export function useEditableNode({
     const start = { x: event.clientX, y: event.clientY, xMm, yMm };
     let moving = false;
 
+    // Si un ancestro no es libre, craft le puso draggable: al mover el puntero
+    // el navegador empezaría el arrastre nativo de ese ancestro (su dragstart
+    // no pasa por el de este componente) y cancelaría el puntero
+    // (pointercancel) a los pocos px. Mientras dura este arrastre ningún
+    // dragstart llega a nadie: se corta en la captura de window.
+    const blockNativeDrag = (dragEvent: DragEvent) => {
+      dragEvent.preventDefault();
+      dragEvent.stopPropagation();
+    };
+
     const move = (moveEvent: PointerEvent) => {
       const dx = (moveEvent.clientX - start.x) / scale;
       const dy = (moveEvent.clientY - start.y) / scale;
@@ -115,11 +125,13 @@ export function useEditableNode({
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", end);
       window.removeEventListener("pointercancel", end);
+      window.removeEventListener("dragstart", blockNativeDrag, true);
       document.body.style.userSelect = "";
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", end);
     window.addEventListener("pointercancel", end);
+    window.addEventListener("dragstart", blockNativeDrag, true);
   };
 
   // Por si craft ya le había puesto su arrastre antes de pasar a libre, o de

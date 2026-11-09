@@ -71,11 +71,15 @@ const pxToMm = (px: number) => px / PX_PER_MM;
 const IMAGE_PX_PER_MM = 300 / 25.4;
 
 /**
- * Una imagen lista para el PDF (PNG, sobre blanco), del tamaño con que se
- * imprime: un logo de 1200 × 1600 px en una caja de 38 × 12 mm baja a unos
- * 140 px. jsPDF procesa los PNG píxel por píxel, y a tamaño completo «Probar
- * PDF» tardaba minutos. Nunca se agranda: el QR y el código de barras quedan
- * como están, nítidos.
+ * Una imagen lista para el PDF (PNG, con su transparencia), del tamaño con
+ * que se imprime: un logo de 1200 × 1600 px en una caja de 38 × 12 mm baja a
+ * unos 140 px. jsPDF procesa los PNG píxel por píxel, y a tamaño completo
+ * «Probar PDF» tardaba minutos. Nunca se agranda: el QR y el código de barras
+ * quedan como están, nítidos.
+ *
+ * Sin fondo: pintada sobre blanco, una imagen tapaba con su rectángulo a lo
+ * que tuviera debajo (otra imagen, un fondo de color), y en la hoja se veían
+ * las dos.
  */
 async function imageForPdf(url: string, widthMm: number, heightMm: number) {
   const blob = await (await fetch(url)).blob();
@@ -96,8 +100,6 @@ async function imageForPdf(url: string, widthMm: number, heightMm: number) {
     canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Sin canvas");
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
     context.imageSmoothingQuality = "high";
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL("image/png");
