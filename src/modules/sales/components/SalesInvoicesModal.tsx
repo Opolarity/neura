@@ -632,8 +632,14 @@ export const SalesInvoicesModal = ({
             filtro: los comprobantes de una venta se acumulan y sin esto el
             modal se estiraba hasta salirse de la pantalla. El max-h va en un
             contenedor propio, no en el ScrollArea. El pr-4 aparta la tabla de
-            la barra de scroll. */}
-        <div className="max-h-[50vh]">
+            la barra de scroll.
+
+            min-w-0: DialogContent es un grid y sus hijos tienen min-width
+            auto, asi que la tabla le imponia su ancho minimo a la columna y
+            el modal se desbordaba (columna Acciones y boton Crear cortados en
+            el borde). Con min-w-0 el contenedor mide lo que el modal y la
+            tabla se desplaza en horizontal dentro del ScrollArea. */}
+        <div className="max-h-[50vh] min-w-0">
           {/* El viewport de Radix envuelve el contenido en un div con
               display: table, que deja a la tabla crecer a su ancho natural y
               la recorta: el ScrollArea solo trae barra vertical. En block, el
