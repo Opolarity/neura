@@ -1,33 +1,23 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { ListFilter, Search } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/modules/auth";
 import { PageLoader } from "@/shared/components/page-loader";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
+import { TooltipIconButton } from "@/shared/components/tooltip-icon-button/TooltipIconButton";
 import ChatbotTemplatesHeader from "../components/chatbot-templates/ChatbotTemplatesHeader";
 import ChatbotTemplatesTable from "../components/chatbot-templates/ChatbotTemplatesTable";
 import ChatbotTemplateFormDialog from "../components/chatbot-templates/ChatbotTemplateFormDialog";
 import ChatbotTemplateDeleteDialog from "../components/chatbot-templates/ChatbotTemplateDeleteDialog";
+import ChatbotTemplatesFilterModal from "../components/chatbot-templates/ChatbotTemplatesFilterModal";
 import { useChatbotTemplates } from "../hooks/useChatbotTemplates";
 import type { ChatbotTemplate } from "../types/chatbotTemplates.types";
-
-/** Valor del Select para "todos": Radix no admite un SelectItem con value "". */
-const ALL = "__all__";
 
 /**
  * T-902. Los textos fijos del chatbot de WhatsApp. En las del sistema solo se
  * edita el texto: los nombres los usa el código del bot. T-917: etiquetas (una
- * principal de Jev y extras), filtro por etiqueta y plantillas nuevas creadas
+ * principal y extras), filtro por etiqueta en el pop-up de siempre y plantillas nuevas creadas
  * desde acá. T-922: se elimina cualquiera que no esté bloqueada; si el bot la
  * usaba para algo (rol), ese mensaje lo redacta él. Solo admin (lo exigen también los SP).
  */
@@ -53,6 +43,7 @@ export default function ChatbotTemplatesPage() {
   const [editing, setEditing] = useState<ChatbotTemplate | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<ChatbotTemplate | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   if (!isAdmin) {
     return (
@@ -85,37 +76,12 @@ export default function ChatbotTemplatesPage() {
                 className="pl-9"
               />
             </div>
-            <Select value={tagFilter || ALL} onValueChange={(v) => onTagFilterChange(v === ALL ? "" : v)}>
-              <SelectTrigger className="w-full sm:w-[260px]" aria-label="Filtrar por etiqueta">
-                <SelectValue placeholder="Todas las etiquetas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>Todas las etiquetas</SelectItem>
-                <SelectGroup>
-                  <SelectLabel>Principales</SelectLabel>
-                  {tags
-                    .filter((g) => g.is_jev)
-                    .map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>
-                        {g.name} ({g.templates_count})
-                      </SelectItem>
-                    ))}
-                </SelectGroup>
-                {tags.some((g) => !g.is_jev) && (
-                  <SelectGroup>
-                    <SelectLabel>Otras</SelectLabel>
-                    {tags
-                      .filter((g) => !g.is_jev)
-                      .map((g) => (
-                        <SelectItem key={g.id} value={String(g.id)}>
-                          {g.name} ({g.templates_count})
-                        </SelectItem>
-                      ))}
-                  </SelectGroup>
-                )}
-                {withoutTopic ? <SelectItem value="none">Sin etiqueta principal ({withoutTopic})</SelectItem> : null}
-              </SelectContent>
-            </Select>
+            <TooltipIconButton
+              onClick={() => setFilterOpen(true)}
+              variant={tagFilter ? "default" : "outline"}
+              icon={<ListFilter className="w-4 h-4" />}
+              label="Filtrar"
+            />
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
@@ -143,6 +109,18 @@ export default function ChatbotTemplatesPage() {
         }}
         onSave={save}
         onCreate={create}
+      />
+
+      <ChatbotTemplatesFilterModal
+        tags={tags}
+        withoutTopic={withoutTopic}
+        tagFilter={tagFilter}
+        isOpen={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        onApply={(tag) => {
+          onTagFilterChange(tag);
+          setFilterOpen(false);
+        }}
       />
 
       <ChatbotTemplateDeleteDialog
