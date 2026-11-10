@@ -127,7 +127,12 @@ export function EditableImage(props: EditableImageProps) {
 
   const popup = popupTargetOf({ linkType, popupSlug, popupAction });
 
-  const image = (
+  // An empty src makes the browser request the page again. Without a URL the
+  // store draws nothing; the editor shows a placeholder so it can be selected.
+  const hasSrc = typeof src === "string" && src.trim() !== "";
+  if (!hasSrc && !enabled) return null;
+
+  const image = hasSrc ? (
     <img
       src={src}
       alt={alt}
@@ -138,6 +143,13 @@ export function EditableImage(props: EditableImageProps) {
         display: "block",
       }}
     />
+  ) : (
+    <div
+      className="flex items-center justify-center bg-muted text-xs text-muted-foreground"
+      style={{ width: "100%", height: "100%", minHeight: 80 }}
+    >
+      Sin imagen
+    </div>
   );
 
   return (
