@@ -7,9 +7,11 @@ export interface AccountsApiResponse {
       last_name: string;
       last_name2: string;
       document_type_id: number;
+      document_type_name: string | null;
       document_number: string;
       show: boolean;
       types_name: string;
+      has_account: boolean | null;
       total_purchases: number;
       total_spent: number;
     }>;
@@ -36,8 +38,10 @@ export interface Accounts {
 export interface Account {
   id: number;
   fullName: string;
+  documentTypeName: string;
   documentNumber: string;
   typeName: string;
+  hasAccount: boolean;
   show?: boolean;
   documentTypeId?: number;
   totalPurchases: number;

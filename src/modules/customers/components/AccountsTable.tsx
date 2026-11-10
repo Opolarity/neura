@@ -24,8 +24,9 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                 <TableRow>
                     <TableHead className="w-16">ID</TableHead>
                     <TableHead>Nombre</TableHead>
+                    <TableHead>Tipo doc.</TableHead>
                     <TableHead>Documento</TableHead>
-                    <TableHead>Tipo</TableHead>
+                    <TableHead>Tiene cuenta</TableHead>
                     <TableHead className="text-center">Compras</TableHead>
                     <TableHead className="text-right">Monto Gastado</TableHead>
                     <TableHead>Estado</TableHead>
@@ -34,7 +35,7 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
             <TableBody>
                 {loading && accounts.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
+                        <TableCell colSpan={8} className="text-center py-8">
                             <div className="flex items-center justify-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin" />
                                 Cargando clientes...
@@ -43,7 +44,7 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                     </TableRow>
                 ) : accounts.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground p-10">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground p-10">
                             No se encontraron cuentas
                         </TableCell>
                     </TableRow>
@@ -52,8 +53,15 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                         <TableRow key={account.id}>
                             <TableCell className="font-medium">{account.id}</TableCell>
                             <TableCell>{account.fullName}</TableCell>
-                            <TableCell>{account.documentNumber}</TableCell>
-                            <TableCell>{account.typeName}</TableCell>
+                            <TableCell>{account.documentTypeName || '—'}</TableCell>
+                            <TableCell>{account.documentNumber || '—'}</TableCell>
+                            <TableCell>
+                                {account.hasAccount ? (
+                                    <Badge variant="info">Sí</Badge>
+                                ) : (
+                                    <Badge variant="pending">No</Badge>
+                                )}
+                            </TableCell>
                             <TableCell className="text-center">
                                 <Badge variant="secondary">
                                     {account.totalPurchases}
