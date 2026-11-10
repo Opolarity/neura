@@ -17,6 +17,7 @@ export const accountsAdapter = (response: AccountsApiResponse) => {
             documentNumber: item.document_number,
             typeName: item.types_name,
             hasAccount: item.has_account === true,
+            canManageAccess: item.account_access === true,
             show: item.show,
             documentTypeId: item.document_type_id,
             totalPurchases: item.total_purchases || 0,
