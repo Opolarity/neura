@@ -13,8 +13,10 @@ export const accountsAdapter = (response: AccountsApiResponse) => {
         return {
             id: item.id,
             fullName: nameParts.join(' '),
+            documentTypeName: item.document_type_name ?? '',
             documentNumber: item.document_number,
             typeName: item.types_name,
+            hasAccount: item.has_account === true,
             show: item.show,
             documentTypeId: item.document_type_id,
             totalPurchases: item.total_purchases || 0,
