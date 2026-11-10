@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAccountAccess } from "../hooks/useAccountAccess";
 
-const MIN_PASSWORD = 8;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface AccountAccessDialogProps {
@@ -23,40 +22,23 @@ interface AccountAccessDialogProps {
 }
 
 // Acceso a la cuenta del ecommerce de un cliente: mandar el enlace para
-// restablecer la contraseña, cambiar el correo o poner una contraseña nueva.
+// restablecer la contraseña o cambiar el correo. La contraseña no se pone desde
+// el ERP: el cliente la crea con el enlace.
 // Toda la validación real la hace customer-account-access.
 export const AccountAccessDialog = ({ account, onClose }: AccountAccessDialogProps) => {
-  const { info, busy, sendReset, changeEmail, setPassword } = useAccountAccess(account?.id ?? null);
+  const { info, busy, sendReset, changeEmail } = useAccountAccess(account?.id ?? null);
   const [newEmail, setNewEmail] = useState("");
-  const [password, setPasswordValue] = useState("");
-  const [confirm, setConfirm] = useState("");
 
   useEffect(() => {
     setNewEmail("");
-    setPasswordValue("");
-    setConfirm("");
   }, [account?.id]);
 
   const loading = busy === "load";
   const canEdit = info?.canEditCredentials === true;
   const emailValid = EMAIL_RE.test(newEmail.trim());
-  const passwordError =
-    password && password.length < MIN_PASSWORD
-      ? `Mínimo ${MIN_PASSWORD} caracteres.`
-      : confirm && password !== confirm
-        ? "Las contraseñas no coinciden."
-        : null;
-  const passwordReady = password.length >= MIN_PASSWORD && password === confirm;
 
   const handleChangeEmail = async () => {
     if (await changeEmail(newEmail)) setNewEmail("");
-  };
-
-  const handleSetPassword = async () => {
-    if (await setPassword(password)) {
-      setPasswordValue("");
-      setConfirm("");
-    }
   };
 
   return (
@@ -130,39 +112,6 @@ export const AccountAccessDialog = ({ account, onClose }: AccountAccessDialogPro
                       Guardar
                     </Button>
                   </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <Label htmlFor="account-access-password">Poner contraseña nueva</Label>
-                  <Input
-                    id="account-access-password"
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder={`Mínimo ${MIN_PASSWORD} caracteres`}
-                    value={password}
-                    onChange={(e) => setPasswordValue(e.target.value)}
-                    disabled={busy !== null}
-                  />
-                  <Input
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="Repite la contraseña"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    disabled={busy !== null}
-                  />
-                  {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
-                  <Button
-                    type="button"
-                    className="w-full"
-                    disabled={busy !== null || !passwordReady}
-                    onClick={handleSetPassword}
-                  >
-                    {busy === "password" && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Guardar contraseña
-                  </Button>
                 </div>
               </>
             )}

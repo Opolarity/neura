@@ -62,7 +62,7 @@ export const AccountsTable = ({ accounts, loading, onAccountAccess }: AccountsTa
                             <TableCell>{account.documentNumber || '—'}</TableCell>
                             <TableCell>
                                 {account.hasAccount ? (
-                                    <span title="Tiene cuenta" aria-label="Tiene cuenta">
+                                    <span className="text-success" title="Tiene cuenta" aria-label="Tiene cuenta">
                                         <Check className="w-4 h-4" />
                                     </span>
                                 ) : (
