@@ -95,7 +95,7 @@ export const AccountsTable = ({ accounts, loading, onAccountAccess }: AccountsTa
                             </TableCell>
                             {showActions && (
                                 <TableCell>
-                                    {account.hasAccount && (
+                                    {account.canManageAccess && (
                                         <div className="flex gap-2">
                                             <Button
                                                 variant="outline"

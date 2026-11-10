@@ -12,6 +12,8 @@ export interface AccountsApiResponse {
       show: boolean;
       types_name: string;
       has_account: boolean | null;
+      /** Aplica "Acceso a la cuenta": solo CLI + USE, un perfil, sin roles del ERP. */
+      account_access?: boolean | null;
       total_purchases: number;
       total_spent: number;
     }>;
@@ -42,6 +44,7 @@ export interface Account {
   documentNumber: string;
   typeName: string;
   hasAccount: boolean;
+  canManageAccess: boolean;
   show?: boolean;
   documentTypeId?: number;
   totalPurchases: number;
