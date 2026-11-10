@@ -4,7 +4,10 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 
+import { useAuth } from '@/modules/auth';
 import { useAccounts } from '../hooks/useAccounts';
+import { AccountAccessDialog } from '../components/AccountAccessDialog';
+import type { Account } from '../types/accounts.types';
 import { AccountsFilterBar } from '../components/AccountsFilterBar';
 import { AccountsTable } from '../components/AccountsTable';
 import { AccountFilterModal } from '../components/AccountFilterModal';
@@ -14,6 +17,9 @@ const AccountsList = () => {
     const navigate = useNavigate();
 
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [accessAccount, setAccessAccount] = useState<Account | null>(null);
+    const { permissionCodes } = useAuth();
+    const canAccountAccess = permissionCodes.includes('customers.account_access');
 
     const {
         accounts,
@@ -45,6 +51,10 @@ const AccountsList = () => {
                 onApply={handleFiltersChange}
                 onClear={clearFilters}
             />
+            <AccountAccessDialog
+                account={accessAccount}
+                onClose={() => setAccessAccount(null)}
+            />
             {/* Header */}
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-foreground">Lista de clientes</h1>
@@ -70,7 +80,7 @@ const AccountsList = () => {
                     <AccountsTable
                         accounts={accounts}
                         loading={loading}
-
+                        onAccountAccess={canAccountAccess ? setAccessAccount : undefined}
                     />
                 </CardContent>
 
