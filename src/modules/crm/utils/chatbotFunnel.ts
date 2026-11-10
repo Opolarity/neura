@@ -133,6 +133,13 @@ const SETTING_STAGE: Record<string, FunnelStage> = {
 
 export const settingStage = (code: string): FunnelStage => SETTING_STAGE[code] ?? "general";
 
+/**
+ * Ajustes de «Datos y pago» que ya no se muestran: salen del ERP en vez de
+ * preguntarse. Su valor publicado sigue vigente para el bot. Las sedes
+ * (store_locations) se quedan: no tienen otro lugar donde editarse.
+ */
+export const HIDDEN_SETTINGS = new Set(["dispatch_time", "receipt_question", "pickup_outside_lima"]);
+
 /** La etapa de cada plantilla de Overtake, por nombre. */
 const TEMPLATE_NAMES: Record<FunnelStage, string[]> = {
   saludo: [

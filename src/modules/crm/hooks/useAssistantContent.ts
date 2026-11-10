@@ -4,16 +4,10 @@ import { toastError } from "@/shared/utils/toastError";
 import {
   createPromptBlockApi,
   deletePromptBlockApi,
-  getChatbotTagsApi,
-  getChatbotTemplatesApi,
   getPromptBlocksApi,
   savePromptBlockApi,
-  setChatbotTemplateSaleSolaApi,
-  updateChatbotTemplateApi,
 } from "../services/crm.service";
-import { toChatbotTemplate } from "../adapters/chatbotTemplates.adapter";
 import { toPromptBlock } from "../adapters/chatbotConsiderations.adapter";
-import type { ChatbotTemplate, ChatbotTemplateMeta } from "../types/chatbotTemplates.types";
 import type { PromptBlock } from "../types/chatbotConsiderations.types";
 import type { FunnelStage } from "../types/chatbotAssistant.types";
 import { stageSectionKeys } from "../utils/chatbotFunnel";
@@ -29,24 +23,20 @@ const tituloDe = (texto: string): string =>
 
 /**
  * Lo que el Asistente de ventas muestra por etapa además de los ajustes: las
- * plantillas que el bot manda en esa etapa y las indicaciones que agregó la
- * tienda en las secciones del prompt de esa etapa. Solo admin.
+ * indicaciones que agregó la tienda en las secciones del prompt de esa etapa.
+ * Las plantillas se editan en su propia página. Solo admin.
  */
 export const useAssistantContent = (enabled: boolean) => {
-  const [templates, setTemplates] = useState<ChatbotTemplate[]>([]);
-  const [tagOptions, setTagOptions] = useState<string[]>([]);
   const [blocks, setBlocks] = useState<PromptBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const [t, g, b] = await Promise.all([getChatbotTemplatesApi(), getChatbotTagsApi(), getPromptBlocksApi()]);
-      setTemplates((t.data ?? []).map(toChatbotTemplate));
-      setTagOptions((g.data ?? []).filter((x) => !x.is_jev).map((x) => x.name));
+      const b = await getPromptBlocksApi();
       setBlocks((b.data ?? []).map(toPromptBlock));
     } catch (error) {
-      toastError(error, undefined, "No se pudieron cargar los mensajes del asistente");
+      toastError(error, undefined, "No se pudieron cargar las indicaciones del asistente");
     } finally {
       setLoading(false);
     }
@@ -56,29 +46,6 @@ export const useAssistantContent = (enabled: boolean) => {
     if (enabled) void load();
     else setLoading(false);
   }, [enabled, load]);
-
-  /** Mismo guardado que la pantalla de Plantillas: el texto y, si cambió, "responde solo". */
-  const saveTemplate = useCallback(
-    async (template: ChatbotTemplate, content: string, meta?: ChatbotTemplateMeta, saleSola?: boolean) => {
-      setSaving(true);
-      try {
-        const res = await updateChatbotTemplateApi(template.id, content, template.updatedAt, meta);
-        const cambioSola = !template.locked && saleSola != null && saleSola !== template.saleSola;
-        if (cambioSola) await setChatbotTemplateSaleSolaApi(template.id, saleSola);
-        if (res.changed || cambioSola) {
-          toast({ title: "Mensaje guardado", description: LIVE });
-          await load();
-        }
-        return true;
-      } catch (error) {
-        toastError(error, undefined, "No se pudo guardar el mensaje");
-        return false;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [load]
-  );
 
   const notesOf = useCallback(
     (stage: FunnelStage) => {
@@ -131,5 +98,5 @@ export const useAssistantContent = (enabled: boolean) => {
     [run]
   );
 
-  return { templates, tagOptions, loading, saving, saveTemplate, notesOf, addNote, saveNote, deleteNote };
+  return { loading, saving, notesOf, addNote, saveNote, deleteNote };
 };

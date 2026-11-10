@@ -21,11 +21,3 @@ export type FunnelStage =
   | "asesor"
   | "fuera"
   | "general";
-
-/**
- * Cómo se muestra una plantilla en la etapa:
- * - automatica: la arma el bot en un flujo fijo (locked); va plegada.
- * - responde_sola: Jev puede mandarla sin pasar por el modelo (sale_sola).
- * - base: el bot la usa como referencia para redactar.
- */
-export type AssistantTemplateKind = "automatica" | "responde_sola" | "base";
