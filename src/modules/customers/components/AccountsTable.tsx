@@ -1,4 +1,5 @@
-import { Loader2 } from 'lucide-react';
+import { Check, KeyRound, Loader2, Minus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
     Table,
@@ -14,10 +15,13 @@ import { formatCurrency } from '@/shared/utils/currency';
 interface AccountsTableProps {
     accounts: Account[];
     loading: boolean;
-
+    /** Si llega, se muestra la columna Acciones con "Acceso a la cuenta". */
+    onAccountAccess?: (account: Account) => void;
 }
 
-export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
+export const AccountsTable = ({ accounts, loading, onAccountAccess }: AccountsTableProps) => {
+    const showActions = Boolean(onAccountAccess);
+    const colSpan = showActions ? 9 : 8;
     return (
         <Table>
             <TableHeader>
@@ -30,12 +34,13 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                     <TableHead className="text-center">Compras</TableHead>
                     <TableHead className="text-right">Monto Gastado</TableHead>
                     <TableHead>Estado</TableHead>
+                    {showActions && <TableHead>Acciones</TableHead>}
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {loading && accounts.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8">
+                        <TableCell colSpan={colSpan} className="text-center py-8">
                             <div className="flex items-center justify-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin" />
                                 Cargando clientes...
@@ -44,7 +49,7 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                     </TableRow>
                 ) : accounts.length === 0 ? (
                     <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground p-10">
+                        <TableCell colSpan={colSpan} className="text-center text-muted-foreground p-10">
                             No se encontraron cuentas
                         </TableCell>
                     </TableRow>
@@ -57,9 +62,13 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                             <TableCell>{account.documentNumber || '—'}</TableCell>
                             <TableCell>
                                 {account.hasAccount ? (
-                                    <Badge variant="info">Sí</Badge>
+                                    <span title="Tiene cuenta" aria-label="Tiene cuenta">
+                                        <Check className="w-4 h-4" />
+                                    </span>
                                 ) : (
-                                    <Badge variant="pending">No</Badge>
+                                    <span className="text-muted-foreground" title="Sin cuenta" aria-label="Sin cuenta">
+                                        <Minus className="w-4 h-4" />
+                                    </span>
                                 )}
                             </TableCell>
                             <TableCell className="text-center">
@@ -84,6 +93,23 @@ export const AccountsTable = ({ accounts, loading }: AccountsTableProps) => {
                                     )}
                                 </div>
                             </TableCell>
+                            {showActions && (
+                                <TableCell>
+                                    {account.hasAccount && (
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                title="Acceso a la cuenta"
+                                                aria-label="Acceso a la cuenta"
+                                                onClick={() => onAccountAccess?.(account)}
+                                            >
+                                                <KeyRound className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    )}
+                                </TableCell>
+                            )}
                         </TableRow>
                     ))
                 )}
