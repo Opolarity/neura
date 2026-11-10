@@ -5,11 +5,10 @@ import {
   changeAccountEmailApi,
   getAccountAccessApi,
   sendPasswordResetApi,
-  setAccountPasswordApi,
 } from "../services/accountAccess.service";
 import type { AccountAccessInfo } from "../types/accountAccess.types";
 
-type Busy = null | "load" | "reset" | "email" | "password";
+type Busy = null | "load" | "reset" | "email";
 
 /** Estado y acciones del diálogo "Acceso a la cuenta" de un cliente. */
 export const useAccountAccess = (accountId: number | null) => {
@@ -69,20 +68,5 @@ export const useAccountAccess = (accountId: number | null) => {
     }
   };
 
-  const setPassword = async (password: string) => {
-    if (!accountId) return false;
-    setBusy("password");
-    try {
-      await setAccountPasswordApi(accountId, password);
-      toast({ title: "Contraseña actualizada", variant: "success" });
-      return true;
-    } catch (error) {
-      toastError(error, "No se pudo cambiar la contraseña");
-      return false;
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  return { info, busy, sendReset, changeEmail, setPassword };
+  return { info, busy, sendReset, changeEmail };
 };

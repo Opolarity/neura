@@ -31,10 +31,3 @@ export const changeAccountEmailApi = async (accountId: number, email: string): P
     body: { account_id: accountId, action: "change_email", email },
   });
 };
-
-export const setAccountPasswordApi = async (accountId: number, password: string): Promise<void> => {
-  await invokeFunction(FN, {
-    method: "POST",
-    body: { account_id: accountId, action: "set_password", password },
-  });
-};
