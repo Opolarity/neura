@@ -4,6 +4,8 @@ import { buildEndpoint } from "@/shared/utils/query";
 import {
   AddSupplierPaymentPayload,
   AddSupplierPaymentsBulkPayload,
+  SupplierPayablesApiResponse,
+  SupplierPayablesFilters,
   SupplierPaymentsApiResponse,
   SupplierPaymentsFilters,
 } from "../types/supplierPayments.types";
@@ -22,6 +24,27 @@ export const getSupplierPaymentsApi = async (
   return (
     data ?? {
       paymentsdata: {
+        data: [],
+        page: { page: 1, size: 20, total: 0 },
+        totals: { payable: 0, paid: 0, balance: 0 },
+      },
+    }
+  );
+};
+
+/** Lo que se le debe a cada taller, por OP (202610190008): Pagos y cobros › Proveedores. */
+export const getSupplierPayablesByOrderApi = async (
+  filters: SupplierPayablesFilters = {},
+): Promise<SupplierPayablesApiResponse> => {
+  const endpoint = buildEndpoint("get-supplier-payables-by-order", filters);
+
+  const data = await invokeFunction<SupplierPayablesApiResponse>(endpoint, {
+    method: "GET",
+  });
+
+  return (
+    data ?? {
+      payablesdata: {
         data: [],
         page: { page: 1, size: 20, total: 0 },
         totals: { payable: 0, paid: 0, balance: 0 },
