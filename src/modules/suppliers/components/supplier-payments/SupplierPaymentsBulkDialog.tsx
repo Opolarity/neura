@@ -96,11 +96,10 @@ const SupplierPaymentsBulkDialog = ({
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Pagar {rows.length} servicios</DialogTitle>
-          <DialogDescription>
-            Cada uno se salda por completo. Es una sola operación: si algo
-            falla, no se registra ningún pago.
-          </DialogDescription>
+          <DialogTitle>
+            {rows.length === 1 ? "Pagar 1 servicio" : `Pagar ${rows.length} servicios`}
+          </DialogTitle>
+          <DialogDescription>Cada servicio se salda entero y pasa a Pagado.</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">

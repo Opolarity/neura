@@ -10,9 +10,11 @@ import { useDebounce } from "@/shared/hooks/useDebounce";
 import { useToast } from "@/hooks/use-toast";
 import { toastError } from "@/shared/utils/toastError";
 
+const DEFAULT_ORDER = "created_at_desc";
+
 const DEFAULT_FILTERS: QuotationsFilters = {
   search: null,
-  order: "created_at_desc",
+  order: DEFAULT_ORDER,
   page: 1,
   size: 20,
 };
@@ -93,11 +95,18 @@ export const useQuotations = () => {
     loadData(newFilters);
   };
 
-  const onOrderChange = (order: string) => {
-    const newFilters = { ...filtersRef.current, order, page: 1 };
+  /** Lo que se aplica desde el pop-up «Filtrar»: por ahora, el orden. */
+  const handleApplyFilters = (applied: Pick<QuotationsFilters, "order">) => {
+    const newFilters: QuotationsFilters = {
+      ...filtersRef.current,
+      order: applied.order || DEFAULT_ORDER,
+      page: 1,
+    };
     updateFilters(newFilters);
     loadData(newFilters);
   };
+
+  const hasActiveFilters = filters.order !== DEFAULT_ORDER;
 
   return {
     quotations,
@@ -109,6 +118,7 @@ export const useQuotations = () => {
     onSearchChange,
     onPageChange,
     handlePageSizeChange,
-    onOrderChange,
+    handleApplyFilters,
+    hasActiveFilters,
   };
 };

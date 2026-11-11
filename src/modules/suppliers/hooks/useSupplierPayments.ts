@@ -1,22 +1,24 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
-import { useDebounce } from "@/shared/hooks/useDebounce";
 import { getPaymentMethodsIsActiveTrueAndActiveTrue } from "@/shared/services/service";
 import { errorMessageOf } from "@/shared/utils/functionError";
-import { suppliersListApi } from "../services/suppliers.service";
-import { Supplier } from "../types/suppliers.types";
 import {
   addSupplierPaymentApi,
   addSupplierPaymentsBulkApi,
+  getSupplierPayablesByOrderApi,
   getSupplierPaymentsApi,
   uploadSupplierPaymentVoucherApi,
 } from "../services/supplierPayments.service";
-import { supplierPaymentsAdapter } from "../adapters/supplierPayments.adapter";
+import {
+  supplierPayablesAdapter,
+  supplierPaymentsAdapter,
+} from "../adapters/supplierPayments.adapter";
 import {
   AddSupplierPaymentPayload,
+  SupplierPayableRow,
+  SupplierPayablesFilters,
   SupplierPaymentRow,
-  SupplierPaymentsFilters,
   SupplierPaymentsTotals,
 } from "../types/supplierPayments.types";
 
@@ -28,66 +30,108 @@ export interface PaymentMethodOption {
   businessAccountName: string | null;
 }
 
+/** El detalle de una fila (taller × OP): sus servicios, en el pop-up del ojo. */
+export interface PayableDetail {
+  row: SupplierPayableRow;
+  loading: boolean;
+  services: SupplierPaymentRow[];
+}
+
+/** Cuántos servicios se piden de un taller al desplegarlo o saldarlo. */
+const SERVICIOS_POR_TALLER = 200;
+
+/**
+ * Pagos a proveedores, por TALLER y OP (2026-10-19).
+ *
+ * Una fila por taller y OP con lo que se le debe; el ojo abre sus servicios
+ * exigibles con cómo sale cada importe. Se paga un servicio (también a medias)
+ * desde el detalle, o el saldo entero de esa OP de una vez.
+ */
 export const useSupplierPayments = () => {
-  const [rows, setRows] = useState<SupplierPaymentRow[]>([]);
+  const [rows, setRows] = useState<SupplierPayableRow[]>([]);
   const [totals, setTotals] = useState<SupplierPaymentsTotals>({
     payable: 0,
     paid: 0,
     balance: 0,
   });
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [search, setSearch] = useState("");
   const [pagination, setPagination] = useState<PaginationState>({
     p_page: 1,
     p_size: 20,
     total: 0,
   });
-  const [filters, setFilters] = useState<SupplierPaymentsFilters>({
+  // Por defecto, lo que falta pagar: es a lo que se viene a esta pantalla.
+  const [filters, setFilters] = useState<SupplierPayablesFilters>({
     page: 1,
     size: 20,
     search: null,
-    supplier_id: null,
-    status: null,
+    status: "OPEN",
   });
+
+  /** La fila cuyo detalle de servicios está abierto. */
+  const [detail, setDetail] = useState<PayableDetail | null>(null);
 
   /** El servicio que se está pagando. `null` = el diálogo está cerrado. */
   const [payTarget, setPayTarget] = useState<SupplierPaymentRow | null>(null);
+  /** Lo que se salda de una vez (el saldo de un taller). `null` = cerrado. */
+  const [bulkRows, setBulkRows] = useState<SupplierPaymentRow[] | null>(null);
   const [saving, setSaving] = useState(false);
-
-  /**
-   * Los servicios marcados para saldar juntos, por id.
-   *
-   * Se guardan los ids y no las filas: la lista se recarga tras cada pago y
-   * una fila guardada quedaría con el saldo viejo. Lo que se paga se resuelve
-   * contra `rows` en el momento de abrir el diálogo.
-   */
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  /** El lote está abierto en el diálogo. */
-  const [bulkOpen, setBulkOpen] = useState(false);
 
   const { toast } = useToast();
 
-  const loadRows = async (currentFilters: SupplierPaymentsFilters = filters) => {
+  /** Los servicios de un taller con el filtro de estado de la lista. */
+  const fetchServicios = async (
+    supplierId: number | null,
+    status: SupplierPayablesFilters["status"],
+    search: string | null,
+  ) =>
+    supplierPaymentsAdapter(
+      await getSupplierPaymentsApi({
+        supplier_id: supplierId,
+        status: status ?? null,
+        search,
+        page: 1,
+        size: SERVICIOS_POR_TALLER,
+      }),
+    ).data.filter((row) => row.supplierId === supplierId);
+
+  /** Los servicios de una fila: los del taller que son de esa OP. */
+  const serviciosDeFila = async (
+    row: SupplierPayableRow,
+    status: SupplierPayablesFilters["status"],
+    search: string | null,
+  ) =>
+    (await fetchServicios(row.supplierId, status, search)).filter(
+      (servicio) => (servicio.productionOrders ?? null) === row.productionOrderCode,
+    );
+
+  const loadRows = async (currentFilters: SupplierPayablesFilters = filters) => {
     setLoading(true);
     try {
-      const response = await getSupplierPaymentsApi(currentFilters);
-      const adapted = supplierPaymentsAdapter(response);
+      const adapted = supplierPayablesAdapter(await getSupplierPayablesByOrderApi(currentFilters));
       setRows(adapted.data);
       setPagination(adapted.pagination);
       setTotals(adapted.totals);
-      // La selección no sobrevive a un cambio de lista: marcar en una página,
-      // filtrar y pagar habría cobrado servicios que ya no se veían.
-      setSelectedIds((prev) =>
-        prev.filter((id) => adapted.data.some((row) => row.serviceId === id)),
-      );
+      // El detalle abierto se relee (tras un pago), para que diga lo mismo que
+      // la fila.
+      if (detail) {
+        const fila =
+          adapted.data.find(
+            (row) => row.supplierId === detail.row.supplierId && row.productionOrderId === detail.row.productionOrderId,
+          ) ?? detail.row;
+        setDetail({
+          row: fila,
+          loading: false,
+          services: await serviciosDeFila(fila, currentFilters.status, currentFilters.search ?? null),
+        });
+      }
     } catch (error) {
-      console.error("Error loading supplier payments:", error);
+      console.error("Error loading supplier payables:", error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar los pagos a proveedores",
+        title: "No se pudieron cargar los pagos a proveedores",
+        description: errorMessageOf(error),
         variant: "destructive",
       });
     } finally {
@@ -95,117 +139,74 @@ export const useSupplierPayments = () => {
     }
   };
 
-  const loadInitial = async () => {
-    setLoading(true);
-    try {
-      // Los proveedores son para el filtro; se piden de una vez porque el
-      // selector tiene que poder abrirse sin ir a la red.
-      const [suppliersResponse, methods] = await Promise.all([
-        suppliersListApi({ page: 1, size: 500 }),
-        getPaymentMethodsIsActiveTrueAndActiveTrue(),
-      ]);
-
-      setSuppliers(suppliersResponse.data ?? []);
-      setPaymentMethods(
-        (methods ?? []).map((method) => ({
-          id: method.id,
-          name: method.name ?? "",
-          businessAccountId: method.business_account_id ?? null,
-          businessAccountName: method.business_accounts?.name ?? null,
-        })),
-      );
-
-      await loadRows(filters);
-    } catch (error) {
-      console.error("Error loading supplier payments catalogues:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los pagos a proveedores",
-        variant: "destructive",
-      });
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadInitial();
+    const init = async () => {
+      try {
+        const methods = await getPaymentMethodsIsActiveTrueAndActiveTrue();
+        setPaymentMethods(
+          (methods ?? []).map((method) => ({
+            id: method.id,
+            name: method.name ?? "",
+            businessAccountId: method.business_account_id ?? null,
+            businessAccountName: method.business_accounts?.name ?? null,
+          })),
+        );
+      } catch (error) {
+        console.error("Error loading payment methods:", error);
+      }
+      await loadRows(filters);
+    };
+    void init();
+    // Solo al montar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const debouncedSearch = useDebounce(search, 500);
+  const applyFilters = (patch: Partial<SupplierPayablesFilters>) => {
+    const next = { ...filters, ...patch, page: patch.page ?? 1 };
+    setFilters(next);
+    void loadRows(next);
+  };
 
-  useEffect(() => {
-    const searchTerm = debouncedSearch || null;
-    if (searchTerm !== filters.search) {
-      setFilters((prev) => {
-        const next = { ...prev, search: searchTerm, page: 1 };
-        loadRows(next);
-        return next;
+  const onSearch = (value: string) => applyFilters({ search: value.trim() || null });
+  const onStatusChange = (status: SupplierPayablesFilters["status"]) => applyFilters({ status });
+  const onPageChange = (page: number) => applyFilters({ page });
+  const onPageSizeChange = (size: number) => applyFilters({ size, page: 1 });
+
+  /** El ojo: los servicios de la fila (taller × OP) en un pop-up. */
+  const openDetail = async (row: SupplierPayableRow) => {
+    setDetail({ row, loading: true, services: [] });
+    try {
+      const services = await serviciosDeFila(row, filters.status, filters.search ?? null);
+      setDetail({ row, loading: false, services });
+    } catch (error) {
+      setDetail(null);
+      toast({
+        title: "No se pudieron cargar los servicios",
+        description: errorMessageOf(error),
+        variant: "destructive",
       });
     }
-  }, [debouncedSearch]);
-
-  const onSearchChange = (value: string) => setSearch(value);
-
-  const onSupplierChange = (supplierId: number | null) => {
-    const next = { ...filters, supplier_id: supplierId, page: 1 };
-    setFilters(next);
-    setPagination((prev) => ({ ...prev, p_page: 1 }));
-    loadRows(next);
   };
-
-  const onStatusChange = (status: SupplierPaymentsFilters["status"]) => {
-    const next = { ...filters, status, page: 1 };
-    setFilters(next);
-    setPagination((prev) => ({ ...prev, p_page: 1 }));
-    loadRows(next);
-  };
-
-  const onPageChange = (page: number) => {
-    setPagination((prev) => ({ ...prev, p_page: page }));
-    setFilters((prev) => {
-      const next = { ...prev, page };
-      loadRows(next);
-      return next;
-    });
-  };
-
-  const onPageSizeChange = (size: number) => {
-    setPagination((prev) => ({ ...prev, p_size: size, p_page: 1 }));
-    setFilters((prev) => {
-      const next = { ...prev, size, page: 1 };
-      loadRows(next);
-      return next;
-    });
-  };
+  const closeDetail = () => setDetail(null);
 
   const onOpenPay = (row: SupplierPaymentRow) => setPayTarget(row);
   const onClosePay = () => setPayTarget(null);
 
-  const onSubmitPay = async (
-    payload: AddSupplierPaymentPayload,
-    voucher?: File | null,
-  ) => {
+  const onSubmitPay = async (payload: AddSupplierPaymentPayload, voucher?: File | null) => {
     setSaving(true);
     try {
-      // Primero el comprobante: el pago necesita su url. Si el pago falla
-      // después, queda un fichero suelto en el storage -- preferible a un pago
-      // registrado sin comprobante.
+      // Primero el comprobante: el pago necesita su url.
       const voucherUrl = voucher
-        ? await uploadSupplierPaymentVoucherApi(
-            payload.supplierQuotationId,
-            voucher,
-          )
+        ? await uploadSupplierPaymentVoucherApi(payload.supplierQuotationId, voucher)
         : (payload.voucherUrl ?? null);
 
       await addSupplierPaymentApi({ ...payload, voucherUrl });
-      toast({ title: "Pago registrado" });
+      toast({ title: "Pago registrado", variant: "success" });
       setPayTarget(null);
       await loadRows(filters);
     } catch (error) {
       console.error("Error adding supplier payment:", error);
-      // El SP rechaza pagar de más, pagar sin saldo o pagar un servicio de
-      // otra cotización, y su mensaje es el que sirve: decir "no se pudo
-      // registrar el pago" escondería el motivo.
+      // El SP dice por qué: pagar de más, sin saldo, o de otra cotización.
       toast({
         title: "No se pudo registrar el pago",
         description: errorMessageOf(error),
@@ -216,42 +217,30 @@ export const useSupplierPayments = () => {
     }
   };
 
-  // Solo se puede marcar lo que se puede pagar: un servicio saldado en el lote
-  // solo serviría para que el SP lo rechazara y tumbara el resto.
-  const selectableRows = rows.filter((row) => row.balance > 0);
+  /** Pagar el saldo de una fila: los servicios con saldo del taller en esa OP, enteros. */
+  const onPaySupplier = async (row: SupplierPayableRow) => {
+    try {
+      const pendientes = (await serviciosDeFila(row, "OPEN", null)).filter((servicio) => servicio.balance > 0);
+      if (pendientes.length === 0) {
+        toast({ title: "No hay saldo pendiente en esta OP" });
+        return;
+      }
+      setBulkRows(pendientes);
+    } catch (error) {
+      toast({
+        title: "No se pudieron cargar los servicios del taller",
+        description: errorMessageOf(error),
+        variant: "destructive",
+      });
+    }
+  };
 
-  const selectedRows = selectableRows.filter((row) =>
-    selectedIds.includes(row.serviceId),
-  );
-
-  const selectedTotal = selectedRows.reduce((sum, row) => sum + row.balance, 0);
-
-  const allSelected =
-    selectableRows.length > 0 && selectedRows.length === selectableRows.length;
-
-  const onToggleRow = (serviceId: number, checked: boolean) =>
-    setSelectedIds((prev) =>
-      checked
-        ? prev.includes(serviceId)
-          ? prev
-          : [...prev, serviceId]
-        : prev.filter((id) => id !== serviceId),
-    );
-
-  const onToggleAll = (checked: boolean) =>
-    setSelectedIds(checked ? selectableRows.map((row) => row.serviceId) : []);
-
-  const onClearSelection = () => setSelectedIds([]);
-
-  const onOpenBulk = () => setBulkOpen(true);
-  const onCloseBulk = () => setBulkOpen(false);
+  const onCloseBulk = () => setBulkRows(null);
+  const bulkTotal = (bulkRows ?? []).reduce((sum, row) => sum + row.balance, 0);
 
   /**
-   * Salda el lote entero: cada servicio por TODO su saldo.
-   *
-   * Pagar de a poco es lo que hace el diálogo de uno solo; el lote es para
-   * cerrar lo que se le debe a un taller, y pedir un importe por fila lo
-   * convertiría en un formulario que nadie quiere rellenar.
+   * Salda el lote: cada servicio por TODO su saldo, en una sola transacción.
+   * Para pagar a medias está el diálogo de un servicio.
    */
   const onSubmitBulk = async (
     paymentMethodId: number,
@@ -259,21 +248,15 @@ export const useSupplierPayments = () => {
     description: string | null,
     voucher?: File | null,
   ) => {
+    if (!bulkRows || bulkRows.length === 0) return;
     setSaving(true);
     try {
-      // Uno para todo el lote: es un solo desembolso. Se cuelga de la primera
-      // cotización porque el fichero tiene que vivir en algún sitio, y todas
-      // las filas apuntan a la misma url.
-      const voucherUrl =
-        voucher && selectedRows.length > 0
-          ? await uploadSupplierPaymentVoucherApi(
-              selectedRows[0].quotationId,
-              voucher,
-            )
-          : null;
+      const voucherUrl = voucher
+        ? await uploadSupplierPaymentVoucherApi(bulkRows[0].quotationId, voucher)
+        : null;
 
       await addSupplierPaymentsBulkApi({
-        payments: selectedRows.map((row) => ({
+        payments: bulkRows.map((row) => ({
           supplierQuotationId: row.quotationId,
           supplierServiceId: row.serviceId,
           amount: row.balance,
@@ -284,18 +267,14 @@ export const useSupplierPayments = () => {
         voucherUrl,
       });
       toast({
-        title:
-          selectedRows.length === 1
-            ? "Pago registrado"
-            : `${selectedRows.length} pagos registrados`,
+        title: bulkRows.length === 1 ? "Pago registrado" : `${bulkRows.length} pagos registrados`,
+        variant: "success",
       });
-      setBulkOpen(false);
-      setSelectedIds([]);
+      setBulkRows(null);
       await loadRows(filters);
     } catch (error) {
       console.error("Error adding supplier payments in bulk:", error);
-      // El SP mete el lote entero en una transacción: si falla, no entró
-      // ninguno. Decirlo evita que alguien vuelva a pagar los que "sí pasaron".
+      // Va en una transacción: si falla, no entró ninguno.
       toast({
         title: "No se registró ningún pago",
         description: errorMessageOf(error),
@@ -306,39 +285,29 @@ export const useSupplierPayments = () => {
     }
   };
 
-  const hasActiveFilters =
-    (filters.supplier_id ?? null) !== null || (filters.status ?? null) !== null;
-
   return {
     rows,
     totals,
-    suppliers,
     paymentMethods,
     loading,
-    search,
     pagination,
     filters,
-    hasActiveFilters,
+    detail,
+    openDetail,
+    closeDetail,
     payTarget,
+    bulkRows,
+    bulkTotal,
     saving,
-    selectedIds,
-    selectedRows,
-    selectedTotal,
-    allSelected,
-    bulkOpen,
-    onToggleRow,
-    onToggleAll,
-    onClearSelection,
-    onOpenBulk,
-    onCloseBulk,
-    onSubmitBulk,
-    onSearchChange,
-    onSupplierChange,
+    onSearch,
     onStatusChange,
     onPageChange,
     onPageSizeChange,
     onOpenPay,
     onClosePay,
     onSubmitPay,
+    onPaySupplier,
+    onCloseBulk,
+    onSubmitBulk,
   };
 };

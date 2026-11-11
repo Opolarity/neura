@@ -43,10 +43,15 @@ export const forwardSituations = (
   currentSituationId: number | null
 ): SituationOption[] => {
   const current = situations.find((s) => s.id === currentSituationId);
+  // «Cancelado» (CAN-HDN) solo se ofrece mientras el encargo está en
+  // cotización (En cotización o Cotizado): ya enviado no se cancela, y el
+  // backend también lo rechaza.
+  const enCotizacion = ["INQUO-HDN", "QUOT-HDN", "CAN-HDN"].includes(current?.code ?? "");
+  const opciones = situations.filter((s) => s.code !== "CAN-HDN" || enCotizacion);
   if (!current || current.order === null || current.order === undefined) {
-    return situations;
+    return opciones;
   }
-  return situations.filter(
+  return opciones.filter(
     (s) => s.order !== null && s.order !== undefined && s.order >= current.order!
   );
 };

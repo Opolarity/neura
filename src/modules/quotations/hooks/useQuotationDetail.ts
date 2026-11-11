@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchQuotationById, fetchQuotationByIdServices } from "../services/Quotations.service";
-import { QuotationDetailApi, QuotationServiceApi, QuotationsPaginationState, ServiceTab } from "../types/Quotations.types";
+import {
+  QuotationDetailApi,
+  QuotationPaymentTotals,
+  QuotationServiceApi,
+  QuotationsPaginationState,
+  ServiceTab,
+} from "../types/Quotations.types";
 
 export const useQuotationDetail = (id: number) => {
   const [quotation, setQuotation] = useState<QuotationDetailApi["quotation"] | null>(null);
   const [services, setServices] = useState<QuotationServiceApi[]>([]);
+  /** Lo que se le debe al taller por TODA la cotización (no la página). */
+  const [paymentTotals, setPaymentTotals] = useState<QuotationPaymentTotals | null>(null);
   const [pagination, setPagination] = useState<QuotationsPaginationState>({
     p_page: 1,
     p_size: 20,
@@ -46,6 +54,15 @@ export const useQuotationDetail = (id: number) => {
           kind,
         });
         setServices(response.data);
+        setPaymentTotals(
+          response.totals
+            ? {
+                payable: Number(response.totals.payable) || 0,
+                paid: Number(response.totals.paid) || 0,
+                pending: Number(response.totals.pending) || 0,
+              }
+            : null,
+        );
         setPagination({
           p_page: response.page.page,
           p_size: response.page.size,
@@ -107,6 +124,7 @@ export const useQuotationDetail = (id: number) => {
   return {
     quotation,
     services,
+    paymentTotals,
     serviceKind,
     onServiceKindChange,
     pagination,
