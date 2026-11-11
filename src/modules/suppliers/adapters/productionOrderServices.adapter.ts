@@ -1,7 +1,4 @@
-import {
-  LinkedService,
-  QuotationServiceOption,
-} from "../types/productionOrderServices.types";
+import { LinkedService } from "../types/productionOrderServices.types";
 
 const toTextOrNull = (value: unknown): string | null => {
   if (value === undefined || value === null || value === "") return null;
@@ -29,20 +26,4 @@ export const toLinkedService = (row: any): LinkedService => ({
   situationCode: toTextOrNull(row.situation_code),
   price: toNumberOrNull(row.price),
   canUnlink: Boolean(row.can_unlink),
-});
-
-/**
- * Fila de sp_get_quotation_services → opción del diálogo de vínculo.
- *
- * `kind` del SP no se usa: es un derivado de `material_id`, que ya viene aquí.
- * Leer el derivado en vez del original solo añade un sitio donde equivocarse.
- */
-export const toQuotationServiceOption = (row: any): QuotationServiceOption => ({
-  id: row.id,
-  code: toTextOrNull(row.code),
-  description: row.description ?? "",
-  materialId: toNumberOrNull(row.material_id),
-  productionOrderId: toNumberOrNull(row.production_order_id),
-  situationName: toTextOrNull(row.last_situation?.situation_name),
-  price: toNumberOrNull(row.last_situation?.price),
 });

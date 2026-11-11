@@ -130,8 +130,18 @@ export interface ProductionOrderDetail {
   updatedAt: string | null;
   /** Entrega comprometida. Calendario de Lima, "YYYY-MM-DD". */
   promisedDate: string | null;
+  /**
+   * Fecha de emisión de la orden (T-980), distinta de la de creación. Lima,
+   * "YYYY-MM-DD". Null en un backend que aún no la devuelve.
+   */
+  issueDate: string | null;
   /** Cuándo terminó. Calendario de Lima, "YYYY-MM-DD". */
   finishDate: string | null;
+  /**
+   * La receta trae materiales que pedir: decide la fila «Materiales» de la
+   * pizarra. Null si el backend no lo dice.
+   */
+  hasMaterials: boolean | null;
   items: ProductionOrderItem[];
   /**
    * Servicios que cuelgan de esta orden. La orden no los referencia: el
@@ -205,6 +215,8 @@ export interface SaveProductionOrderData {
    * borrar una entrega que ya no aplica.
    */
   promised_date?: string | null;
+  /** Fecha de emisión (T-980), "YYYY-MM-DD" de Lima. */
+  issue_date?: string | null;
   finish_date?: string | null;
   /** La marca leída al abrir. Ausente = no comprobar (altas y llamadas de sistema). */
   expected_updated_at?: string | null;

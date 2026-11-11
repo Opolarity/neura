@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, FileText, Loader2, ClipboardList } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DateField } from "@/shared/components/date-range";
 import { Label } from "@/components/ui/label";
@@ -29,29 +28,39 @@ import { useProductionOrderDetail } from "../hooks/useProductionOrderDetail";
 import { productionOrderStatusBadge } from "../utils/productionOrderStatus";
 import { productionOrderTypeBadge } from "../utils/productionOrderType";
 import { ProductionOrderItemsEditor } from "../components/production-orders/ProductionOrderItemsEditor";
-import { ProductionOrderProcessesSection } from "../components/production-orders/ProductionOrderProcessesSection";
-import { MaterialRequirementPanel } from "../components/production-orders/MaterialRequirementPanel";
-import { LinkServicesDialog } from "../components/production-orders/LinkServicesDialog";
+import { OrderBoardCard } from "../components/production-orders/board/OrderBoardCard";
+import { OrderActionsBar } from "../components/production-orders/OrderActionsBar";
+import { ReceiveProductionOrderDialog } from "../components/production-orders/ReceiveProductionOrderDialog";
+import { useOrderOverview } from "../hooks/useOrderOverview";
+import { useAuth } from "@/modules/auth/hooks/useAuth";
 
 const ProductionOrderDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [linkServicesOpen, setLinkServicesOpen] = useState(false);
+  const { permissionCodes, isAdmin } = useAuth();
+  const canEditOrder = isAdmin || permissionCodes.includes("production_orders.edit");
   /**
-   * Se incrementa al vincular o desvincular: otra lista de servicios es otro
-   * requerimiento y otra ruta de procesos, y las dos secciones leen del
-   * backend por su cuenta.
+   * Se incrementa al recibir o al guardar: otra lista de prendas es otro
+   * requerimiento y otra ruta, y las filas de la pizarra leen del backend por
+   * su cuenta.
    */
   const [reloadKey, setReloadKey] = useState(0);
+  /** Sube al avanzar, encargar o cortar desde la pizarra: el resumen se relee sin remontar. */
+  const [overviewKey, setOverviewKey] = useState(0);
   const [printing, setPrinting] = useState(false);
   /** El requerimiento se pide aparte: es otro papel y otra espera. */
   const [printingRequirement, setPrintingRequirement] = useState(false);
+  const [receiveOpen, setReceiveOpen] = useState(false);
 
   const {
     createdAt,
     createdByName,
     promisedDate,
     setPromisedDate,
+    issueDate,
+    setIssueDate,
+    hasMaterials,
+    cutProcessGroupId,
     finishDate,
     setFinishDate,
     savedFinishDate,
@@ -81,8 +90,6 @@ const ProductionOrderDetail = () => {
     setExplosionSearch,
     totalItemsQuantity,
     handleSubmit,
-    unlinkingId,
-    unlinkService,
     reloadOrder,
   } = useProductionOrderDetail({ idParam: id });
 
@@ -108,6 +115,41 @@ const ProductionOrderDetail = () => {
   const isConsignment = type === "CONSIGNMENT";
   /** Solo lectura efectiva del formulario: por estado o por ser consignación. */
   const readOnly = locked || isConsignment;
+
+  // ---- La orden como en la pizarra (multicliente, 2026-10-15) -------------
+  const overview = useOrderOverview(
+    orderId,
+    items,
+    reloadKey + overviewKey,
+    !isNew && !isConsignment
+  );
+
+  /**
+   * «Materiales» es el requerimiento que sale de la receta de cada prenda. Sin
+   * materiales no hay nada que mostrar y la fila no aparece. Si el backend no
+   * lo dice, se deduce del requerimiento ya leído.
+   */
+  const conMateriales = hasMaterials ?? (overview.materials?.count ?? 0) > 0;
+
+  /** Por qué no se puede recibir, dicho en palabras. null = se puede. */
+  const receiveBlockedReason: string | null = !canEditOrder
+    ? "No tienes permiso para recibir en esta orden."
+    : overview.reception.allClosed
+      ? "Ya se recibió todo lo pedido."
+      : null;
+  // Sin nada terminado para recibir el botón queda apagado. Con ruta se dice
+  // por qué (2026-11-11): se recibe lo que entrega el ÚLTIMO proceso, y con
+  // la Costura terminada no se entendía que faltara el Acabado. Sin ruta, sin
+  // aviso: se entiende solo.
+  const receiveDisabled = receiveBlockedReason !== null || overview.reception.ready === 0;
+  const ultimoProceso = overview.production?.processes.at(-1)?.name ?? null;
+  const receiveHint: string | null =
+    receiveBlockedReason === null &&
+    overview.reception.ready === 0 &&
+    !overview.reception.allClosed &&
+    ultimoProceso !== null
+      ? `Se recibe lo que entrega ${ultimoProceso}: aún no entrega nada.`
+      : null;
 
   const [savingFinishDate, setSavingFinishDate] = useState(false);
 
@@ -142,24 +184,19 @@ const ProductionOrderDetail = () => {
 
   const bumpReload = () => setReloadKey((prev) => prev + 1);
 
-  const handleLinked = async () => {
-    await reloadOrder();
-    bumpReload();
-  };
-
   /**
-   * Los materiales NO salen de la pestaña de explosión: esa los carga por su
-   * cuenta y podría no haberse abierto nunca. Se piden aquí al imprimir, que
-   * además garantiza que el papel lleva el requerimiento de este momento y no
-   * uno que quedó en pantalla antes de tocar los ítems.
+   * Los materiales NO salen de la pizarra: esa los carga por su cuenta. Se
+   * piden aquí al imprimir, que además garantiza que el papel lleva el
+   * requerimiento de este momento y no uno que quedó en pantalla antes de
+   * tocar los ítems.
    */
   const handlePrint = async () => {
     if (orderId === null) return;
 
     try {
       setPrinting(true);
-      // La ruta tampoco sale de la pantalla: vive en la pestaña de avances y
-      // puede no haberse abierto. Se pide aquí, en paralelo con lo demás.
+      // La ruta tampoco sale de la pantalla: se pide aquí, en paralelo con lo
+      // demás.
       //
       // El requerimiento ya NO se pide: el papel dejó de imprimir los
       // materiales, y era lo único para lo que se leía aquí. Sigue haciendo
@@ -304,11 +341,6 @@ const ProductionOrderDetail = () => {
     }
   };
 
-  const handleUnlinkService = async (serviceId: number) => {
-    await unlinkService(serviceId);
-    bumpReload();
-  };
-
   if (loading) {
     return <PageLoader message="Cargando orden de producción..." />;
   }
@@ -346,41 +378,21 @@ const ProductionOrderDetail = () => {
               {productionOrderTypeBadge(type)!.label}
             </Badge>
           )}
-          {/* En el alta no: una orden sin guardar no tiene ni ítems ni
-              requerimiento que imprimir. En consignación tampoco: no hay receta
-              ni materiales que imprimir. */}
+          {/* Recibir e imprimir, siempre a la vista. En el alta no: una orden
+              sin guardar no tiene nada que recibir ni imprimir. En
+              consignación tampoco: no hay receta, materiales ni ruta. */}
           {!isNew && !isConsignment && (
-            <Button
-              variant="outline"
-              className="ml-auto gap-2"
-              onClick={handlePrint}
-              disabled={printing}
-            >
-              {printing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FileText className="h-4 w-4" />
-              )}
-              Orden de Producción
-            </Button>
-          )}
-          {/* El papel con el que se sale a comprar. Va aquí y no en la receta:
-              la receta dice lo que consume una prenda, y el total solo existe
-              cuando la orden dice cuántas prendas son. En consignación no aplica. */}
-          {!isNew && !isConsignment && (
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={handlePrintRequirement}
-              disabled={printingRequirement}
-            >
-              {printingRequirement ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ClipboardList className="h-4 w-4" />
-              )}
-              Requerimiento de materiales
-            </Button>
+            <div className="ml-auto">
+              <OrderActionsBar
+                onReceive={() => setReceiveOpen(true)}
+                receiveBlockedReason={receiveBlockedReason ?? receiveHint}
+                receiveDisabled={receiveDisabled}
+                onPrintOrder={handlePrint}
+                onPrintRequirement={handlePrintRequirement}
+                showRequirement={conMateriales}
+                printing={printing || printingRequirement}
+              />
+            </div>
           )}
         </div>
       </div>
@@ -388,7 +400,7 @@ const ProductionOrderDetail = () => {
       <Card>
         <CardContent className="pt-6 grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Nombre *</Label>
+            <Label required>Nombre</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -399,7 +411,7 @@ const ProductionOrderDetail = () => {
           </div>
 
           <div className="space-y-2">
-            <Label>Clase de orden *</Label>
+            <Label required>Clase de orden</Label>
             <Select
               value={classId}
               onValueChange={setClassId}
@@ -418,9 +430,22 @@ const ProductionOrderDetail = () => {
             </Select>
           </div>
 
-          {/* Las dos fechas de la orden. El backend las aceptaba desde hace
-              tiempo; el formulario nunca las mandó, y por eso la columna
-              «Entrega» del Plan Maestro salía vacía. */}
+          {/* Fecha de emisión (T-980): distinta de la pactada y de la de
+              término. Nace con la de hoy; no puede ser futura (tope por
+              defecto de DateField) ni posterior a la pactada. */}
+          <div className="space-y-2">
+            <Label htmlFor="order-issue-date" required>
+              Fecha de emisión
+            </Label>
+            <DateField
+              id="order-issue-date"
+              value={issueDate || null}
+              onChange={(value) => setIssueDate(value ?? "")}
+              disabled={readOnly}
+              placeholder="Elige la fecha de emisión"
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="order-promised-date">Entrega comprometida</Label>
             {/* El mismo selector que los filtros del ERP, en vez del campo de
@@ -446,34 +471,31 @@ const ProductionOrderDetail = () => {
 
               La pone sola la recepción cuando entra la última prenda; esto es
               para corregirla, que es lo que hace falta cuando la mercadería
-              llegó un viernes y se registró el lunes. */}
-          <div className="space-y-2">
-            <Label htmlFor="order-finish-date">Fecha de término</Label>
-            <DateField
-              id="order-finish-date"
-              value={finishDate || null}
-              onChange={(value) => setFinishDate(value ?? "")}
-              maxDate={null}
-              disabled={isConsignment}
-              showClear
-              placeholder="Sin fecha de término"
-            />
-            {locked && (
-              <p className="text-muted-foreground text-xs">
-                La pone la recepción al entrar la última prenda. Es lo único
-                que se puede cambiar con la orden ya lanzada.
-              </p>
-            )}
-          </div>
+              llegó un viernes y se registró el lunes. Va en la misma fila que
+              las notas (2026-10-20). */}
+          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="order-finish-date">Fecha de término</Label>
+              <DateField
+                id="order-finish-date"
+                value={finishDate || null}
+                onChange={(value) => setFinishDate(value ?? "")}
+                maxDate={null}
+                disabled={isConsignment}
+                showClear
+                placeholder="Sin fecha de término"
+              />
+            </div>
 
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Notas de la orden</Label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              disabled={readOnly}
-              placeholder="Ej: entregar con etiqueta de marca"
-            />
+            <div className="space-y-2">
+              <Label>Notas de la orden</Label>
+              <Input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={readOnly}
+                placeholder="Ej: entregar con etiqueta de marca"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -502,82 +524,44 @@ const ProductionOrderDetail = () => {
         </Card>
       )}
 
-      {/* Explosión de materiales y ruta de operaciones: ninguna aplica a una
-          consignación (no se produce aquí), por eso se oculta la card entera. */}
-      {!isNew && !isConsignment && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Detalles de la orden</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Las dos son la misma orden vista de dos maneras: qué necesita y
-                por dónde va. Antes eran dos cards de pantalla entera. */}
-            <Tabs defaultValue="materials" className="space-y-4">
-              <TabsList>
-                <TabsTrigger value="materials">
-                  Explosión de materiales
-                </TabsTrigger>
-                <TabsTrigger value="progress">Avances</TabsTrigger>
-              </TabsList>
-
-              {/* forceMount en las dos: TabsContent desmonta la inactiva, y la
-                  de avances tiene edición sin guardar -- asignar servicios a
-                  procesos y sus ítems. Cambiar de pestaña y volver descartaría
-                  esos cambios en silencio. De paso sobreviven el plegado y la
-                  página de la explosión.
-
-                  Y con forceMount hay que ocultarla A MANO: Radix deja de
-                  aplicar `hidden` y marca solo `data-state`, así que sin la
-                  clase de abajo las dos pestañas se pintarían a la vez. */}
-              <TabsContent
-                value="materials"
-                forceMount
-                className="data-[state=inactive]:hidden"
-              >
-                <MaterialRequirementPanel
-                  productionOrderId={orderId}
-                  orderCode={code}
-                  reloadKey={reloadKey}
-                  showHeading={false}
-                  onRecipeRefreshed={handleLinked}
-                />
-              </TabsContent>
-
-              <TabsContent
-                value="progress"
-                forceMount
-                className="data-[state=inactive]:hidden"
-              >
-                <ProductionOrderProcessesSection
-                  productionOrderCode={code}
-                  key={reloadKey}
-                  productionOrderId={orderId}
-                  onLinkServices={() => setLinkServicesOpen(true)}
-                  onUnlinkService={handleUnlinkService}
-                  unlinkingId={unlinkingId}
-                  showHeading={false}
-                />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+      {/* La pizarra (multicliente, 2026-10-15): la ruta de la orden con sus
+          materiales, cada proceso con su taller y sus encargos, la recepción
+          y el costo. Reemplaza las pestañas «Explosión de materiales» y
+          «Avances». Una consignación no se produce aquí: no la lleva. */}
+      {!isNew && !isConsignment && orderId !== null && (
+        <OrderBoardCard
+          productionOrderId={orderId}
+          orderCode={code}
+          canEdit={canEditOrder}
+          overview={overview}
+          cutProcessGroupId={cutProcessGroupId}
+          withMaterials={conMateriales}
+          // overviewKey sube al cambiar una situación o el consumo de un
+          // encargo: el faltante se ve sin recargar.
+          reloadKey={reloadKey + overviewKey}
+          onReceive={() => setReceiveOpen(true)}
+          receiveDisabled={receiveDisabled}
+          receiveHint={receiveHint}
+          onChanged={() => setOverviewKey((prev) => prev + 1)}
+          // Avanzar o encargar un proceso desde su fila. Silenciosa: sin el
+          // «Cargando» que desmonta la página.
+          onAdvanced={() => {
+            void reloadOrder({ silent: true });
+            setOverviewKey((prev) => prev + 1);
+          }}
+          onCutRegistered={() => void reloadOrder({ silent: true })}
+        />
       )}
 
       <div className="flex flex-wrap items-center justify-end gap-2">
         {/* Una consignación es un ingreso de Overtake ya cerrado: no se edita
-            desde el ERP. Su aviso manda sobre el de «orden lanzada». */}
-        {isConsignment ? (
+            desde el ERP. La orden ya lanzada no lleva aviso: que no se editen
+            las prendas se ve en los propios campos. */}
+        {isConsignment && (
           <p className="text-muted-foreground mr-auto text-sm">
             Esta orden es una consignación recibida de Overtake. Se muestra solo
             de lectura: no lleva receta, materiales ni ruta de operaciones.
           </p>
-        ) : (
-          locked && (
-            <p className="text-muted-foreground mr-auto text-sm">
-              La orden ya arrancó, así que lo que se produce no se edita. Los
-              avances se registran desde «Detalles de la orden».
-            </p>
-          )
         )}
         {/* «Cancelar» solo mientras hay cambios que descartar. Con la orden
             lanzada --o en una consignación de solo lectura-- no los hay, y un
@@ -591,15 +575,14 @@ const ProductionOrderDetail = () => {
           </Button>
         )}
         {/* Con la orden lanzada, lo único editable es la fecha de término, así
-            que su guardado es suyo: manda solo esa fecha. El botón de arriba
+            que su guardado es suyo: manda solo esa fecha. El botón de abajo
             mandaría el formulario entero y pasaría por
             fn_replace_production_order_items, que rehace las prendas y su
             stock, para cambiar una fecha.
 
             Y solo sale si la fecha cambió: sin cambios no hay nada que
-            guardar, y un botón ahí invita a pulsarlo para mandar la misma
-            fecha y recargar la orden para nada. Al guardar, reloadOrder
-            vuelve a sembrar las dos y el botón se va solo. */}
+            guardar. Al guardar, reloadOrder vuelve a sembrar las dos y el
+            botón se va solo. */}
         {locked && !isConsignment && finishDateDirty && (
           <Button
             onClick={handleSaveFinishDate}
@@ -636,14 +619,19 @@ const ProductionOrderDetail = () => {
         )}
       </div>
 
-      {linkServicesOpen && (
-        <LinkServicesDialog
-          open={linkServicesOpen}
-          onOpenChange={setLinkServicesOpen}
+      {/* Recibir desde la cabecera o la pizarra: todas las prendas de la
+          orden, con «cerrar ingreso» por prenda. */}
+      {receiveOpen && orderId !== null && (
+        <ReceiveProductionOrderDialog
+          open={receiveOpen}
+          onOpenChange={setReceiveOpen}
           productionOrderId={orderId}
-          // Los servicios nuevos entran como pasos de la orden: hay que
-          // releerla para que aparezcan.
-          onLinked={handleLinked}
+          productionOrderLabel={code ?? name}
+          items={items}
+          onReceived={async () => {
+            await reloadOrder({ silent: true });
+            bumpReload();
+          }}
         />
       )}
     </div>

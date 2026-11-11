@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DateField } from "@/shared/components/date-range";
 import {
   ServiceProgressTarget,
+  SITUACION_ENVIO,
   useServiceProgress,
 } from "../../hooks/useServiceProgress";
 import { ServiceHistoryDialog } from "./ServiceHistoryDialog";
@@ -100,8 +101,6 @@ export const ServiceProgressDialog = ({
     computedBad,
     setItemField,
     activeItems,
-    advanceAll,
-    setAdvanceAll,
   } = useServiceProgress({
     service,
     open,
@@ -137,8 +136,16 @@ export const ServiceProgressDialog = ({
   useEffect(() => {
     if (!open) return;
     setSent(null);
-    setPrintGuide(Boolean(service?.supplierName));
   }, [open, service]);
+
+  // La guía acompaña a la mercadería cuando SALE hacia el taller: solo se
+  // ofrece marcada con la situación de envío. Al registrar una devolución el
+  // diálogo se cierra al guardar.
+  useEffect(() => {
+    setPrintGuide(
+      Boolean(service?.supplierName) && selectedSituation?.code === SITUACION_ENVIO,
+    );
+  }, [selectedSituation?.code, service?.supplierName]);
 
   if (!service) return null;
 
@@ -190,7 +197,7 @@ export const ServiceProgressDialog = ({
           <ScrollArea className="h-full">
             <div className="space-y-4 py-2 pl-1 pr-4">
               <div className="space-y-2">
-                <Label htmlFor="situation">Nueva situación *</Label>
+                <Label htmlFor="situation" required>Nueva situación</Label>
                 <Select
                   value={form.situationId}
                   onValueChange={(value) => setField("situationId", value)}
@@ -216,6 +223,12 @@ export const ServiceProgressDialog = ({
                     ))}
                   </SelectContent>
                 </Select>
+                {!loadingSituations && situations.length === 0 && (
+                  <p className="text-muted-foreground text-xs">
+                    Ya se recibió. El pago se registra en Pagos a proveedores y
+                    el encargo pasa solo a «Pagado».
+                  </p>
+                )}
               </div>
 
               {/* Con varias prendas el avance se declara POR TALLA.
@@ -231,33 +244,22 @@ export const ServiceProgressDialog = ({
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <Label>Cuánto salió de cada prenda ({unit})</Label>
-                    {/* El avance es de la prenda de la fila. El check lo
-                        extiende a las demás del servicio, que es el caso de
-                        "salieron todas juntas". Sin prenda enfocada --la vista
-                        de Servicios-- no hay nada que extender. */}
-                    {focusItemId !== null && service.items.length > 1 && (
-                      <label className="text-muted-foreground flex items-center gap-2 text-xs">
-                        <Checkbox
-                          checked={advanceAll}
-                          onCheckedChange={(value) =>
-                            setAdvanceAll(value === true)
-                          }
-                          aria-label="Pasar todas las prendas del servicio"
-                        />
-                        Pasar todas las prendas del servicio
-                      </label>
-                    )}
+                    <span className="text-muted-foreground text-xs">
+                      Cifras acumuladas de cada talla
+                    </span>
                   </div>
                   <div className="divide-y rounded-md border">
                     <div className="text-muted-foreground grid grid-cols-[1fr_5rem_5rem] gap-3 px-3 py-2 text-xs">
                       <span>Prenda</span>
                       <span className="text-right">Buenas</span>
-                      <span className="text-right">Merma</span>
+                      <span className="text-right">Falladas</span>
                     </div>
                     {activeItems.map((item) => (
                       <div
                         key={item.id}
-                        className="grid grid-cols-[1fr_5rem_5rem] items-center gap-3 px-3 py-2"
+                        className={`grid grid-cols-[1fr_5rem_5rem] items-center gap-3 px-3 py-2 ${
+                          item.id === focusItemId ? "bg-muted/50" : ""
+                        }`}
                       >
                         <div className="min-w-0">
                           <div className="truncate text-sm" title={item.name}>
@@ -287,7 +289,7 @@ export const ServiceProgressDialog = ({
                           onChange={(e) =>
                             setItemField(item.id, "badQuantity", e.target.value)
                           }
-                          aria-label={`Merma de ${item.name}`}
+                          aria-label={`Falladas de ${item.name}`}
                         />
                       </div>
                     ))}
@@ -327,7 +329,7 @@ export const ServiceProgressDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bad-quantity">Merma ({unit})</Label>
+                  <Label htmlFor="bad-quantity">Falladas ({unit})</Label>
                   {/* NO se teclea: se calcula.
 
                       Lo que se manda al taller vuelve como bueno o no vuelve,
@@ -358,7 +360,7 @@ export const ServiceProgressDialog = ({
                       computedBad !== null
                         ? `Lo que falta contra las ${expected} que había que devolver`
                         : splitByItem
-                          ? "Es la suma de la merma de cada prenda"
+                          ? "Es la suma de las falladas de cada prenda"
                           : undefined
                     }
                   />
@@ -463,6 +465,7 @@ export const ServiceProgressDialog = ({
             onClick={handleSubmit}
             className={sent !== null ? "hidden" : undefined}
             disabled={saving || !selectedSituation}
+            title={!selectedSituation ? "Elige la nueva situación" : undefined}
           >
             {saving ? (
               <>

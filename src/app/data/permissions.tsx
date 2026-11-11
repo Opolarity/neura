@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import Products from "@/modules/products/pages/ProductsPage";
 import AddProduct from "@/modules/products/pages/AddProduct";
@@ -97,8 +98,8 @@ import ExplosionsList from "@/modules/suppliers/pages/ExplosionsList";
 import ExplosionDetail from "@/modules/suppliers/pages/ExplosionDetail";
 import ProductionOrdersList from "@/modules/suppliers/pages/ProductionOrdersList";
 import ProductionOrderDetail from "@/modules/suppliers/pages/ProductionOrderDetail";
-import ProductionPlanList from "@/modules/suppliers/pages/ProductionPlanList";
-import SupplierPayments from "@/modules/suppliers/pages/SupplierPayments";
+import MasterPlan from "@/modules/suppliers/pages/MasterPlan";
+import PaymentsAndCollections from "@/modules/suppliers/pages/PaymentsAndCollections";
 import MaterialsList from "@/modules/suppliers/pages/MaterialsList";
 import MaterialDetail from "@/modules/suppliers/pages/MaterialDetail";
 import MaterialInventory from "@/modules/suppliers/pages/MaterialInventory";
@@ -263,13 +264,16 @@ export const APP_PERMISSIONS_CONFIG = [
           { name: "Nueva cotización", path: "/quotations/new", code: "quotations.create", element: <NewQuotation />, showSidebar: false, node: [] },
           { name: "Ver cotización", path: "/quotations/view/:id", code: "quotations.view", element: <QuotationDetail viewOnly />, showSidebar: false, node: [] },
           { name: "Editar cotización", path: "/quotations/edit/:id", code: "quotations.edit", element: <QuotationDetail />, showSidebar: false, node: [] },
-          // Solo lectura: pulsar una fila abre su orden, que es donde estan las
-          // reglas de bloqueo.
-          { name: "Plan maestro", path: "/suppliers/production-plan", code: "production_plan.list", element: <ProductionPlanList />, showSidebar: true, node: [] },
+          // Solo lectura, como en multicliente (pase 2026-11-11): lo que se
+          // registra va en la OP. Reemplaza al «Plan maestro»; su ruta lleva aqui.
+          { name: "Plan de producción", path: "/suppliers/master-plan", code: "production_plan.list", element: <MasterPlan />, showSidebar: true, node: [] },
+          { name: "Plan maestro", path: "/suppliers/production-plan", code: "production_plan.list", element: <Navigate to="/suppliers/master-plan" replace />, showSidebar: false, node: [] },
           // Lo que se le debe a cada taller por trabajo ya recibido. Va aqui y
           // no en Movimientos porque la pregunta se hace desde produccion: se
           // paga por servicio, y el servicio vive en una cotizacion.
-          { name: "Pagos a proveedores", path: "/suppliers/payments", code: "supplier_payments.list", element: <SupplierPayments />, showSidebar: true, node: [] },
+          { name: "Pagos y cobros", path: "/suppliers/payments-collections", code: "payments_collections.view", element: <PaymentsAndCollections />, showSidebar: true, node: [] },
+          // La pantalla de antes lleva a su pestaña: enlaces y marcadores siguen sirviendo.
+          { name: "Pagos a proveedores", path: "/suppliers/payments", code: "supplier_payments.list", element: <Navigate to="/suppliers/payments-collections?tab=suppliers" replace />, showSidebar: false, node: [] },
         ]
       },
       // De que se hace. La receta se fue a Fabricacion --nace ahi el flujo-- y
