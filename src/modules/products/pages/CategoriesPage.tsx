@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { optimizarImagen } from "@/lib/images/optimizarImagen";
 import { useState, useMemo } from "react";
 import { toast } from "@/shared/hooks/use-toast";
 import {
@@ -72,7 +73,8 @@ const Categories = () => {
     }
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImage = async (original: File): Promise<string> => {
+    const file = await optimizarImagen(original, "foto");
     const fileExt = file.name.split(".").pop();
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `${fileName}`;

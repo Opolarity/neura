@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { optimizarImagen } from "@/lib/images/optimizarImagen";
 import { Upload, X } from "lucide-react";
 
 interface SizeImagesModalProps {
@@ -40,7 +41,8 @@ const SizeImagesModal = ({
     setter({ file, preview });
   };
 
-  const uploadImage = async (file: File, folder: string): Promise<string> => {
+  const uploadImage = async (original: File, folder: string): Promise<string> => {
+    const file = await optimizarImagen(original, "foto");
     const uuid = crypto.randomUUID();
     const ext = file.name.split(".").pop();
     const path = `${folder}/${uuid}.${ext}`;

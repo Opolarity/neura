@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Medio } from "../types/medios.types";
+import { optimizarImagen } from "@/lib/images/optimizarImagen";
 
 export const getMedios = async (): Promise<Medio[]> => {
   const { data, error } = await supabase
@@ -11,9 +12,11 @@ export const getMedios = async (): Promise<Medio[]> => {
   return (data as any) ?? [];
 };
 
-export const uploadMedio = async (file: File): Promise<Medio> => {
+export const uploadMedio = async (original: File): Promise<Medio> => {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
+
+  const file = await optimizarImagen(original, "banner");
 
   const uuid = crypto.randomUUID();
   const ext = file.name.split(".").pop();

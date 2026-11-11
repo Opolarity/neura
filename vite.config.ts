@@ -24,6 +24,14 @@ export default defineConfig(() => ({
     port: 8080,
   },
   plugins: [react()],
+  // Conversión de imágenes al subir (src/lib/images): el worker carga el códec con import()
+  // dinámico, que exige formato ES; y el pre-empaquetado de dev rompe la ruta de sus .wasm.
+  worker: {
+    format: "es" as const,
+  },
+  optimizeDeps: {
+    exclude: ["@jsquash/webp"],
+  },
   define: {
     __RUM_RELEASE__: JSON.stringify(rumRelease()),
   },
