@@ -1,28 +1,17 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { createPortal } from "react-dom";
-import {
-  Editor,
-  Frame,
-  ROOT_NODE,
-  useEditor,
-  type NodeId,
-  type Nodes,
-} from "@craftjs/core";
+import { Editor, Frame, useEditor } from "@craftjs/core";
 import type jsPDF from "jspdf";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import type {
-  PrintDataSource,
-  PrintDataSourceId,
-} from "../../constants/printDataSources";
+import type { PrintDataSource } from "../../constants/printDataSources";
 import {
   PrintDataContext,
-  rowsOf,
   usePrintData,
   type PrintData,
 } from "../lib/print-data";
 import { printTemplateResolver } from "../lib/resolver";
 import { PaperContext, type Paper } from "../lib/paper-context";
-import { DATA_TABLE_NAME, DataSourcesContext } from "../lib/data-table";
+import { DataSourcesContext } from "../lib/data-table";
 import { NodeActionsProvider } from "../lib/node-actions";
 import { PX_PER_MM } from "../lib/units";
 import { PaperCanvas, PAPER_ATTR } from "../components/paper-canvas";
@@ -33,22 +22,10 @@ import {
   drawToPdf,
   type LogicalPage,
 } from "./draw-to-pdf";
+import { nextFrame, sheetReady } from "./sheet-ready";
 
 /** Lo más que se espera a que la hoja termine de armarse (ms). */
 const READY_TIMEOUT_MS = 5000;
-
-/**
- * El siguiente cuadro; si la pestaña queda en segundo plano (el navegador no
- * da cuadros ahí), a más tardar en 50 ms.
- */
-const nextFrame = () =>
-  new Promise<void>((resolve) => {
-    const timer = window.setTimeout(resolve, 50);
-    requestAnimationFrame(() => {
-      window.clearTimeout(timer);
-      resolve();
-    });
-  });
 
 /**
  * Espera a que la hoja deje de cambiar: las filas de las tablas, los saltos
@@ -77,33 +54,6 @@ const DISABLE_TIMEOUT_MS = 3000;
 
 /** Con un documento de verdad, lo más que se espera (más filas que armar). */
 const DISABLE_TIMEOUT_DATA_MS = 20000;
-
-/**
- * Si la hoja ya está armada: cada componente que se dibuja tiene su elemento
- * (los ocultos y lo que va dentro de ellos no se dibujan) y cada Tabla de
- * datos ya tiene sus filas: las de ejemplo o, al imprimir, las del documento
- * (las agrega o quita después de dibujarse).
- */
-const sheetReady = (nodes: Nodes, data: PrintData | null) => {
-  if (!nodes[ROOT_NODE]?.dom) return false;
-  const hidden = (id: NodeId | null | undefined): boolean => {
-    for (let current = id; current; current = nodes[current]?.data.parent)
-      if (nodes[current]?.data.hidden) return true;
-    return false;
-  };
-  return Object.entries(nodes).every(([id, node]) => {
-    if (hidden(id)) return true;
-    if (!node.dom) return false;
-    if (node.data.name !== DATA_TABLE_NAME) return true;
-    const real = rowsOf(data, node.data.props.source as PrintDataSourceId);
-    if (real) return node.data.nodes.length === Math.max(0, real.length - 1);
-    const rows = Math.max(1, Number(node.data.props.sampleRows) || 1);
-    return node.data.nodes.length + 1 >= Math.min(rows, MAX_TABLE_ROWS);
-  });
-};
-
-/** El tope de filas de ejemplo de una Tabla (components/pdf-data-table). */
-const MAX_TABLE_ROWS = 40;
 
 /**
  * Apaga el editor cuando la hoja está armada. Arranca encendido porque

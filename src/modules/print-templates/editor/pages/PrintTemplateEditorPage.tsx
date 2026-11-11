@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Editor, Element, Frame, ROOT_NODE, useEditor } from "@craftjs/core";
+import { useNavigate, useParams } from "react-router-dom";
+import { Editor, Frame, ROOT_NODE, useEditor } from "@craftjs/core";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "@/shared/hooks/use-toast";
@@ -13,7 +13,6 @@ import {
   printTemplateUpdateApi,
 } from "../../services/printTemplates.service";
 import type {
-  Imposition,
   PrintTemplateDetail,
   SystemPrintTemplate,
 } from "../../types/printTemplates.types";
@@ -21,9 +20,8 @@ import { printTemplateResolver } from "../lib/resolver";
 import { PaperContext, paperOf } from "../lib/paper-context";
 import { DataSourcesContext, sourcesOf } from "../lib/data-table";
 import { NodeActionsProvider } from "../lib/node-actions";
-import { PdfContainer } from "../components/pdf-container";
 import { pageProps } from "../lib/page-props";
-import { SYSTEM_DESIGNS } from "../designs";
+import { initialDesign } from "../lib/initial-design";
 import { EditorSidebar } from "../components/editor-sidebar";
 import { EditorSettingsPanel } from "../components/editor-settings-panel";
 import { PaperCanvas } from "../components/paper-canvas";
@@ -31,18 +29,6 @@ import { EditorTopbar } from "../components/editor-topbar";
 import { UnsavedChangesDialog } from "../components/unsaved-changes-dialog";
 import { DisableWhenMounted } from "../print/pdf-render-job";
 import "../print-template-editor.css";
-
-/** La medida elegida al crear una plantilla con medidas elegibles. */
-export interface PaperChoice {
-  widthMm: number;
-  heightMm: number;
-}
-
-/** Lo elegido en la Nueva plantilla, para arrancar la Hoja. */
-interface CreateChoice {
-  paper?: PaperChoice | null;
-  imposition?: Imposition;
-}
 
 /** Lo que tarda en salir un tooltip del editor (ms). */
 const EDITOR_TOOLTIP_DELAY_MS = 150;
@@ -267,11 +253,6 @@ export function EditorWorkspace({
       }),
     [system, pageWidth, pageHeight, imposition],
   );
-  // Lo que se eligió al crearla (Nueva plantilla), para arrancar.
-  const location = useLocation();
-  const choice = location.state as CreateChoice | null;
-  const chosenPaper = choice?.paper;
-  const chosenImposition = choice?.imposition;
   const dataSources = useMemo(
     () => sourcesOf(system.dataSources, system.dataColumns),
     [system.dataSources, system.dataColumns],
@@ -330,19 +311,11 @@ export function EditorWorkspace({
                         : undefined
                     }
                   >
-                    {/* Plantilla nueva: arranca con el diseño de hoy de su
-                        plantilla del sistema (editor/designs) si lo tiene; si
-                        no, con la hoja vacía, un Contenedor que la ocupa
-                        entera. */}
-                    {SYSTEM_DESIGNS[system.code]?.(
-                      pageProps(system, chosenPaper, chosenImposition),
-                    ) ?? (
-                      <Element
-                        is={PdfContainer}
-                        canvas
-                        {...pageProps(system, chosenPaper, chosenImposition)}
-                      />
-                    )}
+                    {/* Sin diseño guardado (en /view, o una plantilla creada
+                        antes de que se guardara al crearla): el de hoy de su
+                        plantilla del sistema, con la Hoja de por defecto. Las
+                        nuevas ya llegan con su diseño (Nueva plantilla). */}
+                    {initialDesign(system, pageProps(system))}
                   </Frame>
                 </PaperCanvas>
                 <div className={cn("flex min-h-0", preview && "hidden")}>

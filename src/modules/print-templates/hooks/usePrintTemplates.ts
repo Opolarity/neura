@@ -211,16 +211,27 @@ export const usePrintTemplates = () => {
   const handleCreate = async (values: PrintTemplateCreateValues) => {
     try {
       setSaving(true);
+      // Con su diseño de arranque: la medida y la impresión elegidas quedan
+      // guardadas desde ya, aunque no se toque nada en el editor.
       const id = await printTemplateCreateApi({
         title: values.title,
         systemCode: values.systemCode,
+        contentJson: values.contentJson,
       });
+      if (values.use) {
+        try {
+          await printTemplateSetDefaultApi(values.systemCode, id);
+        } catch (error) {
+          // Ya está creada: se avisa y se sigue al editor.
+          toast({
+            title: "La plantilla se creó, pero no se pudo poner en uso",
+            description: error instanceof Error ? error.message : undefined,
+            variant: "destructive",
+          });
+        }
+      }
       setIsOpenFormModal(false);
-      // La medida y la impresión elegidas las toma el editor para arrancar la
-      // Hoja.
-      navigate(printTemplateEditPath(id), {
-        state: { paper: values.paper, imposition: values.imposition },
-      });
+      navigate(printTemplateEditPath(id));
     } catch (error) {
       toast({
         title: "No se pudo crear la plantilla",

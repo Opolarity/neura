@@ -30,11 +30,13 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   SYSTEM_PRINT_TEMPLATES,
   findSystemPrintTemplate,
 } from "../constants/systemPrintTemplates";
 import { cn } from "@/shared/utils/utils";
+import { toast } from "@/shared/hooks/use-toast";
 import { formatPaper } from "../utils/formatPaper";
 import {
   PRINT_TEMPLATE_AREAS,
@@ -42,6 +44,7 @@ import {
 } from "../types/printTemplates.types";
 import { DEFAULT_IMPOSITION, impositionOf } from "../editor/lib/imposition";
 import { ImpositionFields } from "../editor/components/imposition-fields";
+import { DesignSnapshotJob } from "../editor/print/design-snapshot-job";
 
 /** La opción de «Medidas» que deja escribir el ancho y el alto. */
 const CUSTOM_PAPER = "custom";
@@ -56,6 +59,7 @@ const schema = z
     paperPreset: z.string(),
     paperWidthMm: z.coerce.number(),
     paperHeightMm: z.coerce.number(),
+    use: z.boolean(),
   })
   // El ancho y el alto solo se validan cuando se escriben («Personalizada»):
   // las plantillas de medida fija no los usan y los dejan en 0.
@@ -81,17 +85,28 @@ export interface PrintTemplateFormValues {
   paperPreset: string;
   paperWidthMm: number;
   paperHeightMm: number;
+  /** Si se pone en uso al crearla: el documento se imprime con ella. */
+  use: boolean;
 }
 
 /**
- * Lo que se crea: con medidas elegibles, también la medida elegida; y cómo
- * se imprime (columnas y copias).
+ * Lo que se crea: su diseño de arranque (la plantilla del sistema con la
+ * medida y la impresión elegidas, ya serializado) y si se pone en uso.
  */
 export interface PrintTemplateCreateValues {
   title: string;
   systemCode: string;
+  contentJson: Record<string, unknown>;
+  use: boolean;
+}
+
+/** Lo elegido, mientras se arma su diseño (DesignSnapshotJob). */
+interface PendingCreate {
+  title: string;
+  systemCode: string;
   paper: { widthMm: number; heightMm: number } | null;
   imposition: Imposition;
+  use: boolean;
 }
 
 /** «1 columna · 1 copia», lo elegido en «Impresión» mientras está plegada. */
@@ -106,6 +121,7 @@ const EMPTY_VALUES: PrintTemplateFormValues = {
   paperPreset: "0",
   paperWidthMm: 0,
   paperHeightMm: 0,
+  use: true,
 };
 
 interface PrintTemplateFormDialogProps {
@@ -123,6 +139,8 @@ interface PrintTemplateFormDialogProps {
  * son elegibles (la etiqueta de envío), se elige una recomendada o una
  * personalizada, y después se cambia en la Hoja. También cómo se imprime
  * (columnas y copias), que después se cambia en «Impresión», en el editor.
+ * Se crea con ese diseño ya guardado (content_json) y, con «Usar esta
+ * plantilla» (marcada por defecto), queda en uso para su documento.
  */
 export const PrintTemplateFormDialog = ({
   open,
@@ -157,8 +175,13 @@ export const PrintTemplateFormDialog = ({
   const [imposition, setImposition] = useState<Imposition>(DEFAULT_IMPOSITION);
   // «Impresión» arranca plegada: casi siempre basta la de por defecto.
   const [printOpen, setPrintOpen] = useState(false);
+  // Lo elegido, mientras se arma el diseño con que se crea.
+  const [pending, setPending] = useState<PendingCreate | null>(null);
   useEffect(() => {
-    if (open) setPrintOpen(false);
+    if (open) {
+      setPrintOpen(false);
+      setPending(null);
+    }
   }, [open]);
 
   // Otra plantilla del sistema: arranca con su primera medida recomendada y
@@ -172,15 +195,25 @@ export const PrintTemplateFormDialog = ({
     setImposition(template ? impositionOf(template) : DEFAULT_IMPOSITION);
   }, [systemCode, form, open]);
 
+  // Primero se arma el diseño (DesignSnapshotJob) y con él se crea.
   const handleSubmit = (values: PrintTemplateFormValues) =>
-    onSave({
+    setPending({
       title: values.title.trim(),
       systemCode: values.systemCode,
       paper: presets.length
-        ? { widthMm: values.paperWidthMm, heightMm: values.paperHeightMm }
+        ? {
+            widthMm: Number(values.paperWidthMm),
+            heightMm: Number(values.paperHeightMm),
+          }
         : null,
       imposition,
+      use: values.use,
     });
+
+  const pendingSystem = pending
+    ? findSystemPrintTemplate(pending.systemCode)
+    : undefined;
+  const busy = saving || pending !== null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -379,6 +412,33 @@ export const PrintTemplateFormDialog = ({
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="use"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start gap-2 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
+                      className="mt-0.5"
+                    />
+                  </FormControl>
+                  <div className="flex flex-col gap-0.5">
+                    <FormLabel className="font-normal">
+                      Usar esta plantilla
+                    </FormLabel>
+                    <p className="text-[12px] text-muted-foreground">
+                      El documento se imprime con ella, en lugar de la que está
+                      en uso ahora.
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+
             <DialogFooter>
               <Button
                 type="button"
@@ -387,13 +447,36 @@ export const PrintTemplateFormDialog = ({
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={busy}>
+                {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Crear y diseñar
               </Button>
             </DialogFooter>
           </form>
         </Form>
+
+        {/* El diseño con que se crea: se arma fuera de la vista. */}
+        {pending && pendingSystem && (
+          <DesignSnapshotJob
+            key={pending.systemCode}
+            system={pendingSystem}
+            paper={pending.paper}
+            imposition={pending.imposition}
+            onDone={(contentJson) => {
+              const { title, systemCode, use } = pending;
+              setPending(null);
+              onSave({ title, systemCode, contentJson, use });
+            }}
+            onError={(error) => {
+              setPending(null);
+              toast({
+                title: "No se pudo armar el diseño de la plantilla",
+                description: error instanceof Error ? error.message : undefined,
+                variant: "destructive",
+              });
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
