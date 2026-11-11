@@ -42,12 +42,12 @@ interface ProcessCatalogConfig {
   updateApi: (payload: SaveProcessCatalogData) => Promise<unknown>;
   deleteApi: (id: number) => Promise<unknown>;
   /**
-   * Solo Operaciones: la lista de PROCESOS (`process_group`) a los que puede
-   * pertenecer una operación. Si se pasa, el hook carga `groupOptions` para el
+   * Solo Operaciones: la lista de operaciones que pueden ser OPERACIÓN PADRE
+   * (pase de multicliente, 2026-11). Si se pasa, el hook carga `parentOptions` para el
    * selector del formulario. La pantalla de Procesos no lo pasa: un proceso no
    * cuelga de otro.
    */
-  groupListApi?: (filters: ProcessCatalogFilters) => Promise<{
+  parentListApi?: (filters: ProcessCatalogFilters) => Promise<{
     data: ProcessCatalogItem[];
     pagination: PaginationState;
   }>;
@@ -61,7 +61,7 @@ export const useProcessCatalog = ({
   createApi,
   updateApi,
   deleteApi,
-  groupListApi,
+  parentListApi,
 }: ProcessCatalogConfig) => {
   // Concordancia de los toasts: "creado" / "creada".
   const o = isFeminine ? "a" : "o";
@@ -88,25 +88,25 @@ export const useProcessCatalog = ({
   const [deleting, setDeleting] = useState(false);
 
   /**
-   * Grupos (etapas) disponibles para el selector del formulario. Solo se
-   * llenan cuando el catálogo los necesita (procesos); el de grupos no.
+   * Operaciones activas que se ofrecen como padre en el formulario. Solo se
+   * llenan en Operaciones; el catálogo de Procesos no las usa.
    */
-  const [groupOptions, setGroupOptions] = useState<ProcessCatalogItem[]>([]);
+  const [parentOptions, setParentOptions] = useState<ProcessCatalogItem[]>([]);
 
-  const loadGroups = useCallback(async () => {
-    if (!groupListApi) return;
+  const loadParents = useCallback(async () => {
+    if (!parentListApi) return;
     try {
-      const response = await groupListApi({ is_active: true, size: 100 });
-      setGroupOptions(response.data);
+      const response = await parentListApi({ is_active: true, size: 500 });
+      setParentOptions(response.data);
     } catch {
-      // El selector de grupo puede quedarse vacío sin romper el alta: no se
+      // El selector de padre puede quedarse vacío sin romper el alta: no se
       // avisa para no duplicar el error del listado.
     }
-  }, [groupListApi]);
+  }, [parentListApi]);
 
   useEffect(() => {
-    loadGroups();
-  }, [loadGroups]);
+    loadParents();
+  }, [loadParents]);
 
   const fetchItems = useCallback(async () => {
     try {
@@ -183,8 +183,8 @@ export const useProcessCatalog = ({
       setIsOpenFormModal(false);
       setEditingItem(null);
       fetchItems();
-      // Un grupo recién creado tiene que aparecer en el selector.
-      loadGroups();
+      // Una operación recién creada puede ser padre de la siguiente.
+      loadParents();
     } catch (error: any) {
       toast({ title: `Error al guardar ${entityLabel}: ` + error.message, variant: "destructive" });
     } finally {
@@ -233,6 +233,6 @@ export const useProcessCatalog = ({
     deleting,
     handleDelete,
     /** Grupos para el selector del formulario (vacío si el catálogo no los usa). */
-    groupOptions,
+    parentOptions,
   };
 };

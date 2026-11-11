@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import PaginationBar from "@/shared/components/pagination-bar/PaginationBar";
 import { useProcesses } from "../hooks/useProcesses";
-import { ProcessCatalogTable } from "../components/processes/ProcessCatalogTable";
+import { useOperationsMasterExport } from "../hooks/useOperationsMasterExport";
+import { OperationBlocksTable } from "../components/processes/OperationBlocksTable";
 import { CatalogFilterBar } from "../components/CatalogFilterBar";
 import { CatalogFilterModal } from "../components/CatalogFilterModal";
 import { ProcessCatalogFormDialog } from "../components/processes/ProcessCatalogFormDialog";
@@ -11,9 +13,13 @@ import ProcessesHeader from "../components/processes/ProcessesHeader";
 /**
  * Catálogo de OPERACIONES (tabla `processes`).
  *
- * La operación es el trabajo concreto -- tender, trazar, remallar -- y cuelga
- * de un PROCESO (`process_group`), que tiene su propia pantalla. De ahí la
- * columna "Proceso" del listado y el selector del formulario.
+ * La operación es el trabajo concreto -- tender, trazar, remallar -- y puede
+ * agruparse bajo una OPERACIÓN PADRE ("Ensamble"). El listado sale agrupado:
+ * cada padre y debajo sus hijas. No lleva precio: lo que se cobra se digita
+ * en la orden.
+ *
+ * Dos altas (2026-10-19): «Nuevo bloque» crea el padre, y «Nueva operación»
+ * crea una operación que debe ir en un bloque.
  */
 const ProcessesList = () => {
   const {
@@ -40,12 +46,33 @@ const ProcessesList = () => {
     setDeletingItem,
     deleting,
     handleDelete,
-    groupOptions,
+    parentOptions,
   } = useProcesses();
+  // El maestro de operaciones a Excel, con los filtros de la pantalla.
+  const { exporting, exportToExcel } = useOperationsMasterExport({
+    search,
+    isActive,
+    total: pagination.total,
+  });
+  /** Qué se crea al abrir el formulario sin registro: un bloque o una operación. */
+  const [createMode, setCreateMode] = useState<"block" | "operation">("operation");
+  // Al editar, el registro dice qué es: sin padre, un bloque; con padre, una operación.
+  const formMode = editingItem ? (editingItem.parentProcessId === null ? "block" : "operation") : createMode;
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-4">
-      <ProcessesHeader onCreate={openCreate} />
+      <ProcessesHeader
+        onCreateBlock={() => {
+          setCreateMode("block");
+          openCreate();
+        }}
+        onCreateOperation={() => {
+          setCreateMode("operation");
+          openCreate();
+        }}
+        onExport={() => void exportToExcel()}
+        exporting={exporting}
+      />
 
       <Card className="flex flex-col min-h-0 overflow-hidden">
         <CardHeader className="!p-4">
@@ -59,11 +86,10 @@ const ProcessesList = () => {
         </CardHeader>
 
         <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
-          <ProcessCatalogTable
+          <OperationBlocksTable
             items={items}
             loading={loading}
-            entityLabel="operación"
-            showGroup
+            expandAll={search.trim() !== ""}
             onEdit={openEdit}
             onDelete={setDeletingItem}
           />
@@ -97,8 +123,8 @@ const ProcessesList = () => {
           entityLabel="Operación"
           isFeminine
           namePlaceholder="ej: Tendido"
-          codePlaceholder="ej: TEN"
-          groupOptions={groupOptions}
+          parentOptions={parentOptions}
+          mode={formMode}
         />
       )}
 
