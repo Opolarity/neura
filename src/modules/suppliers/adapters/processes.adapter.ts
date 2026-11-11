@@ -15,10 +15,16 @@ export const toProcessCatalogItem = (row: any): ProcessCatalogItem => ({
   name: row.name ?? "",
   code: toTextOrNull(row.code),
   isActive: row.is_active ?? true,
-  // Solo lo devuelven los procesos (sp_get_processes): a qué grupo pertenece
-  // la operación. Los grupos no lo traen, así que cae a null.
-  processGroupId: row.process_group_id ?? null,
-  processGroupName: toTextOrNull(row.process_group_name),
+  // Solo lo devuelven las operaciones (sp_get_processes): su operación padre.
+  // Los procesos (grupos) no lo traen, así que cae a null.
+  parentProcessId: row.parent_process_id ?? null,
+  parentProcessName: toTextOrNull(row.parent_process_name),
+  childrenCount: Number(row.children_count ?? 0),
+  // Solo los devuelve el catálogo de procesos (sp_get_process_groups).
+  isEssential: row.is_essential === true,
+  essentialOrder:
+    row.essential_order === undefined || row.essential_order === null ? null : Number(row.essential_order),
+  isDefault: row.is_default === true,
   usageCount: Number(row.usage_count ?? 0),
   createdAt: row.created_at ?? "",
 });

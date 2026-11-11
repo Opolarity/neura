@@ -33,6 +33,12 @@ interface SupplierPaymentDialogProps {
   onClose: () => void;
   /** El comprobante viaja aparte: quien lo sube es el hook, no la pantalla. */
   onSubmit: (payload: AddSupplierPaymentPayload, voucher: File | null) => void;
+  /**
+   * Desde la cotización: los servicios que se pueden pagar. Con más de uno
+   * aparece «Servicio» para elegir a cuál va el pago.
+   */
+  choices?: SupplierPaymentRow[];
+  onChoose?: (serviceId: number) => void;
 }
 
 /**
@@ -48,6 +54,8 @@ const SupplierPaymentDialog = ({
   saving,
   onClose,
   onSubmit,
+  choices,
+  onChoose,
 }: SupplierPaymentDialogProps) => {
   const [amount, setAmount] = useState("");
   const [methodId, setMethodId] = useState<string>("");
@@ -114,6 +122,28 @@ const SupplierPaymentDialog = ({
         </DialogHeader>
 
         <div className="grid gap-4">
+          {choices && choices.length > 1 && onChoose && (
+            <div className="grid gap-2">
+              <Label htmlFor="pago-servicio">Servicio</Label>
+              <Select
+                value={target ? String(target.serviceId) : ""}
+                onValueChange={(value) => onChoose(Number(value))}
+              >
+                <SelectTrigger id="pago-servicio">
+                  <SelectValue placeholder="Elegir servicio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {choices.map((choice) => (
+                    <SelectItem key={choice.serviceId} value={String(choice.serviceId)}>
+                      {choice.serviceDescription || `Servicio ${choice.serviceCode}`} ·{" "}
+                      pendiente {formatCurrency(choice.balance)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-3 py-2">
             <span className="text-sm text-muted-foreground">
               Saldo pendiente

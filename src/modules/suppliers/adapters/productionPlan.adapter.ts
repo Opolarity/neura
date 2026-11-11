@@ -143,14 +143,28 @@ const toRouteService = (row: any): ProductionPlanRouteService => ({
       sku: textOrNull(detail?.sku),
     }),
   ),
+  // Avance por talla (pase de multicliente): lo declarado de cada talla y lo
+  // que le entró. Sin las claves (backend anterior) quedan vacíos.
+  sizes: (row?.sizes ?? []).map((sz: Record<string, unknown>) => ({
+    itemId: num(sz?.production_order_item_id),
+    quantity: num(sz?.quantity),
+    badQuantity: num(sz?.bad_quantity),
+  })),
+  itemIncoming: Object.fromEntries(
+    (row?.item_incoming ?? []).map((ii: Record<string, unknown>) => [
+      num(ii?.production_order_item_id),
+      num(ii?.incoming),
+    ]),
+  ),
 });
 
 const toRouteStep = (row: any): ProductionPlanRouteStep => ({
   order: num(row?.order),
   processId: numOrNull(row?.process_id),
-  // Un paso sin proceso asignado existe: es un servicio vinculado a la orden
-  // al que todavía no se le puso proceso en la configuración de la ruta.
-  processName: row?.process_name ?? "Sin proceso",
+  // La ruta del plan es por PROCESO (etapa): el backend puede mandar la
+  // operación en null, así que se cae al nombre del proceso. "Sin proceso"
+  // solo queda para un servicio vinculado al que aún no se le puso ninguno.
+  processName: row?.process_name ?? row?.process_group_name ?? "Sin proceso",
   processGroupId: numOrNull(row?.process_group_id),
   processGroupName: textOrNull(row?.process_group_name),
   stepsTotal: num(row?.steps_total),

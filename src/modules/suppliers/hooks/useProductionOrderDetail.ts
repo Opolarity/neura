@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/shared/hooks/use-toast";
-import { deleteServiceLinkApi } from "../services/productionOrderServices.service";
+import { getTodayDate, toLimaDateInput } from "@/shared/utils/date";
 import { useDebounce } from "@/shared/hooks/useDebounce";
+import { processGroupsListApi } from "../services/processes.service";
 import {
   ExplosionOption,
   ProductionOrderClassOption,
@@ -86,7 +87,6 @@ export const useProductionOrderDetail = ({
   const [classId, setClassId] = useState("");
   const [description, setDescription] = useState("");
   const [items, setItems] = useState<ProductionOrderItem[]>([]);
-  const [unlinkingId, setUnlinkingId] = useState<number | null>(null);
   /**
    * En qué punto está la orden. Lo calcula el backend a partir de sus
    * servicios, así que se guarda tal cual y se recarga con el resto: al
@@ -104,6 +104,18 @@ export const useProductionOrderDetail = ({
   const [createdByName, setCreatedByName] = useState<string | null>(null);
   /** Entrega comprometida y término, como las teclea el input de fecha. */
   const [promisedDate, setPromisedDate] = useState("");
+  /**
+   * Fecha de emisión (T-980): distinta de la pactada y de la de término. Nace
+   * con la de hoy; no puede ser futura ni posterior a la pactada.
+   */
+  const [issueDate, setIssueDate] = useState(isNew ? getTodayDate() : "");
+  /** La receta trae materiales (null: el backend no lo dice). */
+  const [hasMaterials, setHasMaterials] = useState<boolean | null>(null);
+  /**
+   * El proceso por defecto «Corte» del catálogo (essential_order 1): su fila
+   * de la pizarra lleva las O/C y «Iniciar corte».
+   */
+  const [cutProcessGroupId, setCutProcessGroupId] = useState<number | null>(null);
   const [finishDate, setFinishDate] = useState("");
   /**
    * La fecha de término tal como vino del backend.
@@ -138,6 +150,22 @@ export const useProductionOrderDetail = ({
       }
     };
     loadCatalogs();
+  }, []);
+
+  useEffect(() => {
+    let vigente = true;
+    processGroupsListApi({ is_active: true, size: 200 })
+      .then((response) => {
+        if (!vigente) return;
+        const corte = response.data.find((grupo) => grupo.isEssential && grupo.essentialOrder === 1);
+        setCutProcessGroupId(corte?.id ?? null);
+      })
+      .catch(() => {
+        if (vigente) setCutProcessGroupId(null);
+      });
+    return () => {
+      vigente = false;
+    };
   }, []);
 
   /**
@@ -225,11 +253,15 @@ export const useProductionOrderDetail = ({
       .catch(() => toast({ title: "Error al buscar explosiones", variant: "destructive" }));
   }, [debouncedExplosionSearch]);
 
-  const loadOrder = useCallback(async () => {
+  /**
+   * `silent`: sin el «Cargando» que desmonta la página. Es la relectura tras
+   * avanzar o cortar desde la pizarra, que no debe cerrar lo que está abierto.
+   */
+  const loadOrder = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (orderId === null) return;
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const detail = await productionOrderByIdApi(orderId);
       setName(detail.name);
       setClassId(detail.productionOrderClassId.toString());
@@ -240,15 +272,21 @@ export const useProductionOrderDetail = ({
       setCreatedAt(detail.createdAt);
       setCreatedByName(detail.createdByName);
       setPromisedDate(detail.promisedDate ?? "");
+      // Sin fecha de emisión (backend anterior a la columna): el día de Lima
+      // en que se creó, que es lo que el backend toma por defecto.
+      setIssueDate(
+        detail.issueDate ?? (detail.createdAt ? toLimaDateInput(new Date(detail.createdAt)) : ""),
+      );
+      setHasMaterials(detail.hasMaterials);
       setFinishDate(detail.finishDate ?? "");
       setSavedFinishDate(detail.finishDate ?? "");
       setCode(detail.code);
       setUpdatedAt(detail.updatedAt);
     } catch (error: any) {
       toast({ title: "Error al cargar la orden: " + error.message, variant: "destructive" });
-      navigate("/suppliers/production-orders");
+      if (!silent) navigate("/suppliers/production-orders");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [orderId, navigate]);
 
@@ -351,6 +389,23 @@ export const useProductionOrderDetail = ({
       toast({ title: "La clase de orden es obligatoria", variant: "destructive" });
       return;
     }
+    // Fecha de emisión (T-980): obligatoria, no futura y no después de la
+    // pactada. Las fechas son «YYYY-MM-DD», así que se comparan como texto.
+    if (!issueDate) {
+      toast({ title: "La fecha de emisión es obligatoria", variant: "destructive" });
+      return;
+    }
+    if (issueDate > getTodayDate()) {
+      toast({ title: "La fecha de emisión no puede ser futura", variant: "destructive" });
+      return;
+    }
+    if (promisedDate && issueDate > promisedDate) {
+      toast({
+        title: "La fecha de emisión no puede ser posterior a la de entrega",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // quantity no va en el payload: lo calcula y guarda el SP desde los ítems.
     const payload = {
@@ -359,6 +414,7 @@ export const useProductionOrderDetail = ({
       description: description.trim() === "" ? null : description.trim(),
       expected_updated_at: updatedAt,
       promised_date: promisedDate || null,
+      issue_date: issueDate || null,
       finish_date: finishDate || null,
       items: items.map((item) => ({
         // El id viaja para que el backend actualice el ítem en vez de
@@ -406,31 +462,16 @@ export const useProductionOrderDetail = ({
     }
   };
 
-  /**
-   * Quita un servicio de la orden. El SP aborta si ese servicio ya ingresó
-   * stock: el movimiento subió stock de verdad y su trazabilidad pasa por
-   * este vínculo.
-   */
-  const unlinkService = async (serviceId: number) => {
-    if (orderId === null) return;
-    try {
-      setUnlinkingId(serviceId);
-      await deleteServiceLinkApi(orderId, serviceId);
-      toast({ title: "Servicio desvinculado", variant: "success" });
-      await loadOrder();
-    } catch (error: any) {
-      toast({ title: error.message ?? "No se pudo desvincular", variant: "destructive" });
-    } finally {
-      setUnlinkingId(null);
-    }
-  };
-
   return {
     type,
     createdAt,
     createdByName,
     promisedDate,
     setPromisedDate,
+    issueDate,
+    setIssueDate,
+    hasMaterials,
+    cutProcessGroupId,
     finishDate,
     setFinishDate,
     savedFinishDate,
@@ -438,8 +479,6 @@ export const useProductionOrderDetail = ({
     isNew,
     loading,
     status,
-    unlinkingId,
-    unlinkService,
     reloadOrder: loadOrder,
     submitting,
     classes,

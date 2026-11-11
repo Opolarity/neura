@@ -18,10 +18,17 @@ interface ProcessCatalogTableProps {
   /** "proceso" / "operación", para los aria-labels de las acciones. */
   entityLabel: string;
   /**
-   * Solo Operaciones: pinta la columna "Proceso" (la etapa a la que pertenece
-   * la operación). La pantalla de Procesos no la pasa.
+   * Solo Operaciones: pinta «Operación padre» y sangra las hijas bajo su padre
+   * (el SP ya las devuelve en ese orden). La pantalla de Procesos no la pasa.
    */
-  showGroup?: boolean;
+  showOperationFields?: boolean;
+  /**
+   * Solo Procesos: badge «Por defecto» junto al nombre, y sin editar ni
+   * borrar los por defecto (Corte, Costura, Acabado).
+   */
+  showEssentialBadge?: boolean;
+  /** Procesos (2026-10-20): sin columna Código, el código lo pone el backend. */
+  showCode?: boolean;
   onEdit: (item: ProcessCatalogItem) => void;
   onDelete: (item: ProcessCatalogItem) => void;
 }
@@ -32,21 +39,23 @@ export const ProcessCatalogTable = ({
   items,
   loading,
   entityLabel,
-  showGroup = false,
+  showOperationFields = false,
+  showEssentialBadge = false,
+  showCode = true,
   onEdit,
   onDelete,
 }: ProcessCatalogTableProps) => {
-  // Una columna más cuando se muestra el grupo: ajusta el colSpan de las filas
-  // de carga y vacío.
-  const colSpan = showGroup ? 7 : 6;
+  // Una columna más en Operaciones: ajusta el colSpan de las filas de carga
+  // y vacío.
+  const colSpan = 5 + (showOperationFields ? 1 : 0) + (showCode ? 1 : 0);
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-16">ID</TableHead>
           <TableHead>Nombre</TableHead>
-          <TableHead>Código</TableHead>
-          {showGroup && <TableHead>Proceso</TableHead>}
+          {showCode && <TableHead>Código</TableHead>}
+          {showOperationFields && <TableHead>Bloque</TableHead>}
           <TableHead>Estado</TableHead>
           <TableHead>Creado</TableHead>
           <TableHead className="w-[100px]" />
@@ -72,15 +81,33 @@ export const ProcessCatalogTable = ({
           items.map((item) => (
             <TableRow key={item.id}>
               <TableCell className="font-medium">{item.id}</TableCell>
-              <TableCell>{item.name}</TableCell>
               <TableCell>
-                {item.code ?? <span className="text-muted-foreground text-sm">—</span>}
+                {/* Las hijas, sangradas bajo su padre. */}
+                {showOperationFields && item.parentProcessId !== null ? (
+                  <span className="pl-4 text-muted-foreground">↳ </span>
+                ) : null}
+                {item.name}
+                {showEssentialBadge && item.isDefault && (
+                  <Badge variant="info" className="ml-2">
+                    Por defecto
+                  </Badge>
+                )}
+                {showOperationFields && item.childrenCount > 0 && (
+                  <Badge variant="outline" className="ml-2">
+                    {item.childrenCount} {item.childrenCount === 1 ? "operación" : "operaciones"}
+                  </Badge>
+                )}
               </TableCell>
-              {/* El proceso (etapa) al que pertenece la operación. */}
-              {showGroup && (
+              {showCode && (
                 <TableCell>
-                  {item.processGroupName ? (
-                    <Badge variant="secondary">{item.processGroupName}</Badge>
+                  {item.code ?? <span className="text-muted-foreground text-sm">—</span>}
+                </TableCell>
+              )}
+              {/* La operación padre que la agrupa. */}
+              {showOperationFields && (
+                <TableCell>
+                  {item.parentProcessName ? (
+                    <Badge variant="secondary">{item.parentProcessName}</Badge>
                   ) : (
                     <span className="text-muted-foreground text-sm">—</span>
                   )}
@@ -93,25 +120,30 @@ export const ProcessCatalogTable = ({
               </TableCell>
               <TableCell>{formatDate(item.createdAt)}</TableCell>
               <TableCell>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(item)}
-                    aria-label={`Editar ${entityLabel} ${item.name}`}
-                  >
-                    <SquarePen className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={!item.isActive}
-                    onClick={() => onDelete(item)}
-                    aria-label={`Desactivar ${entityLabel} ${item.name}`}
-                  >
-                    <Trash className="w-4 h-4" />
-                  </Button>
-                </div>
+                {/* Los por defecto son fijos: ni se editan ni se borran. */}
+                {!(showEssentialBadge && item.isDefault) && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onEdit(item)}
+                      title={`Editar ${entityLabel}`}
+                      aria-label={`Editar ${entityLabel} ${item.name}`}
+                    >
+                      <SquarePen className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={!item.isActive}
+                      onClick={() => onDelete(item)}
+                      title={`Desactivar ${entityLabel}`}
+                      aria-label={`Desactivar ${entityLabel} ${item.name}`}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </TableCell>
             </TableRow>
           ))

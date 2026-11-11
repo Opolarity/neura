@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getWarehousesIsActiveTrue } from "@/shared/services/service";
 import type { Warehouse } from "@/types/warehouse";
 import { useQuotationDetail } from "../hooks/useQuotationDetail";
+import { useQuotationPayment } from "../hooks/useQuotationPayment";
+import SupplierPaymentDialog from "@/modules/suppliers/components/supplier-payments/SupplierPaymentDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -116,6 +118,7 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
   const {
     quotation,
     services,
+    paymentTotals,
     serviceKind,
     onServiceKindChange,
     pagination,
@@ -127,6 +130,20 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
     onSearchChange,
     refetch,
   } = useQuotationDetail(quotationId);
+
+  /** Pagar al taller desde aquí, eligiendo el servicio. */
+  const pago = useQuotationPayment(
+    quotation
+      ? {
+          id: quotation.id,
+          code: quotation.code,
+          subject: quotation.subject,
+          supplierId: quotation.supplier_id,
+          supplierName: quotation.supplier_name,
+        }
+      : null,
+    () => void refetch(),
+  );
 
   const [searchInput, setSearchInput] = useState<string>("");
 
@@ -247,6 +264,14 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
   const [origQuantity, setOrigQuantity] = useState<string>("");
   const [origBadQuantity, setOrigBadQuantity] = useState<string>("");
   const [origPrice, setOrigPrice] = useState<string>("");
+  /**
+   * El precio se negocia solo mientras la línea está «En cotización»
+   * (INQUO-HDN): desde «Cotizado» queda cerrado y no se edita (el backend
+   * también lo rechaza).
+   */
+  const precioCerrado =
+    (availableSituations.find((s) => String(s.id) === origSituationId)?.code ?? null) !==
+    "INQUO-HDN";
 
   // History modal state
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -736,7 +761,8 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
           moduleId: service.module_id,
           situationId: chosenSituationId,
           statusId: chosenSituation.status_id,
-          badQuantity: null,
+          // Se conserva: mandar null dejaba la cabecera sin falladas.
+          badQuantity: sit.bad_quantity ?? null,
           message: null,
           quantity: sit.quantity ?? null,
           measurementUnit: sit.measurement_unit,
@@ -1496,6 +1522,22 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                       ? "Orden de Compra"
                       : "Orden de Servicio"}
                   </Button>
+                  {!viewOnly && serviceKind === "SERVICE" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                      disabled={pago.opening || (paymentTotals?.pending ?? 0) <= 0}
+                      onClick={() => void pago.open()}
+                    >
+                      {pago.opening ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CreditCard className="h-4 w-4" />
+                      )}
+                      Registrar pago
+                    </Button>
+                  )}
                   {!viewOnly && (
                     <Button size="sm" className="gap-2" onClick={() => setAddServiceOpen(true)}>
                       <Plus className="h-4 w-4" />
@@ -1508,6 +1550,29 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
+              {/* Lo que se le debe al taller por toda la cotización. */}
+              {serviceKind === "SERVICE" && paymentTotals && paymentTotals.payable > 0 && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-2 text-sm">
+                  <span>
+                    Por pagar{" "}
+                    <span className="font-semibold tabular-nums">
+                      {formatCurrency(paymentTotals.payable)}
+                    </span>
+                  </span>
+                  <span>
+                    Pagado{" "}
+                    <span className="font-semibold tabular-nums">
+                      {formatCurrency(paymentTotals.paid)}
+                    </span>
+                  </span>
+                  {/* Calculado, como en las ventas: a medias sigue Pendiente. */}
+                  <Badge variant={paymentTotals.pending > 0.005 ? "warning" : "success"}>
+                    {paymentTotals.pending > 0.005
+                      ? `Pendiente ${formatCurrency(paymentTotals.pending)}`
+                      : "Pagado"}
+                  </Badge>
+                </div>
+              )}
               <div className="flex items-center gap-3 px-4 py-2">
                 <div className="flex flex-row gap-2">
                   <Input
@@ -1574,6 +1639,8 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                     <TableHead>Situación</TableHead>
                     <TableHead className="text-right">Precio Uni.</TableHead>
                     <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="text-right">Pagado</TableHead>
+                    <TableHead className="text-right">Pendiente</TableHead>
                     <TableHead>IGV</TableHead>
                     <TableHead className="text-center">Acciones</TableHead>
                   </TableRow>
@@ -1582,7 +1649,7 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                   {loadingServices ? (
                     <TableRow>
                       <TableCell
-                        colSpan={viewOnly ? 9 : 10}
+                        colSpan={viewOnly ? 11 : 12}
                         className="text-center py-8"
                       >
                         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
@@ -1591,7 +1658,7 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                   ) : services.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={viewOnly ? 9 : 10}
+                        colSpan={viewOnly ? 11 : 12}
                         className="text-center py-8 text-muted-foreground"
                       >
                         {serviceKind === "SERVICE"
@@ -1636,7 +1703,13 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                               : "—"}
                           </TableCell>
                           <TableCell>{s?.measurement_unit || "—"}</TableCell>
-                          <TableCell>{s?.situation_name || "—"}</TableCell>
+                          <TableCell>
+                            {s?.situation_name ? (
+                              <Badge variant="secondary">{s.situation_name}</Badge>
+                            ) : (
+                              "—"
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             {/* Entre lo PEDIDO: repartir el precio entre lo
                                 que sobrevivió a la merma inflaba el unitario. */}
@@ -1644,6 +1717,16 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                           </TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(s?.price)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {service.paid == null ? "—" : formatCurrency(Number(service.paid))}
+                          </TableCell>
+                          <TableCell
+                            className={`text-right tabular-nums ${
+                              Number(service.pending ?? 0) > 0 ? "text-destructive" : ""
+                            }`}
+                          >
+                            {service.pending == null ? "—" : formatCurrency(Number(service.pending))}
                           </TableCell>
                           <TableCell>
                             {s?.price === null || s?.price === undefined ? (
@@ -1705,6 +1788,16 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
               <Button disabled>Guardar cambios</Button>
             </div>
           )}
+
+          <SupplierPaymentDialog
+            target={pago.target}
+            choices={pago.choices}
+            onChoose={pago.choose}
+            paymentMethods={pago.paymentMethods}
+            saving={pago.saving}
+            onClose={pago.close}
+            onSubmit={(payload, voucher) => void pago.submit(payload, voucher)}
+          />
 
           {!viewOnly && quotation && (
             <AddQuotationServiceDialog
@@ -1866,15 +1959,22 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
                   type="number"
                   min={0}
                   step="0.01"
-                  disabled={modalMode === "view"}
+                  // El precio se negocia solo «En cotización»; después está
+                  // cerrado y el backend rechaza cambiarlo.
+                  disabled={modalMode === "view" || (modalMode === "edit" && precioCerrado)}
                   value={modalMode === "edit" ? editPrice : (sit?.price ?? "")}
                   onChange={(e) => setEditPrice(e.target.value)}
                   placeholder="0.00"
                   className={cn(
-                    modalMode === "view" &&
+                    (modalMode === "view" || (modalMode === "edit" && precioCerrado)) &&
                       "bg-muted text-muted-foreground cursor-not-allowed",
                   )}
                 />
+                {modalMode === "edit" && precioCerrado && (
+                  <p className="text-muted-foreground text-xs">
+                    Precio cerrado: solo se cambia mientras está En cotización.
+                  </p>
+                )}
               </div>
 
               {/* IGV */}

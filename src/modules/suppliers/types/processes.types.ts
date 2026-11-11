@@ -5,9 +5,11 @@
  * compartan tipos. El grupo ("procesos de pantalones") se decide en la orden
  * de producción, no aquí; su cruce vive en `production_order_info`.
  *
- * La jerarquía es entre las dos tablas: el GRUPO es la etapa padre
- * ("Corte", "Confección") y cada PROCESO es una operación que pertenece a un
- * grupo ("Tendido", "Trazado"). Los grupos no se agrupan entre sí.
+ * El GRUPO (menú «Procesos») es la etapa de la receta y de la orden ("Corte",
+ * "Confección"). Las OPERACIONES (tabla `processes`) ya no cuelgan de un
+ * proceso: desde el pase de multicliente (2026-11) se agrupan por una OPERACIÓN PADRE
+ * ("Ensamble" → "Volt. prenda para basta"), de un solo nivel, y cualquiera
+ * puede ir en cualquier etapa.
  */
 
 /** Fila de cualquiera de los dos catálogos. */
@@ -17,12 +19,27 @@ export interface ProcessCatalogItem {
   code: string | null;
   isActive: boolean;
   /**
-   * Grupo (etapa) al que pertenece esta operación. `null` = la operación aún
-   * no cuelga de ningún grupo (o la fila es un grupo, que no se agrupa).
+   * Solo operaciones: la operación PADRE que la agrupa. `null` = es un padre
+   * o una operación suelta (o la fila es un proceso, que no se agrupa).
    */
-  processGroupId: number | null;
-  /** Nombre del grupo, para pintarlo sin otra consulta. */
-  processGroupName: string | null;
+  parentProcessId: number | null;
+  /** Nombre del padre, para pintarlo sin otra consulta. */
+  parentProcessName: string | null;
+  /**
+   * Solo operaciones: cuántas operaciones activas agrupa.
+   */
+  childrenCount: number;
+  /**
+   * Solo procesos (grupos): por defecto del servicio de confección (Corte,
+   * Costura, Acabado) y su orden en la ruta (2026-10-14).
+   */
+  isEssential: boolean;
+  essentialOrder: number | null;
+  /**
+   * Corte, Costura y Acabado (los marcados por defecto): fijos, no se
+   * editan ni se borran.
+   */
+  isDefault: boolean;
   /** Veces que se usa en `production_order_info`. */
   usageCount: number;
   createdAt: string;
@@ -43,8 +60,8 @@ export interface ProcessCatalogFormValues {
   id?: number;
   name: string;
   code?: string | null;
-  /** Solo procesos: grupo (etapa) al que pertenece la operación. */
-  processGroupId?: number | null;
+  /** Solo operaciones: la operación padre. */
+  parentProcessId?: number | null;
 }
 
 export interface SaveProcessCatalogData {
@@ -52,8 +69,9 @@ export interface SaveProcessCatalogData {
   name: string;
   code?: string | null;
   /**
-   * Solo procesos. Va en snake_case porque el service reenvía el payload tal
-   * cual a la edge function, que espera `process_group_id`.
+   * Solo operaciones. Va en snake_case porque el service reenvía el payload
+   * tal cual a la edge function. Al editar, null le quita el padre; ausente
+   * no lo toca.
    */
-  process_group_id?: number | null;
+  parent_process_id?: number | null;
 }
