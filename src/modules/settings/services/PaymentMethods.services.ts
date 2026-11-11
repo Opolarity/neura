@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { optimizarImagen } from "@/lib/images/optimizarImagen";
 import type { PaymentMethodsApiResponse, PaymentMethodsFilters, PaymentMethod, PaymentMethodPayload } from "../types/PaymentMethods.types";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
@@ -67,7 +68,9 @@ export const UpdatePaymentMethod = async (paymentMethod: PaymentMethodPayload): 
 
 const PAYMENT_METHODS_BUCKET = "payment-methods";
 
-export const UploadPaymentMethodImage = async (file: File): Promise<string> => {
+export const UploadPaymentMethodImage = async (original: File): Promise<string> => {
+    // Son QR: sin pérdida, un borde difuso puede impedir que se escanee.
+    const file = await optimizarImagen(original, "qr");
     const fileExt = file.name.split(".").pop();
     const filePath = `${crypto.randomUUID()}.${fileExt}`;
 

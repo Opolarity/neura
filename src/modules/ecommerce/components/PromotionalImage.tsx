@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { optimizarImagen } from "@/lib/images/optimizarImagen";
 import { AlertTriangle, Trash2, Upload, X } from "lucide-react";
 
 interface PromotionalImageModalProps {
@@ -62,7 +63,8 @@ const PromotionalImageModal = ({
     setter({ file, preview });
   };
 
-  const uploadImage = async (file: File, folder: string): Promise<string> => {
+  const uploadImage = async (original: File, folder: string): Promise<string> => {
+    const file = await optimizarImagen(original, "banner");
     const uuid = crypto.randomUUID();
     const ext = file.name.split(".").pop();
     const path = `${folder}/${uuid}.${ext}`;

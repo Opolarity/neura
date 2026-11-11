@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { optimizarImagen } from "@/lib/images/optimizarImagen";
 import { buildEndpoint } from "@/shared/utils/query";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 import {
@@ -558,7 +559,8 @@ export const materialSuppliersApi = async (
  * no lleva el id del material a propósito: en el alta todavía no existe, y
  * así la foto se sube en cuanto se elige y el material nace con sus URLs.
  */
-export const uploadMaterialImageApi = async (file: File): Promise<string> => {
+export const uploadMaterialImageApi = async (original: File): Promise<string> => {
+  const file = await optimizarImagen(original, "foto");
   const extension = file.name.split(".").pop() || "jpg";
   const path = `materials-images/${crypto.randomUUID()}.${extension}`;
 

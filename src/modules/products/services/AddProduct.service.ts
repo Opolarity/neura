@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { optimizarImagen } from '@/lib/images/optimizarImagen';
 import type {
   ProductFormDataResponse, 
   ProductDetailsResponse,
@@ -62,7 +63,9 @@ export const AddProductService = {
   /**
    * Sube una imagen al storage en la carpeta temporal
    */
-  async uploadImage(file: File, productId?: number): Promise<string> {
+  async uploadImage(original: File, productId?: number): Promise<string> {
+    // create/update-product conservan la extensión al mover desde tmp/: la foto queda .webp.
+    const file = await optimizarImagen(original, 'foto');
     const fileExtension = file.name.split('.').pop() || 'jpg';
     // Siempre subir a products-images/tmp/ primero, el edge function moverá a la carpeta correcta
     const fileName = `products-images/tmp/${crypto.randomUUID()}.${fileExtension}`;
@@ -99,7 +102,8 @@ export const AddProductService = {
   /**
    * Sube una imagen única de tallas o de referencia de tallas y devuelve su path y URL pública
    */
-  async uploadSizeImage(file: File, folder: 'sizes' | 'sizes-ref'): Promise<{ path: string; url: string }> {
+  async uploadSizeImage(original: File, folder: 'sizes' | 'sizes-ref'): Promise<{ path: string; url: string }> {
+    const file = await optimizarImagen(original, 'foto');
     const fileExtension = file.name.split('.').pop() || 'jpg';
     const path = `products-images/${folder}/${crypto.randomUUID()}.${fileExtension}`;
 
