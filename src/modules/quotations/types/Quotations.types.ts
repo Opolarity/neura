@@ -3,6 +3,10 @@ import { ProductionOrderLinkValue } from "@/modules/suppliers/types/productionOr
 
 export interface QuotationListItemApi {
   id: number;
+  code?: string | null;
+  /** La situación más temprana de sus líneas: la que dice dónde va la cotización. */
+  situation_code?: string | null;
+  situation_name?: string | null;
   /** El asunto: el título de la cotización. */
   subject: string;
   /** Las notas. Hasta la 202610010110 este campo era el título. */
@@ -12,16 +16,30 @@ export interface QuotationListItemApi {
   created_at: string;
   supplier_name: string;
   status_name: string | null;
+  /** PEN / COM / CAN (estados SPS de personalizado). */
+  status_code?: string | null;
+  /** Lo exigible y lo pagado de toda la cotización. Calculados en el backend. */
+  payable?: number | string | null;
+  paid?: number | string | null;
+  /** null = aún no se debe nada. */
+  payment_status?: "PAID" | "PENDING" | null;
 }
 
 export interface QuotationListItem {
   id: number;
+  code: string | null;
+  situationCode: string | null;
+  situationName: string | null;
   description: string;
   quantity: number | null;
   price: number | null;
   createdAt: string;
   supplierName: string;
   statusName: string | null;
+  statusCode: string | null;
+  payable: number;
+  paid: number;
+  paymentStatus: "PAID" | "PENDING" | null;
 }
 
 export interface QuotationsFilters {
@@ -110,6 +128,19 @@ export interface QuotationServiceApi {
    */
   requested_quantity: number | null;
   last_situation: QuotationSituationApi | null;
+  /** Lo que se le debe al taller por esta línea (regla de pago del backend). */
+  payable?: number | string | null;
+  /** Lo pagado: directo al servicio más su parte de los pagos a la cotización. */
+  paid?: number | string | null;
+  /** Lo que falta, nunca negativo. */
+  pending?: number | string | null;
+}
+
+/** Deuda de TODA la cotización, no de la página. */
+export interface QuotationPaymentTotals {
+  payable: number;
+  paid: number;
+  pending: number;
 }
 
 export interface QuotationServicesFilters {
@@ -125,6 +156,7 @@ export interface QuotationServicesFilters {
 export interface QuotationServicesApiResponse {
   data: QuotationServiceApi[];
   page: { page: number; size: number; total: number };
+  totals?: { payable: number | string; paid: number | string; pending: number | string } | null;
 }
 
 export interface ServiceSituationHistoryItem {

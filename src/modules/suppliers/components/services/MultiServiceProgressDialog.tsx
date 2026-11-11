@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ServiceProgressTarget } from "../../hooks/useServiceProgress";
-import { useMultiServiceProgress } from "../../hooks/useMultiServiceProgress";
+import { unitKey, unitsOf, useMultiServiceProgress } from "../../hooks/useMultiServiceProgress";
+import { SITUACION_ENVIO } from "../../hooks/useServiceProgress";
 import { ServiceHistoryDialog, ServiceHistoryTarget } from "./ServiceHistoryDialog";
 import {
   openProductionRemisionGuide,
@@ -82,7 +83,7 @@ export const MultiServiceProgressDialog = ({
    */
   const advanceableRef = useRef<ServiceProgressTarget[]>([]);
   const selectedRef = useRef<Set<number>>(new Set<number>());
-  const rowsRef = useRef<Record<number, { quantity: string; badQuantity: string }>>(
+  const rowsRef = useRef<Record<string, { quantity: string; badQuantity: string }>>(
     {},
   );
 
@@ -108,20 +109,25 @@ export const MultiServiceProgressDialog = ({
     services,
     open,
     focusServiceId,
-    onSaved: () => {
+    onSaved: (guardados) => {
       onSaved?.();
+      // Solo lo que sí se guardó entra en la guía. Si no se guardó nada, no
+      // hay nada que imprimir y el diálogo queda para corregir.
+      if (guardados.length === 0) return;
       if (!printGuide) {
         onOpenChange(false);
         return;
       }
       setSent(
         advanceableRef.current
-          .filter((service) => selectedRef.current.has(service.id))
-          .map((service) => ({
-            service,
-            itemId: service.items[0]?.id ?? null,
-            quantity: Number(rowsRef.current[service.id]?.quantity || 0),
-          })),
+          .filter((service) => guardados.includes(service.id))
+          .flatMap((service) =>
+            unitsOf(service).map((itemId) => ({
+              service,
+              itemId,
+              quantity: Number(rowsRef.current[unitKey(service.id, itemId)]?.quantity || 0),
+            })),
+          ),
       );
     },
   });
@@ -135,8 +141,14 @@ export const MultiServiceProgressDialog = ({
   useEffect(() => {
     if (!open) return;
     setSent(null);
-    setPrintGuide(Boolean(advanceable[0]?.supplierName));
   }, [open, advanceable]);
+
+  // La guía solo viene marcada cuando lo que se registra es un envío.
+  useEffect(() => {
+    setPrintGuide(
+      Boolean(advanceable[0]?.supplierName) && selectedSituation?.code === SITUACION_ENVIO,
+    );
+  }, [selectedSituation?.code, advanceable]);
 
   const todas =
     advanceable.length > 0 && selectedCount === advanceable.length;
@@ -148,8 +160,8 @@ export const MultiServiceProgressDialog = ({
           <DialogTitle>Avanzar {processName}</DialogTitle>
           <DialogDescription>
             Marca las prendas que salieron y registra cuánto salió de cada una.
-            Las cantidades vienen con lo que salió del proceso anterior:
-            corrígelas si salió otra cosa. Si una prenda ya tiene cantidad
+            En gris va lo que salió del proceso anterior: escríbelo o
+            corrígelo si salió otra cosa. Si una prenda ya tiene cantidad
             declarada, escribe el total acumulado: el stock se mueve por
             diferencia con lo anterior.
           </DialogDescription>
@@ -180,7 +192,7 @@ export const MultiServiceProgressDialog = ({
           <ScrollArea className="h-full">
             <div className="space-y-4 py-2 pl-1 pr-4">
               <div className="space-y-2">
-                <Label htmlFor="multi-situation">Nueva situación *</Label>
+                <Label htmlFor="multi-situation" required>Nueva situación</Label>
                 <Select
                   value={situationId}
                   onValueChange={setSituationId}
@@ -206,6 +218,12 @@ export const MultiServiceProgressDialog = ({
                     ))}
                   </SelectContent>
                 </Select>
+                {!loadingSituations && situationOptions.length === 0 && (
+                  <p className="text-muted-foreground text-xs">
+                    Ya se recibió. El pago se registra en Pagos a proveedores y
+                    el encargo pasa solo a «Pagado».
+                  </p>
+                )}
                 {/* El destino vale para todas las marcadas: se ofrece desde
                     la más avanzada de ellas. */}
                 <p className="text-muted-foreground text-xs">
@@ -223,94 +241,104 @@ export const MultiServiceProgressDialog = ({
                   <span>Prenda</span>
                   <span>Situación actual</span>
                   <span className="text-right">Buenas</span>
-                  <span className="text-right">Merma</span>
+                  <span className="text-right">Falladas</span>
                   <span className="sr-only">Historial</span>
                 </div>
-                {advanceable.map((service) => {
-                  const prenda = service.items[0];
-                  const nombre = prenda?.name ?? service.description;
+                {advanceable.flatMap((service) => {
                   const marcado = selected.has(service.id);
-                  return (
-                    <div
-                      key={service.id}
-                      className="grid grid-cols-[1.5rem_1fr_7rem_5rem_5rem_2rem] items-center gap-3 px-3 py-2"
-                    >
-                      <Checkbox
-                        checked={marcado}
-                        onCheckedChange={(value) =>
-                          toggle(service.id, value === true)
-                        }
-                        aria-label={`Avanzar ${nombre}`}
-                      />
-                      <div className="min-w-0">
-                        <div className="truncate text-sm" title={nombre}>
-                          {nombre}
-                        </div>
-                        {prenda?.sku && (
-                          <div className="text-muted-foreground text-xs tabular-nums">
-                            {prenda.sku}
+                  const unidades = unitsOf(service);
+                  return unidades.map((itemId, index) => {
+                    const prenda =
+                      service.items.find((item) => item.id === itemId) ?? service.items[0];
+                    const nombre = prenda?.name ?? service.description;
+                    const key = unitKey(service.id, itemId);
+                    // Un servicio de varias tallas se marca una vez, en su
+                    // primera fila; el resto de sus tallas va con él.
+                    const primera = index === 0;
+                    return (
+                      <div
+                        key={key}
+                        className="grid grid-cols-[1.5rem_1fr_7rem_5rem_5rem_2rem] items-center gap-3 px-3 py-2"
+                      >
+                        {primera ? (
+                          <Checkbox
+                            checked={marcado}
+                            onCheckedChange={(value) =>
+                              toggle(service.id, value === true)
+                            }
+                            aria-label={`Avanzar ${nombre}`}
+                          />
+                        ) : (
+                          <span />
+                        )}
+                        <div className="min-w-0">
+                          <div className="truncate text-sm" title={nombre}>
+                            {nombre}
                           </div>
+                          {prenda?.sku && (
+                            <div className="text-muted-foreground text-xs tabular-nums">
+                              {prenda.sku}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-muted-foreground truncate text-xs">
+                          {primera ? service.situationName || "—" : ""}
+                        </span>
+                        <Input
+                          type="number"
+                          min="0"
+                          className="h-8 text-right"
+                          value={rows[key]?.quantity ?? ""}
+                          // Lo que salió del anterior, en gris para transcribirlo.
+                          placeholder={rows[key]?.suggestion || undefined}
+                          onChange={(e) => setRowField(key, "quantity", e.target.value)}
+                          disabled={!marcado}
+                          aria-label={`Buenas de ${nombre}`}
+                        />
+                        <Input
+                          type="number"
+                          min="0"
+                          className="h-8 text-right"
+                          value={rows[key]?.badQuantity ?? ""}
+                          onChange={(e) => setRowField(key, "badQuantity", e.target.value)}
+                          disabled={!marcado}
+                          aria-label={`Falladas de ${nombre}`}
+                        />
+                        {/* Consultar y registrar son dos cosas distintas, pero
+                            la pregunta «¿por dónde ha pasado esta prenda?» se
+                            hace justo aquí, al ir a moverla. */}
+                        {primera ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() =>
+                              setHistoryFor({
+                                id: service.id,
+                                description: service.description,
+                                code: service.code,
+                              })
+                            }
+                            title="Ver los movimientos del servicio"
+                            aria-label={`Ver historial de ${nombre}`}
+                          >
+                            <History className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <span />
                         )}
                       </div>
-                      <span className="text-muted-foreground truncate text-xs">
-                        {service.situationName || "—"}
-                      </span>
-                      <Input
-                        type="number"
-                        min="0"
-                        className="h-8 text-right"
-                        value={rows[service.id]?.quantity ?? ""}
-                        onChange={(e) =>
-                          setRowField(service.id, "quantity", e.target.value)
-                        }
-                        disabled={!marcado}
-                        aria-label={`Buenas de ${nombre}`}
-                      />
-                      <Input
-                        type="number"
-                        min="0"
-                        className="h-8 text-right"
-                        value={rows[service.id]?.badQuantity ?? ""}
-                        onChange={(e) =>
-                          setRowField(
-                            service.id,
-                            "badQuantity",
-                            e.target.value,
-                          )
-                        }
-                        disabled={!marcado}
-                        aria-label={`Merma de ${nombre}`}
-                      />
-                      {/* Consultar y registrar son dos cosas distintas, pero
-                          la pregunta «¿por dónde ha pasado esta prenda?» se
-                          hace justo aquí, al ir a moverla. */}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() =>
-                          setHistoryFor({
-                            id: service.id,
-                            description: service.description,
-                            code: service.code,
-                          })
-                        }
-                        title="Ver los movimientos del servicio"
-                        aria-label={`Ver historial de ${nombre}`}
-                      >
-                        <History className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  );
+                    );
+                  });
                 })}
               </div>
 
               {excludedCount > 0 && (
                 <p className="text-muted-foreground text-xs">
                   {excludedCount === 1
-                    ? "Un servicio de este proceso cubre varias prendas o no tiene situación vigente: se avanza desde su propio botón."
-                    : `${excludedCount} servicios de este proceso cubren varias prendas o no tienen situación vigente: se avanzan desde su propio botón.`}
+                    ? "Un servicio de este proceso no tiene situación vigente: se avanza desde su propio botón."
+                    : `${excludedCount} servicios de este proceso no tienen situación vigente: se avanzan desde su propio botón.`}
                 </p>
               )}
 

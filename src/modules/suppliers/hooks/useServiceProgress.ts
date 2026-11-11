@@ -68,7 +68,71 @@ export interface ServiceProgressTarget {
    * aparte y se pinta debajo, porque solo no dice qué talla es.
    */
   items: ({ id: number; name: string; sku: string | null } & ProductionItemSizeParts)[];
+  /** Lo último declarado de cada talla. Con esto se siembra y no se borra nada. */
+  sizes?: { itemId: number; quantity: number; badQuantity: number }[];
+  /** Lo que entró a este paso de cada talla: la siembra de la primera vez. */
+  itemIncoming?: Record<number, number>;
 }
+
+/**
+ * La siembra de una talla: lo ya declarado si lo hay; si no, lo que entró al
+ * paso (buenas) y sin falladas. Nunca vacío: una casilla en blanco se mandaba
+ * como 0 y borraba lo que el taller ya había devuelto.
+ */
+export const seedSize = (
+  service: Pick<ServiceProgressTarget, "sizes" | "itemIncoming">,
+  itemId: number,
+): { quantity: string; badQuantity: string } => {
+  const declarado = service.sizes?.find((s) => s.itemId === itemId);
+  if (declarado) {
+    return {
+      quantity: String(declarado.quantity),
+      badQuantity: String(declarado.badQuantity),
+    };
+  }
+  const entro = service.itemIncoming?.[itemId];
+  return { quantity: entro === undefined ? "" : String(entro), badQuantity: "0" };
+};
+
+/** La situación siguiente a la actual: la que normalmente toca. */
+export const nextSituation = (
+  situations: SituationOption[],
+  currentSituationId: number | null,
+): SituationOption | null => {
+  const actual = situations.find((s) => s.id === currentSituationId);
+  const desde = actual?.order ?? -1;
+  return (
+    situations
+      .filter((s) => s.order !== null && s.order !== undefined && s.order > desde)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))[0] ?? null
+  );
+};
+
+/** «Enviado al proveedor»: solo con esta situación se ofrece la guía. */
+export const SITUACION_ENVIO = "SENDP-HDN";
+
+/**
+ * Lo comercial de un encargo: En cotización, Cotizado, Cancelado y Pagado. No
+ * son avance de prendas, así que no se ofrecen en «Avanzar» del plan: se
+ * marcan desde «Situación», en la fila del proceso de la Ruta de la orden.
+ */
+export const SITUACIONES_COMERCIALES = ["INQUO-HDN", "QUOT-HDN", "CAN-HDN", "PAID-PHY"];
+
+/**
+ * «Cancelado» (0235): la cotización que no se eligió. Solo desde En cotización
+ * o Cotizado, y es final: el backend lo saca de la ruta de la orden.
+ */
+export const SITUACION_CANCELADO = "CAN-HDN";
+
+/** «Pagado»: solo tras recibir las prendas (REC-PHY). */
+export const SITUACION_PAGADO = "PAID-PHY";
+
+/** «Recibido por empresa»: el ingreso de las prendas a stock. */
+export const SITUACION_RECIBIDO = "REC-PHY";
+
+/** Una situación del avance de prendas, no comercial. */
+export const esAvanceDePrendas = (situation: SituationOption) =>
+  !SITUACIONES_COMERCIALES.includes(situation.code ?? "");
 
 interface UseServiceProgressOptions {
   service: ServiceProgressTarget | null;
@@ -170,14 +234,11 @@ export const useServiceProgress = ({
    * payload: mandarlas con cero las moveria igualmente de situacion, que es
    * justo lo contrario de lo que se quiere.
    */
-  const activeItems = useMemo(() => {
-    if (!service) return [];
-    if (advanceAll || focusItemId == null) return service.items;
-    const enfocada = service.items.filter((item) => item.id === focusItemId);
-    // Si la prenda enfocada no esta entre las del servicio, se cae al
-    // comportamiento de siempre en vez de dejar el dialogo sin filas.
-    return enfocada.length > 0 ? enfocada : service.items;
-  }, [service, advanceAll, focusItemId]);
+  // TODAS las tallas del encargo, siempre. La situación es del encargo entero:
+  // avanzar "solo esta prenda" movía igual a las demás y las dejaba sin cifra.
+  // Cada talla viene sembrada con lo suyo, así que las que no se tocan se
+  // quedan como estaban.
+  const activeItems = useMemo(() => service?.items ?? [], [service]);
 
   // El servicio cubre varias: el backend necesita el desglose aunque este
   // avance mueva una sola.
@@ -247,18 +308,12 @@ export const useServiceProgress = ({
     field: "quantity" | "badQuantity",
     value: string,
   ) =>
-    setForm((prev) => ({
-      ...prev,
-      items: {
-        ...prev.items,
-        [itemId]: {
-          quantity: "",
-          badQuantity: "",
-          ...prev.items[itemId],
-          [field]: value,
-        },
-      },
-    }));
+    setForm((prev) => {
+      // Desde la 0237 se puede declarar más de lo que entró (sobrantes): las
+      // falladas ya no rebajan las buenas.
+      const actual = { quantity: "", badQuantity: "", ...prev.items[itemId], [field]: value };
+      return { ...prev, items: { ...prev.items, [itemId]: actual } };
+    });
 
   // Se siembra con lo que ya tiene la situación vigente: avanzar de estado
   // normalmente no cambia la cantidad, y obligar a reteclearla invita a
@@ -282,19 +337,21 @@ export const useServiceProgress = ({
       //
       // Se puede editar: el campo sigue siendo el acumulado y, en una segunda
       // entrega, el aviso de "ya declarado" recuerda lo que había.
+      // Ya enviado, lo último declarado (reabrir para cambiar de situación no
+      // debe cambiar las cifras); sin enviar, lo que entra.
       quantity: String(
-        service.incomingQuantity ??
+        (service.dispatched ? service.quantity : null) ??
+          service.incomingQuantity ??
           service.requestedQuantity ??
           service.quantity ??
           "",
       ),
       badQuantity:
         service.badQuantity === null ? "" : String(service.badQuantity),
-      // Vacío a propósito, y no repartido a ojo entre las tallas: cuánto salió
-      // de cada una es justo el dato que hay que registrar. Sembrarlo sería
-      // inventarlo, que es el error que ya se cometió antes (ver
-      // fn_production_order_item_progress).
-      items: {},
+      // Cada talla con lo suyo: lo declarado, o lo que entró la primera vez.
+      items: Object.fromEntries(
+        service.items.map((item) => [item.id, seedSize(service, item.id)]),
+      ),
       message: "",
       occurredOn: "",
     });
@@ -310,27 +367,28 @@ export const useServiceProgress = ({
       try {
         setLoadingSituations(true);
         // Solo hacia delante: retroceder desharía stock y costo ya movidos.
+        // Y solo el avance de prendas: lo comercial va en «Situación».
         const disponibles = forwardSituations(
           await fetchSituationsByModuleId(service.moduleId),
           service.situationId,
-        );
+        ).filter(esAvanceDePrendas);
         setSituations(disponibles);
 
         // Sin enviar todavía, el avance que toca es el envío: la mercadería
         // aún no ha salido del almacén. Se deja ELEGIDA, no impuesta -- el
         // desplegable sigue entero por si el envío se registra tarde y lo que
         // toca ya es otra cosa.
-        if (service.dispatched === false) {
-          const envio = disponibles.find(
-            (situacion) => situacion.code === SITUACION_ENVIADO,
+        // Ya enviado, la que sigue a la actual.
+        const propuesta =
+          service.dispatched === false
+            ? disponibles.find((situacion) => situacion.code === SITUACION_ENVIADO) ?? null
+            : nextSituation(disponibles, service.situationId);
+        if (propuesta) {
+          setForm((prev) =>
+            prev.situationId === ""
+              ? { ...prev, situationId: String(propuesta.id) }
+              : prev,
           );
-          if (envio) {
-            setForm((prev) =>
-              prev.situationId === ""
-                ? { ...prev, situationId: String(envio.id) }
-                : prev,
-            );
-          }
         }
       } catch (error: any) {
         toast({
