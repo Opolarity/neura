@@ -20,6 +20,13 @@ import { EntityCombobox, ComboboxOption } from "../EntityCombobox";
 import { ProcessCatalogFormDialog } from "../processes/ProcessCatalogFormDialog";
 import { ExplosionProcess } from "../../types/explosions.types";
 import { SaveProcessCatalogData } from "../../types/processes.types";
+import {
+  OperationCatalogEntry,
+  operationComboboxOptions,
+  operationLabel,
+  parentOptionsFrom,
+  selectableOperations,
+} from "../../utils/operationCatalog";
 
 /** Una etapa del catálogo. No es un paso de la ruta: no lleva operaciones. */
 export interface ProcessGroupOption {
@@ -27,12 +34,11 @@ export interface ProcessGroupOption {
   processGroupName: string | null;
 }
 
-/** Una operación del catálogo, con el proceso al que pertenece. */
-export interface OperationOption {
-  processId: number;
-  processName: string;
-  processGroupId: number | null;
-}
+/**
+ * Una operación del catálogo, con su bloque (operación padre). Ya no cuelga
+ * de un proceso: cualquier operación puede ir en cualquier etapa.
+ */
+export type OperationOption = OperationCatalogEntry;
 
 interface ExplosionProcessesEditorProps {
   /** La ruta, en orden. La posición ES la secuencia. */
@@ -53,7 +59,7 @@ interface ExplosionProcessesEditorProps {
   ) => void;
   /** Deja el proceso sin operaciones: vuelve a ir completo. */
   onClearOperations: (index: number) => void;
-  /** Da de alta una operación de ese proceso y la deja puesta. */
+  /** Da de alta una operación (con su bloque) y la deja puesta en ese paso. */
   onCreateOperation: (index: number, values: SaveProcessCatalogData) => Promise<boolean>;
   creatingOperation?: boolean;
   readOnly?: boolean;
@@ -76,7 +82,7 @@ const OperationCombobox = ({
 }: {
   /** Las que QUEDAN por elegir. */
   options: ComboboxOption[];
-  /** Cuántas hay en el catálogo de ese proceso, elegidas o no. */
+  /** Cuántas hay en el catálogo, elegidas o no. */
   catalogSize: number;
   value?: number | null;
   valueLabel?: string | null;
@@ -95,7 +101,7 @@ const OperationCombobox = ({
 
   return (
     <EntityCombobox
-      className="w-56"
+      className="w-72"
       options={options.filter((o) =>
         o.label.toLowerCase().includes(search.trim().toLowerCase())
       )}
@@ -182,19 +188,24 @@ export const ExplosionProcessesEditor = ({
         : [...prev, processGroupId]
     );
 
-  /** Las del catálogo que son de ese proceso, estén elegidas o no. */
-  const operacionesDelProceso = (paso: ExplosionProcess) =>
-    operationCatalog.filter(
-      (operacion) => operacion.processGroupId === paso.processGroupId
+  /**
+   * Las que se pueden elegir: cualquier operación del catálogo en cualquier
+   * proceso, agrupadas por bloque. Un bloque con operaciones no es un paso.
+   */
+  const elegibles = selectableOperations(operationCatalog);
+
+  /** Y de esas, las que aún no eligió NINGUNA línea de este proceso. */
+  const operacionesLibres = (paso: ExplosionProcess): ComboboxOption[] =>
+    operationComboboxOptions(
+      operationCatalog,
+      paso.operations.map((o) => o.processId)
     );
 
-  /** Y de esas, las que aún no eligió NINGUNA línea. */
-  const operacionesLibres = (paso: ExplosionProcess): ComboboxOption[] =>
-    operacionesDelProceso(paso)
-      .filter(
-        (operacion) => !paso.operations.some((o) => o.processId === operacion.processId)
-      )
-      .map((operacion) => ({ id: operacion.processId, label: operacion.processName }));
+  /** «Bloque › Operación» de una ya puesta, para el selector. */
+  const etiquetaDe = (processId: number, fallback: string | null) => {
+    const entrada = operationCatalog.find((o) => o.processId === processId);
+    return entrada ? operationLabel(entrada) : fallback ?? "";
+  };
 
   const cambiarModo = (index: number, paso: ExplosionProcess, modo: string) => {
     if (!modo) return; // El ToggleGroup emite "" al deseleccionar.
@@ -247,7 +258,6 @@ export const ExplosionProcessesEditor = ({
             const abierto = abiertos.includes(paso.processGroupId);
             const porOperaciones = esPorOperaciones(paso);
             const libres = operacionesLibres(paso);
-            const delProceso = operacionesDelProceso(paso);
 
             return (
               <Collapsible
@@ -368,17 +378,17 @@ export const ExplosionProcessesEditor = ({
                               ...libres,
                               {
                                 id: operacion.processId,
-                                label: operacion.processName ?? "",
+                                label: etiquetaDe(operacion.processId, operacion.processName),
                               },
                             ]}
-                            catalogSize={delProceso.length}
+                            catalogSize={elegibles.length}
                             value={operacion.processId}
-                            valueLabel={operacion.processName}
+                            valueLabel={etiquetaDe(operacion.processId, operacion.processName)}
                             onSelect={(option) =>
                               onReplaceOperation(index, operacion.processId, option.id)
                             }
                             readOnly={readOnly}
-                            placeholderVacio="Sin operaciones en este proceso"
+                            placeholderVacio="Sin operaciones en el catálogo"
                             placeholder="Operación"
                           />
 
@@ -404,9 +414,9 @@ export const ExplosionProcessesEditor = ({
                         <div className="flex flex-wrap items-center gap-2 pt-1">
                           <OperationCombobox
                             options={libres}
-                            catalogSize={delProceso.length}
+                            catalogSize={elegibles.length}
                             onSelect={(option) => onAddOperation(index, option.id)}
-                            placeholderVacio="Sin operaciones en este proceso"
+                            placeholderVacio="Sin operaciones en el catálogo"
                             placeholder="Añadir operación"
                           />
                           {/* Crear la operación sin abandonar la receta, como
@@ -436,8 +446,8 @@ export const ExplosionProcessesEditor = ({
         </div>
       )}
 
-      {/* Se monta al abrir para partir siempre del formulario en blanco. No
-          lleva selector de proceso: la operación nace en el de esa fila. */}
+      {/* Se monta al abrir para partir siempre del formulario en blanco. La
+          operación nace con el bloque que se elija y se pone en esa fila. */}
       {creandoEn !== null && (
         <ProcessCatalogFormDialog
           open
@@ -450,7 +460,7 @@ export const ExplosionProcessesEditor = ({
           entityLabel="Operación"
           isFeminine
           namePlaceholder="ej: Tendido"
-          codePlaceholder="ej: TEN"
+          parentOptions={parentOptionsFrom(operationCatalog)}
         />
       )}
     </div>

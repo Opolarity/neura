@@ -20,6 +20,7 @@ import {
   processesListApi,
 } from "../services/processes.service";
 import { SaveProcessCatalogData } from "../types/processes.types";
+import { OperationCatalogEntry, toOperationCatalogEntry } from "../utils/operationCatalog";
 import { MaterialOption } from "../types/services.types";
 import {
   createExplosionApi,
@@ -129,16 +130,10 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
   /** El catálogo de etapas (`process_group`) para el selector. */
   const [processGroups, setProcessGroups] = useState<ProcessGroupOption[]>([]);
   /**
-   * El catálogo de operaciones, con la etapa a la que pertenece cada una: el
-   * editor reparte por etapa en cliente en vez de pedirlas una por una.
+   * El catálogo de operaciones, con su bloque (operación padre). Ya no se
+   * reparte por etapa: cualquier operación puede ir en cualquier proceso.
    */
-  const [operationCatalog, setOperationCatalog] = useState<
-    Array<{
-      processId: number;
-      processName: string;
-      processGroupId: number | null;
-    }>
-  >([]);
+  const [operationCatalog, setOperationCatalog] = useState<OperationCatalogEntry[]>([]);
   const [savedTotal, setSavedTotal] = useState(0);
 
   /**
@@ -199,19 +194,11 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
       );
   }, []);
 
-  // Las operaciones activas, con su etapa. Misma idea que las etapas: una
-  // consulta al abrir, y el reparto por etapa se hace en memoria.
+  // Las operaciones activas, con su bloque. Misma idea que las etapas: una
+  // consulta al abrir; el editor las agrupa por bloque en memoria.
   useEffect(() => {
-    processesListApi({ is_active: true, size: 200 })
-      .then((response) =>
-        setOperationCatalog(
-          response.data.map((operacion) => ({
-            processId: operacion.id,
-            processName: operacion.name,
-            processGroupId: operacion.processGroupId,
-          }))
-        )
-      )
+    processesListApi({ is_active: true, size: 500 })
+      .then((response) => setOperationCatalog(response.data.map(toOperationCatalogEntry)))
       .catch(() =>
         toast({ title: "Error al cargar las operaciones", variant: "destructive" })
       );
@@ -275,12 +262,9 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
 
     try {
       setCreatingOperation(true);
-      const createdId = await createProcessApi({
-        ...values,
-        // La operación nace colgada del proceso de esta fila: por eso el modal
-        // no pregunta a cuál va.
-        process_group_id: paso.processGroupId,
-      });
+      // La operación nace con el bloque que se eligió en el modal (o suelta);
+      // ya no cuelga del proceso de la fila, solo se pone en ese paso.
+      const createdId = await createProcessApi(values);
 
       if (createdId === null) {
         toast({
@@ -290,13 +274,20 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
         return false;
       }
 
-      // Al catálogo, para que se ofrezca en los demás pasos de ese proceso...
+      // Al catálogo, para que se ofrezca en los demás pasos...
+      const parentId = values.parent_process_id ?? null;
+      // El bloque elegido pasa a agrupar operaciones: deja de ofrecerse como paso.
       setOperationCatalog((prev) => [
-        ...prev,
+        ...prev.map((o) => (o.processId === parentId ? { ...o, hasChildren: true } : o)),
         {
           processId: createdId,
           processName: values.name,
-          processGroupId: paso.processGroupId,
+          parentProcessId: parentId,
+          parentProcessName:
+            parentId === null
+              ? null
+              : prev.find((o) => o.processId === parentId)?.processName ?? null,
+          hasChildren: false,
         },
       ]);
 
@@ -332,7 +323,7 @@ export const useExplosionDetail = ({ idParam, productParam }: UseExplosionDetail
   };
 
   /**
-   * Cambia una operación por otra del mismo proceso, conservando su sitio.
+   * Cambia una operación por otra, conservando su sitio.
    *
    * La línea es un selector, no una etiqueta: elegir mal y tener que quitar y
    * volver a añadir era un paso de más.

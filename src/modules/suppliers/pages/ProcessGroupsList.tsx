@@ -56,7 +56,7 @@ const ProcessGroupsList = () => {
             onSearchChange={handleSearchChange}
             onOpen={() => setIsOpenFilterModal(true)}
             hasActiveFilters={hasActiveFilters}
-            placeholder="Buscar proceso por nombre o código..."
+            placeholder="Buscar proceso por nombre..."
           />
         </CardHeader>
 
@@ -65,6 +65,8 @@ const ProcessGroupsList = () => {
             items={items}
             loading={loading}
             entityLabel="proceso"
+            showEssentialBadge
+            showCode={false}
             onEdit={openEdit}
             onDelete={setDeletingItem}
           />
@@ -97,7 +99,6 @@ const ProcessGroupsList = () => {
           onSave={handleSave}
           entityLabel="Proceso"
           namePlaceholder="ej: Corte"
-          codePlaceholder="ej: COR"
         />
       )}
 
