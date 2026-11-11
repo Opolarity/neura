@@ -27,20 +27,3 @@ export interface LinkedService {
   /** Falso si el servicio ya ingresó stock. */
   canUnlink: boolean;
 }
-
-/** Línea de una cotización, tal como se ofrece en el diálogo de vínculo. */
-export interface QuotationServiceOption {
-  id: number;
-  code: string | null;
-  description: string;
-  /**
-   * Una línea con material es una compra de insumo, no un servicio: no entra
-   * en una orden de producción — la orden consume materiales por la explosión.
-   * Lo impide `trg_production_order_info_no_material`.
-   */
-  materialId: number | null;
-  /** Orden a la que ya pertenece, si pertenece a alguna. */
-  productionOrderId: number | null;
-  situationName: string | null;
-  price: number | null;
-}

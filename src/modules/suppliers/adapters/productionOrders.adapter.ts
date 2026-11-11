@@ -85,7 +85,13 @@ export const toProductionOrderDetail = (row: any): ProductionOrderDetail => ({
   createdByName: toTextOrNull(row.created_by_name),
   updatedAt: toTextOrNull(row.updated_at),
   promisedDate: toTextOrNull(row.promised_date),
+  // Fecha de emisión (pase de multicliente, T-980). Las anteriores a la
+  // columna llegan con la de creación (COALESCE del backend) o sin ella.
+  issueDate: toTextOrNull(row.issue_date),
   finishDate: toTextOrNull(row.finish_date),
+  // Sin la clave (backend anterior): null, y la pantalla lo deduce del
+  // requerimiento de materiales.
+  hasMaterials: row.has_materials === undefined || row.has_materials === null ? null : row.has_materials === true,
   items: (row.items ?? []).map(toProductionOrderItem),
   services: (row.services ?? []).map(toLinkedService),
 });

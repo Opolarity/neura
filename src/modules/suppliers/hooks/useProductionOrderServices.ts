@@ -14,8 +14,8 @@ import {
  * no de uno nuevo: es exactamente la misma pregunta hecha desde otro sitio de
  * la pantalla.
  *
- * A diferencia de `useProductionOrderProcesses`, este no carga los catálogos de
- * procesos y grupos: aquí no se edita nada, solo se lee y se imprime.
+ * No carga los catálogos de procesos y grupos: aquí no se edita nada, solo se
+ * lee y se imprime.
  */
 export const useProductionOrderServices = (
   productionOrderId: number | null,

@@ -1,31 +1,16 @@
-import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { FileText, Loader2 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useEffect, useMemo, useState } from "react";
 import { toastError } from "@/shared/utils/toastError";
 import { getCompanyDocumentHeader } from "@/shared/services/companyHeader";
-import { allQuotationServicesApi } from "@/modules/quotations/services/Quotations.service";
+import {
+  allQuotationServicesApi,
+  fetchSituationsByModuleId,
+} from "@/modules/quotations/services/Quotations.service";
 import { openServiceOrderPdf } from "@/modules/quotations/utils/serviceOrderPdf";
-import { useProductionOrderServices } from "../../hooks/useProductionOrderServices";
-import { ServiceProcesses } from "../../types/productionOrderProcesses.types";
-
-interface ProductionOrderServicesProps {
-  productionOrderId: number;
-  /** OP-0028. Va en el papel como la orden de la que sale el encargo. */
-  productionOrderCode?: string | null;
-  /** Sube al guardar la ruta o vincular servicios: la lista se relee. */
-  reloadKey?: number;
-}
+import { useProductionOrderServices } from "./useProductionOrderServices";
+import { ServiceProcesses } from "../types/productionOrderProcesses.types";
 
 /** Una cotización de la orden: el taller, lo que se le encarga y su papel. */
-interface EncargoRow {
+export interface EncargoRow {
   /** Null mientras el backend no la devuelva: entonces la fila es el taller. */
   quotationId: number | null;
   quotationCode: string | null;
@@ -48,7 +33,7 @@ interface EncargoRow {
  * Con qué se identifica una fila: su cotización, o su taller cuando el backend
  * todavía no devuelve la cotización.
  */
-const claveDe = (encargo: {
+export const claveDe = (encargo: {
   quotationId: number | null;
   supplierId: number | null;
   services: ServiceProcesses[];
@@ -57,41 +42,56 @@ const claveDe = (encargo: {
     ? `q${encargo.quotationId}`
     : `s${encargo.supplierId ?? encargo.services[0]?.supplierServiceId}`;
 
-const money = (value: number) =>
-  new Intl.NumberFormat("es-PE", {
-    style: "currency",
-    currency: "PEN",
-  }).format(value);
+/** Si el encargo cubre el proceso (Corte, Costura...) de la ruta. */
+export const cubreProceso = (encargo: EncargoRow, processGroupId: number): boolean =>
+  encargo.services.some((service) => service.steps.some((step) => step.processGroupId === processGroupId));
 
 /**
- * Los encargos de taller de la orden, con su papel.
+ * Los encargos de taller de una orden, con su papel (2026-11-11: sacado de
+ * ProductionOrderServices para pintarlos también en cada fila de la Ruta).
  *
  * Es el espejo de «Compras de esta orden» en la explosión, y se agrupa igual:
- * **una fila es una cotización**, que en este modelo es un proveedor —
+ * **un encargo es una cotización**, que en este modelo es un proveedor —
  * `supplier_service_quotations` tiene un solo `supplier_id`—.
  *
- * No una fila por servicio. Lo que se le encarga a un taller es el conjunto —
+ * No uno por servicio. Lo que se le encarga a un taller es el conjunto —
  * cortar, coser, estampar—, así que la Orden de Servicio sale **una por
  * cotización con todas sus líneas**: un papel por servicio obligaría a mandarle
  * tres documentos para un mismo encargo y ninguno diría cuánto suma.
  *
- * Las líneas del papel NO se toman de esta tabla: se piden completas al
- * imprimir, como hace el botón de Cotizaciones. Aquí solo están los servicios
- * que entraron a ESTA orden, y una orden de servicio que imprimiera un
- * subconjunto se contradiría con la cotización que el proveedor tiene.
+ * Las líneas del papel NO se toman de aquí: se piden completas al imprimir,
+ * como hace el botón de Cotizaciones. Aquí solo están los servicios que
+ * entraron a ESTA orden, y una orden de servicio que imprimiera un subconjunto
+ * se contradiría con la cotización que el proveedor tiene.
  */
-export const ProductionOrderServices = ({
-  productionOrderId,
-  productionOrderCode = null,
-  reloadKey = 0,
-}: ProductionOrderServicesProps) => {
-  const { services, items, loading } = useProductionOrderServices(
-    productionOrderId,
-    reloadKey,
-  );
+export const useServiceOrders = (
+  productionOrderId: number | null,
+  productionOrderCode: string | null,
+  reloadKey: number,
+) => {
+  const { services, items, loading } = useProductionOrderServices(productionOrderId, reloadKey);
 
   /** Qué cotización se está imprimiendo: el spinner es de su fila. */
   const [imprimiendo, setImprimiendo] = useState<string | null>(null);
+
+  /**
+   * La situación «En cotización»: mientras un servicio está así su precio se
+   * cambia desde «Precios». Se lee una vez, del módulo de los servicios.
+   */
+  const [enCotizacionId, setEnCotizacionId] = useState<number | null>(null);
+  const moduloServicios = services[0]?.moduleId ?? null;
+  useEffect(() => {
+    if (moduloServicios === null) return;
+    let vigente = true;
+    fetchSituationsByModuleId(moduloServicios)
+      .then((lista) => {
+        if (vigente) setEnCotizacionId(lista.find((s) => s.code === "INQUO-HDN")?.id ?? null);
+      })
+      .catch(() => undefined);
+    return () => {
+      vigente = false;
+    };
+  }, [moduloServicios]);
 
   const encargos = useMemo<EncargoRow[]>(() => {
     const porCotizacion = new Map<string, EncargoRow>();
@@ -132,21 +132,22 @@ export const ProductionOrderServices = ({
       }
     }
 
-    // Los procesos, al final y sobre el grupo ya armado: son los de todos sus
-    // servicios juntos, sin repetir.
+    // Los procesos (Corte, Costura), al final y sobre el grupo ya armado: son
+    // los de todos sus servicios juntos, sin repetir. Es el proceso y no la
+    // operación, que es opcional y casi siempre va vacía.
     return [...porCotizacion.values()].map((encargo) => ({
       ...encargo,
       processes: [
         ...new Set(
           encargo.services
-            .flatMap((service) => service.steps.map((step) => step.processName))
+            .flatMap((service) => service.steps.map((step) => step.processGroupName ?? step.processName))
             .filter((name): name is string => !!name),
         ),
       ].join(", "),
     }));
   }, [services]);
 
-  const handlePrint = async (encargo: EncargoRow) => {
+  const print = async (encargo: EncargoRow) => {
     try {
       setImprimiendo(claveDe(encargo));
 
@@ -175,13 +176,9 @@ export const ProductionOrderServices = ({
         service.steps.some((step) => step.productionOrderItemIds.length === 0),
       );
       const ids = new Set(
-        encargo.services.flatMap((service) =>
-          service.steps.flatMap((step) => step.productionOrderItemIds),
-        ),
+        encargo.services.flatMap((service) => service.steps.flatMap((step) => step.productionOrderItemIds)),
       );
-      const prendas = cubreTodo
-        ? items
-        : items.filter((item) => ids.has(item.id));
+      const prendas = cubreTodo ? items : items.filter((item) => ids.has(item.id));
 
       openServiceOrderPdf({
         quotationCode: encargo.quotationCode,
@@ -195,8 +192,7 @@ export const ProductionOrderServices = ({
         createdAt: encargo.createdAt ?? new Date().toISOString(),
         promisedDate: null,
         supplierName: encargo.supplierName,
-        supplierDocument:
-          encargo.services[0]?.supplierDocumentNumber ?? null,
+        supplierDocument: encargo.services[0]?.supplierDocumentNumber ?? null,
         supplierPhone: encargo.services[0]?.supplierPhone ?? null,
         company,
         productionOrderNames: productionOrderCode ? [productionOrderCode] : [],
@@ -243,76 +239,5 @@ export const ProductionOrderServices = ({
     }
   };
 
-  // Sin encargos no se pinta nada: la orden puede tener la ruta armada y aún
-  // sin cotizar, y un bloque vacío solo ocuparía sitio.
-  if (loading || encargos.length === 0) return null;
-
-  return (
-    <div className="space-y-2">
-      <div>
-        <h3 className="text-sm font-semibold">Servicios de esta orden</h3>
-        <p className="text-muted-foreground text-xs">
-          Uno por taller. Cada uno se imprime como orden de servicio, con todas
-          sus líneas.
-        </p>
-      </div>
-
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cotización</TableHead>
-              <TableHead>Proveedor</TableHead>
-              <TableHead>Procesos</TableHead>
-              <TableHead className="text-right">Servicios</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-              <TableHead className="w-[1%]" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {encargos.map((encargo) => (
-              <TableRow key={claveDe(encargo)}>
-                <TableCell className="font-medium">
-                  {/* Sin código no se repite el proveedor, que ya está en su
-                      columna: la fila se identifica por él igualmente. */}
-                  {encargo.quotationCode || "—"}
-                  {encargo.quotationDescription && (
-                    <div className="text-muted-foreground text-xs font-normal">
-                      {encargo.quotationDescription}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>{encargo.supplierName}</TableCell>
-                <TableCell>{encargo.processes || "—"}</TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {encargo.services.length}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {money(encargo.total)}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2"
-                    disabled={imprimiendo !== null}
-                    onClick={() => handlePrint(encargo)}
-                    title="Imprimir la orden de servicio de este taller"
-                  >
-                    {imprimiendo === claveDe(encargo) ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <FileText className="h-4 w-4" />
-                    )}
-                    Orden de servicio
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  );
+  return { encargos, loading, enCotizacionId, imprimiendo, print };
 };

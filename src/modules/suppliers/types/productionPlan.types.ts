@@ -265,6 +265,10 @@ export interface ProductionPlanRouteService {
   itemNames: string[];
   /** Las mismas prendas con producto, variación y sku por separado. */
   itemDetails: ProductionItemDisplay[];
+  /** Lo último declarado de cada talla (buenas y falladas). Vacío si aún no. */
+  sizes: { itemId: number; quantity: number; badQuantity: number }[];
+  /** Lo que entró a este paso de cada talla, por id de prenda. */
+  itemIncoming: Record<number, number>;
 }
 
 /** El avance agregado de un proceso, sobre las prendas que cubre. */
