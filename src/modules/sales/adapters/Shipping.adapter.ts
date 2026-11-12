@@ -37,6 +37,7 @@ export const shippingDetailsAdapter = (
     id: shipping?.id ?? 0,
     name: shipping?.name ?? "",
     code: shipping?.code ?? "",
+    channelId: shipping?.channel_id ?? null,
     costs: Array.isArray(shipping?.shipping_costs)
       ? shipping!.shipping_costs.map((cost) => ({
           id: cost.id,

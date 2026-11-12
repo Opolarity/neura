@@ -17,30 +17,63 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   createShippingMethodApi,
+  getChannels,
   getShippingById,
   updateShippingMethodApi,
 } from "../services/Shipping.service";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Trash } from "lucide-react";
-import { ShippingCost } from "../types/Shipping.types";
+import {
+  LocationLevel,
+  LocationOption,
+  ShippingCost,
+  ShippingZone,
+} from "../types/Shipping.types";
 import { shippingDetailsAdapter } from "../adapters/Shipping.adapter";
 import { useShippingLocations } from "../hooks/useShippingLocations";
 import { PageLoader } from "@/shared/components/page-loader";
+import { LocationMultiSelect } from "../components/shipping/LocationMultiSelect";
+import {
+  buildLocationCatalog,
+  emptyZone,
+  expandZonesToCosts,
+  findDuplicateLocations,
+  groupCostsIntoZones,
+  pruneZone,
+} from "../utils/shippingZones";
 
 import { useToast } from "@/hooks/use-toast";
 import { toastError } from "@/shared/utils/toastError";
 
-let tempId = 0;
+type ZoneIdsField = "country_ids" | "state_ids" | "city_ids" | "neighborhood_ids";
+
+const COLUMNS: {
+  field: ZoneIdsField;
+  level: LocationLevel;
+  parentField: ZoneIdsField | null;
+  placeholder: string;
+  ariaLabel: string;
+}[] = [
+  { field: "country_ids", level: "country", parentField: null, placeholder: "Países", ariaLabel: "Elegir países" },
+  { field: "state_ids", level: "state", parentField: "country_ids", placeholder: "Estados", ariaLabel: "Elegir estados" },
+  { field: "city_ids", level: "city", parentField: "state_ids", placeholder: "Ciudades", ariaLabel: "Elegir ciudades" },
+  { field: "neighborhood_ids", level: "neighborhood", parentField: "city_ids", placeholder: "Distritos", ariaLabel: "Elegir distritos" },
+];
 
 const CreateShipping = () => {
   const { toast } = useToast();
-  const [shippingId, setShippingId] = useState<number | null>(null);
   const [shippingName, setShippingName] = useState<string>("");
   const [shippingCode, setShippingCode] = useState<string>("");
-  const [shippingCosts, setShippingCosts] = useState<ShippingCost[]>([]);
+  const [onlyOneChannel, setOnlyOneChannel] = useState<boolean>(false);
+  const [channelId, setChannelId] = useState<number | null>(null);
+  const [zones, setZones] = useState<ShippingZone[]>([]);
+  const [savedCosts, setSavedCosts] = useState<ShippingCost[] | null>(null);
+  const [showErrors, setShowErrors] = useState<boolean>(false);
   const [loadingCreate, setLoadingCreate] = useState<boolean>(false);
   const [shippingLoaded, setShippingLoaded] = useState<boolean>(false);
   const { id } = useParams();
@@ -55,6 +88,53 @@ const CreateShipping = () => {
 
   const navigate = useNavigate();
 
+  const { data: channels = [] } = useQuery({
+    queryKey: ["shipping-channels"],
+    queryFn: getChannels,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const catalog = useMemo(
+    () =>
+      buildLocationCatalog(countries, states, cities, neighborhoods, savedCosts ?? []),
+    [countries, states, cities, neighborhoods, savedCosts],
+  );
+
+  // Opciones de cada columna agrupadas por su padre (país → estados, etc.).
+  const optionsByParent = useMemo(() => {
+    const group = (level: LocationLevel) => {
+      const map = new Map<number | null, LocationOption[]>();
+      for (const option of catalog[level].values()) {
+        const list = map.get(option.parentId) ?? [];
+        list.push(option);
+        map.set(option.parentId, list);
+      }
+      return map;
+    };
+    return {
+      country: group("country"),
+      state: group("state"),
+      city: group("city"),
+      neighborhood: group("neighborhood"),
+    };
+  }, [catalog]);
+
+  // Al editar, las filas guardadas se juntan cuando ya están el método y el catálogo.
+  useEffect(() => {
+    if (savedCosts && !loadingLocations) {
+      setZones(groupCostsIntoZones(savedCosts, catalog));
+    }
+    // Solo al terminar de cargar: después las filas las maneja el usuario.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedCosts, loadingLocations]);
+
+  const optionsFor = (zone: ShippingZone, column: (typeof COLUMNS)[number]) => {
+    if (!column.parentField) return [...catalog.country.values()];
+    return zone[column.parentField].flatMap(
+      (parentId) => optionsByParent[column.level].get(parentId) ?? [],
+    );
+  };
+
   const handleShippingName = (e: React.ChangeEvent<HTMLInputElement>) => {
     setShippingName(e.target.value);
   };
@@ -63,43 +143,33 @@ const CreateShipping = () => {
     setShippingCode(e.target.value);
   };
 
-  const addCost = () => {
-    tempId += 1;
-    setShippingCosts([
-      ...shippingCosts,
-      {
-        id: tempId,
-        name: "",
-        cost: "",
-        country_id: null,
-        state_id: null,
-        city_id: null,
-        neighborhood_id: null,
-      },
-    ]);
+  const addZone = () => {
+    // Con un solo país (Perú) se deja elegido para no tener que marcarlo cada vez.
+    const defaultCountries = countries.length === 1 ? [countries[0].id] : [];
+    setZones((prev) => [...prev, emptyZone(defaultCountries)]);
   };
 
-  const deleteCost = (id: number) => {
-    setShippingCosts((prev) => prev.filter((item) => item.id !== id));
+  const deleteZone = (key: string) => {
+    setZones((prev) => prev.filter((zone) => zone.key !== key));
   };
 
-  const handleName = (e: React.ChangeEvent<HTMLInputElement>, id: number) => {
-    setShippingCosts((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, name: e.target.value } : item,
+  const updateZone = (key: string, patch: Partial<ShippingZone>) => {
+    setZones((prev) =>
+      prev.map((zone) =>
+        zone.key === key ? pruneZone({ ...zone, ...patch }, catalog) : zone,
       ),
     );
   };
 
-  const handleCost = (e: React.ChangeEvent<HTMLInputElement>, id: number) => {
-    setShippingCosts((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, cost: e.target.value === "" ? "" : Number(e.target.value) } : item,
-      ),
-    );
-  };
+  const isZoneInvalid = (zone: ShippingZone) => ({
+    name: !zone.name.trim(),
+    cost: zone.cost === "" || Number(zone.cost) < 0,
+    country: zone.country_ids.length === 0,
+  });
 
   const validateForm = (): boolean => {
+    setShowErrors(true);
+
     if (!shippingName.trim()) {
       toast({
         title: "Error",
@@ -109,7 +179,16 @@ const CreateShipping = () => {
       return false;
     }
 
-    if (shippingCosts.length === 0) {
+    if (onlyOneChannel && channelId === null) {
+      toast({
+        title: "Error",
+        description: "Elige el canal de venta o desmarca \"Solo para un canal\"",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (zones.length === 0) {
       toast({
         title: "Error",
         description: "Debe agregar al menos una configuración de costo",
@@ -118,82 +197,44 @@ const CreateShipping = () => {
       return false;
     }
 
-    const hasInvalidCost = shippingCosts.some(
-      (c) => c.cost === "" || Number(c.cost) < 0 || !c.name.trim()
-    );
+    const incomplete = zones
+      .map((zone, index) => ({ zone, index, invalid: isZoneInvalid(zone) }))
+      .find(({ invalid }) => invalid.name || invalid.cost || invalid.country);
 
-    if (hasInvalidCost) {
+    if (incomplete) {
+      const { zone, index, invalid } = incomplete;
+      const missing = [
+        invalid.name && "nombre",
+        invalid.cost && "costo válido (no negativo)",
+        invalid.country && "país",
+      ].filter(Boolean);
       toast({
         title: "Error",
-        description: "Todas las configuraciones deben tener un nombre y un costo válido (no negativo)",
+        description: `A la fila ${zone.name.trim() || index + 1} le falta: ${missing.join(", ")}`,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    const duplicates = findDuplicateLocations(zones, catalog);
+    if (duplicates.length > 0) {
+      const { label, zones: zoneNames } = duplicates[0];
+      toast({
+        title: "Error",
+        description: `${label} está en más de una fila: ${zoneNames.join(" y ")}. Déjala solo en una.`,
         variant: "destructive",
       });
       return false;
     }
 
     return true;
-  }
-
-  const handleCountry = (value: string, cost: ShippingCost) => {
-    setShippingCosts((prev) =>
-      prev.map((item) =>
-        item.id === cost.id
-          ? {
-            ...item,
-            country_id: value === "none" ? null : Number(value),
-            state_id: null,
-            city_id: null,
-            neighborhood_id: null,
-          }
-          : item,
-      ),
-    );
-  };
-
-  const handleState = (value: string, cost: ShippingCost) => {
-    setShippingCosts((prev) =>
-      prev.map((item) =>
-        item.id === cost.id
-          ? {
-            ...item,
-            state_id: value === "none" ? null : Number(value),
-            city_id: null,
-            neighborhood_id: null,
-          }
-          : item,
-      ),
-    );
-  };
-
-  const handleCity = (value: string, cost: ShippingCost) => {
-    setShippingCosts((prev) =>
-      prev.map((item) =>
-        item.id === cost.id
-          ? {
-            ...item,
-            city_id: value === "none" ? null : Number(value),
-            neighborhood_id: null,
-          }
-          : item,
-      ),
-    );
-  };
-
-  const handleDistrict = (value: string, cost: ShippingCost) => {
-    setShippingCosts((prev) =>
-      prev.map((item) =>
-        item.id === cost.id
-          ? {
-            ...item,
-            neighborhood_id: value === "none" ? null : Number(value),
-          }
-          : item,
-      ),
-    );
   };
 
   const handleCreateShipping = async () => {
     if (!validateForm()) return;
+
+    const costs = expandZonesToCosts(zones, catalog);
+    const channel_id = onlyOneChannel ? channelId : null;
 
     setLoadingCreate(true);
     try {
@@ -202,14 +243,8 @@ const CreateShipping = () => {
           id: Number(id),
           name: shippingName,
           code: shippingCode,
-          costs: shippingCosts.map((cost) => ({
-            name: cost.name,
-            cost: Number(cost.cost),
-            country_id: cost.country_id,
-            state_id: cost.state_id,
-            city_id: cost.city_id,
-            neighborhood_id: cost.neighborhood_id,
-          })),
+          channel_id,
+          costs,
         });
         toast({
           title: "Éxito",
@@ -220,14 +255,8 @@ const CreateShipping = () => {
         await createShippingMethodApi({
           name: shippingName,
           code: shippingCode,
-          cost: shippingCosts.map((cost) => ({
-            name: cost.name,
-            cost: Number(cost.cost),
-            country_id: cost.country_id,
-            state_id: cost.state_id,
-            city_id: cost.city_id,
-            neighborhood_id: cost.neighborhood_id,
-          })),
+          channel_id,
+          cost: costs,
         });
         toast({
           title: "Éxito",
@@ -237,7 +266,7 @@ const CreateShipping = () => {
       }
 
       navigate("/shipping");
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
       toastError(error, "Ocurrió un error al guardar el método de envío");
     } finally {
@@ -249,10 +278,11 @@ const CreateShipping = () => {
     try {
       const data = await getShippingById(id);
       const dataAdapter = shippingDetailsAdapter(data);
-      setShippingId(dataAdapter.id);
       setShippingName(dataAdapter.name);
       setShippingCode(dataAdapter.code);
-      setShippingCosts(dataAdapter.costs);
+      setOnlyOneChannel(dataAdapter.channelId !== null);
+      setChannelId(dataAdapter.channelId);
+      setSavedCosts(dataAdapter.costs);
     } catch (error) {
       console.log(error);
     } finally {
@@ -294,17 +324,20 @@ const CreateShipping = () => {
       <Card className="flex flex-col gap-4 p-6">
         <div className="flex flex-row gap-2">
           <div className="flex-1 flex flex-col gap-2">
-            <Label>Método de Envío</Label>
+            <Label htmlFor="shipping-name" required>Método de Envío</Label>
             <Input
+              id="shipping-name"
               value={shippingName}
               onChange={handleShippingName}
               placeholder="Método de Envío..."
+              aria-required
             />
           </div>
 
           <div className="flex-1 flex flex-col gap-2">
-            <Label>Código</Label>
+            <Label htmlFor="shipping-code">Código</Label>
             <Input
+              id="shipping-code"
               value={shippingCode}
               onChange={handleShippingCode}
               placeholder="Código..."
@@ -312,8 +345,46 @@ const CreateShipping = () => {
           </div>
         </div>
 
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="only-one-channel"
+              checked={onlyOneChannel}
+              onCheckedChange={(checked) => {
+                setOnlyOneChannel(checked === true);
+                if (checked !== true) setChannelId(null);
+              }}
+            />
+            <Label htmlFor="only-one-channel">Solo para un canal</Label>
+          </div>
+          <Select
+            value={channelId !== null ? String(channelId) : undefined}
+            onValueChange={(value) => setChannelId(Number(value))}
+            disabled={!onlyOneChannel}
+          >
+            <SelectTrigger
+              className="sm:max-w-sm"
+              aria-label="Canal de venta"
+              aria-required={onlyOneChannel}
+            >
+              <SelectValue
+                placeholder={
+                  onlyOneChannel ? "Selecciona un canal" : "Todos los canales"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {channels.map((channel) => (
+                <SelectItem key={channel.id} value={String(channel.id)}>
+                  {channel.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="flex flex-row gap-2 items-end">
-          <Button onClick={addCost} type="button">
+          <Button onClick={addZone} type="button">
             Agregar Costo
           </Button>
         </div>
@@ -321,17 +392,17 @@ const CreateShipping = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>País</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Ciudad</TableHead>
-              <TableHead>Distrito</TableHead>
-              <TableHead>Costo</TableHead>
+              <TableHead className="min-w-[160px]">Nombre</TableHead>
+              <TableHead className="min-w-[140px]">País</TableHead>
+              <TableHead className="min-w-[160px]">Estado</TableHead>
+              <TableHead className="min-w-[160px]">Ciudad</TableHead>
+              <TableHead className="min-w-[200px]">Distrito</TableHead>
+              <TableHead className="w-[120px]">Costo</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {shippingCosts.length === 0 ? (
+            {zones.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
@@ -341,155 +412,72 @@ const CreateShipping = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              shippingCosts.map((cost) => {
-                const costStates = states.filter(
-                  (state) => state.country_id === cost.country_id,
-                );
-                const costCities = cities.filter(
-                  (city) => city.state_id === cost.state_id,
-                );
-                const costNeighborhoods = neighborhoods.filter(
-                  (neighborhood) => neighborhood.city_id === cost.city_id,
-                );
+              zones.map((zone) => {
+                const invalid = showErrors
+                  ? isZoneInvalid(zone)
+                  : { name: false, cost: false, country: false };
 
                 return (
-                <TableRow key={cost.id}>
-                  <TableCell>
-                    <Input
-                      value={cost.name}
-                      onChange={(e) => handleName(e, cost.id)}
-                      type="text"
-                      placeholder="Nombre"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={
-                        cost.country_id !== null
-                          ? cost.country_id.toString()
-                          : "none"
-                      }
-                      onValueChange={(value) => handleCountry(value, cost)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione un país" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Seleccione un país</SelectItem>
-                        {countries.map((country) => (
-                          <SelectItem
-                            key={country.id}
-                            value={country.id.toString()}
-                          >
-                            {country.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={
-                        cost.state_id !== null
-                          ? cost.state_id.toString()
-                          : "none"
-                      }
-                      onValueChange={(value) => handleState(value, cost)}
-                      disabled={cost.country_id === null}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione un estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">
-                          Seleccione un estado
-                        </SelectItem>
-                        {costStates.map((state) => (
-                          <SelectItem
-                            key={state.id}
-                            value={state.id.toString()}
-                          >
-                            {state.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={
-                        cost.city_id !== null
-                          ? cost.city_id?.toString()
-                          : "none"
-                      }
-                      onValueChange={(value) => handleCity(value, cost)}
-                      disabled={cost.state_id === null}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione una ciudad" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">
-                          Seleccione una ciudad
-                        </SelectItem>
-                        {costCities.map((city) => (
-                          <SelectItem key={city.id} value={city.id.toString()}>
-                            {city.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={
-                        cost.neighborhood_id !== null
-                          ? cost.neighborhood_id?.toString()
-                          : "none"
-                      }
-                      onValueChange={(value) => handleDistrict(value, cost)}
-                      disabled={cost.city_id === null}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Distrito" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">
-                          Seleccione un distrito
-                        </SelectItem>
-                        {costNeighborhoods.map((neighborhood) => (
-                          <SelectItem
-                            key={neighborhood.id}
-                            value={neighborhood.id.toString()}
-                          >
-                            {neighborhood.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={cost.cost}
-                      onChange={(e) => handleCost(e, cost.id)}
-                      type="number"
-                      placeholder="Costo"
-                      min={0}
-                      onKeyDown={(e) => e.key === "-" && e.preventDefault()}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => deleteCost(cost.id)}
-                        variant="destructive"
-                        size="sm"
-                      >
-                        <Trash className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                  <TableRow key={zone.key}>
+                    <TableCell className="align-top">
+                      <Input
+                        value={zone.name}
+                        onChange={(e) =>
+                          updateZone(zone.key, { name: e.target.value })
+                        }
+                        type="text"
+                        placeholder="Nombre"
+                        aria-label="Nombre"
+                        className={invalid.name ? "border-destructive" : undefined}
+                      />
+                    </TableCell>
+                    {COLUMNS.map((column) => (
+                      <TableCell key={column.field} className="align-top">
+                        <LocationMultiSelect
+                          options={optionsFor(zone, column)}
+                          value={zone[column.field]}
+                          onChange={(ids) =>
+                            updateZone(zone.key, { [column.field]: ids })
+                          }
+                          placeholder={column.placeholder}
+                          ariaLabel={column.ariaLabel}
+                          disabled={
+                            column.parentField !== null &&
+                            zone[column.parentField].length === 0
+                          }
+                          invalid={column.level === "country" && invalid.country}
+                        />
+                      </TableCell>
+                    ))}
+                    <TableCell className="align-top">
+                      <Input
+                        value={zone.cost}
+                        onChange={(e) =>
+                          updateZone(zone.key, {
+                            cost: e.target.value === "" ? "" : Number(e.target.value),
+                          })
+                        }
+                        type="number"
+                        placeholder="Costo"
+                        aria-label="Costo"
+                        min={0}
+                        onKeyDown={(e) => e.key === "-" && e.preventDefault()}
+                        className={invalid.cost ? "border-destructive" : undefined}
+                      />
+                    </TableCell>
+                    <TableCell className="align-top">
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => deleteZone(zone.key)}
+                          variant="destructive"
+                          size="sm"
+                          title="Eliminar costo"
+                        >
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 );
               })
             )}
