@@ -40,6 +40,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
     setPromotionalTextColor,
     sizesImageUrl,
     sizesRefImageUrl,
+    sizesMobileImageUrl,
     handleSizeImageUpload,
     removeSizeImage,
     description,
@@ -765,7 +766,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
               <CardTitle>Imagen de tallas</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Imagen de tallas */}
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Imagen de tallas</p>
@@ -848,6 +849,50 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                         variant="destructive"
                         className="absolute top-1 right-1 h-6 w-6 p-0"
                         onClick={() => removeSizeImage('sizes-ref')}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* Imagen de tallas para móvil (opcional) */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Imagen para móvil (opcional)</p>
+                <input
+                  id="sizesMobileImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleSizeImageUpload(file, 'sizes-mobile');
+                    e.target.value = '';
+                  }}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('sizesMobileImage')?.click()}
+                  className="w-full"
+                  disabled={loading || viewOnly}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Móvil
+                </Button>
+                {sizesMobileImageUrl && (
+                  <div className="relative">
+                    <img
+                      src={sizesMobileImageUrl}
+                      alt="Imagen de tallas para móvil"
+                      className="w-full rounded-lg border object-contain max-h-[200px]"
+                    />
+                    {!viewOnly && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="absolute top-1 right-1 h-6 w-6 p-0"
+                        onClick={() => removeSizeImage('sizes-mobile')}
                       >
                         <X className="w-3 h-3" />
                       </Button>

@@ -607,6 +607,7 @@ export const ItemProductDialog = ({
       promotionalTextColor: "",
       sizesImageUrl: null,
       sizesRefImageUrl: null,
+      sizesMobileImageUrl: null,
       exhibitionStartDate: null,
       exhibitionEndDate: null,
       description: "",

@@ -292,6 +292,7 @@ const PromotionalTextPage = () => {
   const handleSaveSizeImages = async (
     sizesImageUrl: string | null,
     sizesRefImageUrl: string | null,
+    sizesMobileImageUrl: string | null,
   ) => {
     if (selectedProducts.length === 0) {
       noSelectionToast("actualizar las imágenes de tallas");
@@ -299,7 +300,12 @@ const PromotionalTextPage = () => {
     }
     await saveOnProducts(
       () =>
-        updateSizeImagesApi(selectedProducts, sizesImageUrl, sizesRefImageUrl),
+        updateSizeImagesApi(
+          selectedProducts,
+          sizesImageUrl,
+          sizesRefImageUrl,
+          sizesMobileImageUrl,
+        ),
       (n) => `Imágenes de tallas actualizadas en ${plural(n)}.`,
       "No se pudieron actualizar las imágenes de tallas",
     );

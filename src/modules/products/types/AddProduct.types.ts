@@ -80,6 +80,7 @@ export interface ProductDetailsResponse {
     promotional_text_color: string | null;
     sizes_image_url: string | null;
     sizes_ref_image_url: string | null;
+    sizes_mobile_image_url: string | null;
     description: string;
     is_variable: boolean;
     active: boolean;
@@ -128,6 +129,7 @@ export interface CreateProductRequest {
   promotionalTextColor: string;
   sizesImageUrl: string | null;
   sizesRefImageUrl: string | null;
+  sizesMobileImageUrl: string | null;
   description: string;
   isVariable: boolean;
   isActive: boolean;
