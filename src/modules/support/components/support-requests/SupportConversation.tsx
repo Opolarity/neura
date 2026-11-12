@@ -13,6 +13,7 @@ import { formatDateLong, formatDateTime, formatTime } from "@/shared/utils/date"
 import type { SupportAttachmentFile, SupportMessage } from "../../types/Support.types";
 import { SupportAttachmentLink } from "./SupportAttachmentLink";
 import { SupportMessageText } from "./SupportMessageText";
+import { SupportRichText } from "./SupportRichText";
 
 interface SupportConversationProps {
   messages: SupportMessage[];
@@ -196,7 +197,7 @@ const MessageBubble = ({
           </span>
         )}
 
-        {message.content && (
+        {(message.content || message.descriptionHtml) && (
           <div
             className={cn(
               "w-fit min-w-0 max-w-full rounded-2xl px-3 py-2 text-sm leading-relaxed",
@@ -208,7 +209,15 @@ const MessageBubble = ({
             {/* content es texto plano con Markdown simple: se pinta con su
                 formato y nunca se inserta como HTML (a diferencia de la
                 descripción). Las palabras y URLs largas bajan de línea. */}
-            <SupportMessageText text={message.content} />
+            {message.descriptionHtml ? (
+              // Primer mensaje: la descripción de la solicitud, que sí es HTML
+              <SupportRichText
+                html={message.descriptionHtml}
+                className="[overflow-wrap:anywhere]"
+              />
+            ) : (
+              <SupportMessageText text={message.content} />
+            )}
             <div className="mt-1 flex flex-wrap items-center justify-end gap-x-2 text-[11px] text-muted-foreground tabular-nums">
               {sending && (
                 <span className="flex items-center gap-1">
@@ -265,7 +274,7 @@ const MessageBubble = ({
         )}
 
         {/* Mensaje sin texto (solo adjuntos): la hora va suelta debajo */}
-        {!message.content && (
+        {!message.content && !message.descriptionHtml && (
           <span className="px-1 text-[11px] text-muted-foreground tabular-nums">
             {formatTime(message.createdAt)}
           </span>

@@ -224,6 +224,12 @@ export interface SupportMessage {
    * Los que llegan de la API no lo traen.
    */
   delivery?: SupportMessageDelivery;
+  /**
+   * Solo en el primer mensaje del chat, que no viene de la API: es la
+   * descripción de la solicitud (HTML del editor, se pinta saneado con
+   * SupportRichText). En el resto de mensajes no existe.
+   */
+  descriptionHtml?: string | null;
 }
 
 /**
