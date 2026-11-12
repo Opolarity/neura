@@ -10,6 +10,7 @@ import {
   ShippingPayload,
   ShippingDetailsApiResponse,
   ShippingEdit,
+  ChannelOption,
 } from "../types/Shipping.types";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
@@ -143,6 +144,17 @@ export async function getDistrictsByCityIdApi(
 
   if (error) throw error;
 
+  return data ?? [];
+}
+
+// Canales de venta (webs, chatbot, bandejas del CRM).
+export async function getChannels(): Promise<ChannelOption[]> {
+  const { data, error } = await supabase
+    .from("channels")
+    .select("id, name")
+    .order("name");
+
+  if (error) throw error;
   return data ?? [];
 }
 
