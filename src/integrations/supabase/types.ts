@@ -6154,6 +6154,7 @@ export type Database = {
           short_description: string
           sizes_image_url: string | null
           sizes_ref_image_url: string | null
+          sizes_mobile_image_url: string | null
           title: string
           web: boolean
         }
@@ -6178,6 +6179,7 @@ export type Database = {
           short_description?: string
           sizes_image_url?: string | null
           sizes_ref_image_url?: string | null
+          sizes_mobile_image_url?: string | null
           title: string
           web?: boolean
         }
@@ -6201,6 +6203,7 @@ export type Database = {
           short_description?: string
           sizes_image_url?: string | null
           sizes_ref_image_url?: string | null
+          sizes_mobile_image_url?: string | null
           title?: string
           web?: boolean
         }

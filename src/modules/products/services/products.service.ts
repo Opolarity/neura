@@ -109,10 +109,12 @@ export const updateSizeImagesApi = async (
   productIds: number[],
   sizesImageUrl: string | null,
   sizesRefImageUrl: string | null,
+  sizesMobileImageUrl: string | null,
 ): Promise<MassiveUpdateResult> =>
   updateLiveProducts(productIds, {
     sizes_image_url: sizesImageUrl,
     sizes_ref_image_url: sizesRefImageUrl,
+    sizes_mobile_image_url: sizesMobileImageUrl,
   });
 export const categoriesApi = async (): Promise<Categories> => {
   const { data, error } = await supabase

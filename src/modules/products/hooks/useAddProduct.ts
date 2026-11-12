@@ -33,6 +33,7 @@ export const useAddProduct = () => {
   const [promotionalTextColor, setPromotionalTextColor] = useState('#000000');
   const [sizesImageUrl, setSizesImageUrl] = useState<string | null>(null);
   const [sizesRefImageUrl, setSizesRefImageUrl] = useState<string | null>(null);
+  const [sizesMobileImageUrl, setSizesMobileImageUrl] = useState<string | null>(null);
   // URLs de imágenes de tallas ya persistidas que se borrarán del storage al guardar
   const [sizesImagesToDelete, setSizesImagesToDelete] = useState<string[]>([]);
   // URLs subidas en esta sesión (aún no persistidas): se borran del storage al instante
@@ -176,6 +177,7 @@ export const useAddProduct = () => {
       setPromotionalTextColor(adapted.product.promotionalTextColor);
       setSizesImageUrl(adapted.product.sizesImageUrl);
       setSizesRefImageUrl(adapted.product.sizesRefImageUrl);
+      setSizesMobileImageUrl(adapted.product.sizesMobileImageUrl);
       setDescription(adapted.product.description);
       setIsVariable(adapted.product.isVariable);
       setIsActive(adapted.product.isActive);
@@ -342,11 +344,15 @@ export const useAddProduct = () => {
 
   // ---- Imagen de tallas / de referencia (una sola imagen por campo) ----
 
-  type SizeImageKind = 'sizes' | 'sizes-ref';
+  type SizeImageKind = 'sizes' | 'sizes-ref' | 'sizes-mobile';
+
+  const getSizeImageUrl = (kind: SizeImageKind) =>
+    kind === 'sizes' ? sizesImageUrl : kind === 'sizes-ref' ? sizesRefImageUrl : sizesMobileImageUrl;
 
   const setSizeImageUrl = (kind: SizeImageKind, url: string | null) => {
     if (kind === 'sizes') setSizesImageUrl(url);
-    else setSizesRefImageUrl(url);
+    else if (kind === 'sizes-ref') setSizesRefImageUrl(url);
+    else setSizesMobileImageUrl(url);
   };
 
   /**
@@ -369,7 +375,7 @@ export const useAddProduct = () => {
   const handleSizeImageUpload = async (file: File, kind: SizeImageKind) => {
     setLoading(true);
     try {
-      const previousUrl = kind === 'sizes' ? sizesImageUrl : sizesRefImageUrl;
+      const previousUrl = getSizeImageUrl(kind);
       const { url } = await AddProductService.uploadSizeImage(file, kind);
 
       if (previousUrl) await discardSizeImage(previousUrl);
@@ -391,7 +397,7 @@ export const useAddProduct = () => {
   };
 
   const removeSizeImage = async (kind: SizeImageKind) => {
-    const url = kind === 'sizes' ? sizesImageUrl : sizesRefImageUrl;
+    const url = getSizeImageUrl(kind);
     if (!url) return;
 
     await discardSizeImage(url);
@@ -764,6 +770,7 @@ export const useAddProduct = () => {
           promotionalTextColor,
           sizesImageUrl,
           sizesRefImageUrl,
+          sizesMobileImageUrl,
           description,
           isVariable,
           isActive,
@@ -790,7 +797,11 @@ export const useAddProduct = () => {
         // Save sizes image URLs directly to the products table
         await supabase
           .from('products')
-          .update({ sizes_image_url: sizesImageUrl, sizes_ref_image_url: sizesRefImageUrl })
+          .update({
+            sizes_image_url: sizesImageUrl,
+            sizes_ref_image_url: sizesRefImageUrl,
+            sizes_mobile_image_url: sizesMobileImageUrl,
+          })
           .eq('id', Number(productId));
 
         toast({
@@ -808,6 +819,7 @@ export const useAddProduct = () => {
           promotionalTextColor,
           sizesImageUrl,
           sizesRefImageUrl,
+          sizesMobileImageUrl,
           description,
           isVariable,
           isActive,
@@ -830,10 +842,14 @@ export const useAddProduct = () => {
         }
 
         // create-product no persiste estos campos → se guardan aquí
-        if (result.product?.id && (sizesImageUrl || sizesRefImageUrl)) {
+        if (result.product?.id && (sizesImageUrl || sizesRefImageUrl || sizesMobileImageUrl)) {
           await supabase
             .from('products')
-            .update({ sizes_image_url: sizesImageUrl, sizes_ref_image_url: sizesRefImageUrl })
+            .update({
+            sizes_image_url: sizesImageUrl,
+            sizes_ref_image_url: sizesRefImageUrl,
+            sizes_mobile_image_url: sizesMobileImageUrl,
+          })
             .eq('id', result.product.id);
         }
 
@@ -882,6 +898,7 @@ export const useAddProduct = () => {
     setPromotionalTextColor,
     sizesImageUrl,
     sizesRefImageUrl,
+    sizesMobileImageUrl,
     handleSizeImageUpload,
     removeSizeImage,
     description,

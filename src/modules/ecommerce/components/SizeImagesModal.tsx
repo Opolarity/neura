@@ -16,7 +16,8 @@ interface SizeImagesModalProps {
   selectedCount: number;
   onSave: (
     sizesImageUrl: string | null,
-    sizesRefImageUrl: string | null
+    sizesRefImageUrl: string | null,
+    sizesMobileImageUrl: string | null
   ) => Promise<void>;
 }
 
@@ -28,10 +29,12 @@ const SizeImagesModal = ({
 }: SizeImagesModalProps) => {
   const [sizesImage, setSizesImage] = useState<{ file: File; preview: string } | null>(null);
   const [sizesRefImage, setSizesRefImage] = useState<{ file: File; preview: string } | null>(null);
+  const [sizesMobileImage, setSizesMobileImage] = useState<{ file: File; preview: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const sizesInputRef = useRef<HTMLInputElement>(null);
   const sizesRefInputRef = useRef<HTMLInputElement>(null);
+  const sizesMobileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (
     file: File,
@@ -59,6 +62,7 @@ const SizeImagesModal = ({
     try {
       let sizesImageUrl: string | null = null;
       let sizesRefImageUrl: string | null = null;
+      let sizesMobileImageUrl: string | null = null;
 
       if (sizesImage) {
         sizesImageUrl = await uploadImage(sizesImage.file, "products-images/sizes");
@@ -66,10 +70,14 @@ const SizeImagesModal = ({
       if (sizesRefImage) {
         sizesRefImageUrl = await uploadImage(sizesRefImage.file, "products-images/sizes-ref");
       }
+      if (sizesMobileImage) {
+        sizesMobileImageUrl = await uploadImage(sizesMobileImage.file, "products-images/sizes-mobile");
+      }
 
-      await onSave(sizesImageUrl, sizesRefImageUrl);
+      await onSave(sizesImageUrl, sizesRefImageUrl, sizesMobileImageUrl);
       setSizesImage(null);
       setSizesRefImage(null);
+      setSizesMobileImage(null);
       onClose();
     } finally {
       setIsSaving(false);
@@ -154,13 +162,21 @@ const SizeImagesModal = ({
             inputRef={sizesRefInputRef}
           />
 
+          <DropZone
+            label="Imagen de tallas para móvil (opcional)"
+            value={sizesMobileImage}
+            onSelect={(file) => handleFileSelect(file, setSizesMobileImage)}
+            onClear={() => setSizesMobileImage(null)}
+            inputRef={sizesMobileInputRef}
+          />
+
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={onClose} disabled={isSaving}>
               Cancelar
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving || (!sizesImage && !sizesRefImage)}
+              disabled={isSaving || (!sizesImage && !sizesRefImage && !sizesMobileImage)}
               className="bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-60"
             >
               {isSaving

@@ -86,6 +86,7 @@ export const AddProductAdapter = {
       promotionalTextColor: string;
       sizesImageUrl: string | null;
       sizesRefImageUrl: string | null;
+      sizesMobileImageUrl: string | null;
       description: string;
       isVariable: boolean;
       isActive: boolean;
@@ -112,6 +113,7 @@ export const AddProductAdapter = {
       promotionalTextColor: data.product.promotional_text_color || '#000000',
       sizesImageUrl: data.product.sizes_image_url || null,
       sizesRefImageUrl: data.product.sizes_ref_image_url || null,
+      sizesMobileImageUrl: data.product.sizes_mobile_image_url || null,
       description: data.product.description || '',
       isVariable: data.product.is_variable,
       isActive: data.product.active,
@@ -214,6 +216,7 @@ export const AddProductAdapter = {
     promotionalTextColor: string,
     sizesImageUrl: string | null,
     sizesRefImageUrl: string | null,
+    sizesMobileImageUrl: string | null,
     description: string,
     isVariable: boolean,
     isActive: boolean,
@@ -246,6 +249,7 @@ export const AddProductAdapter = {
       promotionalTextColor,
       sizesImageUrl,
       sizesRefImageUrl,
+      sizesMobileImageUrl,
       description,
       isVariable,
       isActive,
@@ -274,6 +278,7 @@ export const AddProductAdapter = {
     promotionalTextColor: string,
     sizesImageUrl: string | null,
     sizesRefImageUrl: string | null,
+    sizesMobileImageUrl: string | null,
     description: string,
     isVariable: boolean,
     isActive: boolean,
@@ -307,6 +312,7 @@ export const AddProductAdapter = {
       promotionalTextColor,
       sizesImageUrl,
       sizesRefImageUrl,
+      sizesMobileImageUrl,
       description,
       isVariable,
       isActive,

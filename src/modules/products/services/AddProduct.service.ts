@@ -102,7 +102,7 @@ export const AddProductService = {
   /**
    * Sube una imagen única de tallas o de referencia de tallas y devuelve su path y URL pública
    */
-  async uploadSizeImage(original: File, folder: 'sizes' | 'sizes-ref'): Promise<{ path: string; url: string }> {
+  async uploadSizeImage(original: File, folder: 'sizes' | 'sizes-ref' | 'sizes-mobile'): Promise<{ path: string; url: string }> {
     const file = await optimizarImagen(original, 'foto');
     const fileExtension = file.name.split('.').pop() || 'jpg';
     const path = `products-images/${folder}/${crypto.randomUUID()}.${fileExtension}`;
