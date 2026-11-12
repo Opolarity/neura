@@ -76,9 +76,34 @@ export interface ShippingCost {
   neighborhood_id: number | null;
 }
 
+export type LocationLevel = "country" | "state" | "city" | "neighborhood";
+
+export interface LocationOption {
+  id: number;
+  label: string;
+  hint: string;
+  parentId: number | null;
+  search: string;
+}
+
+export type LocationCatalog = Record<LocationLevel, Map<number, LocationOption>>;
+
+// Una fila de la tabla: en cada columna se eligen varias ubicaciones.
+export interface ShippingZone {
+  key: string;
+  name: string;
+  cost: number | "";
+  country_ids: number[];
+  state_ids: number[];
+  city_ids: number[];
+  neighborhood_ids: number[];
+}
+
 export interface ShippingPayload {
   name: string;
   code: string;
+  // null = disponible en todos los canales de venta.
+  channel_id: number | null;
   cost: Array<{
     name: string;
     cost: number;
@@ -93,6 +118,7 @@ export interface ShippingEdit {
   id: number;
   name: string;
   code: string;
+  channel_id: number | null;
   costs: Array<{
     name: string;
     cost: number;
@@ -108,6 +134,7 @@ export interface ShippingDetailsApiResponse {
     id: number;
     name: string;
     code: string;
+    channel_id?: number | null;
     shipping_costs: Array<{
       id: number;
       name: string;
@@ -124,6 +151,7 @@ export interface ShippingDetails {
   id: number;
   name: string;
   code: string;
+  channelId: number | null;
   costs: Array<{
     id: number;
     name: string;
@@ -133,4 +161,9 @@ export interface ShippingDetails {
     neighborhood_id: number | null;
     cost: number;
   }>;
+}
+
+export interface ChannelOption {
+  id: number;
+  name: string;
 }
