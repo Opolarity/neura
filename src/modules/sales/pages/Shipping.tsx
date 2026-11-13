@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Plus, Edit, Trash } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash, Wallet } from 'lucide-react';
+import { CourierPaymentsDialog } from '../components/shipping/couriers/CourierPaymentsDialog';
+import type { CourierCode } from '../types/Couriers.types';
 import { useShipping } from '../hooks/useShipping';
 import ShippingFilterBar from '../components/shipping/ShippingFilterBar';
 import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
@@ -50,6 +52,9 @@ const Shipping = () => {
     onOrderChange,
     onDeleteShipping,
   } = useShipping();
+
+  // Olva / Shalom: diálogo de pagos de sus guías.
+  const [paymentsCourier, setPaymentsCourier] = useState<CourierCode | null>(null);
 
   const handleDeleteClick = (shipping: Shipping) => {
     setShippingToDelete(shipping);
@@ -147,7 +152,14 @@ const Shipping = () => {
                     />
                     
                   </TableCell>*/}
-                  <TableCell className="font-medium">{shipping.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {shipping.name}
+                    {shipping.branchName && (
+                      <span className="block text-xs font-normal text-muted-foreground">
+                        Recojo en {shipping.branchName}
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {shipping.minCost === shipping.maxCost
                       ? `S/ ${shipping.minCost.toFixed(2)}`
@@ -170,6 +182,19 @@ const Shipping = () => {
                   <ComponentPermission codeIn={ACTION_CODES}>
                     <TableCell>
                       <div className="flex gap-2">
+                        {shipping.courierCode && (
+                          <ComponentPermission codeIn={["shipments.edit"]}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setPaymentsCourier(shipping.courierCode)}
+                              title="Pagos de guías"
+                              aria-label={`Pagos de guías de ${shipping.name}`}
+                            >
+                              <Wallet className="w-4 h-4" />
+                            </Button>
+                          </ComponentPermission>
+                        )}
                         <ComponentPermission codeIn={["shipments.edit"]}>
                           <Link to={`/shipping/edit/${shipping.id}`}>
                             <Button
@@ -206,6 +231,10 @@ const Shipping = () => {
           />
         </CardFooter>
       </Card>
+      <CourierPaymentsDialog
+        courier={paymentsCourier}
+        onOpenChange={(open) => !open && setPaymentsCourier(null)}
+      />
       <ShippingFilterModal
         isOpen={isOpenFilterModal}
         filters={filters}

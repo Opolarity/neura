@@ -11,6 +11,7 @@ import {
   ShippingDetailsApiResponse,
   ShippingEdit,
   ChannelOption,
+  PickupBranchOption,
 } from "../types/Shipping.types";
 import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 
@@ -156,6 +157,23 @@ export async function getChannels(): Promise<ChannelOption[]> {
 
   if (error) throw error;
   return data ?? [];
+}
+
+/** Sucursales activas, para el recojo en tienda. */
+export async function getPickupBranches(): Promise<PickupBranchOption[]> {
+  const { data, error } = await supabase
+    .from("branches")
+    .select("id, name, address, address_reference")
+    .eq("is_active", true)
+    .order("name");
+
+  if (error) throw error;
+  return (data ?? []).map((b) => ({
+    id: b.id,
+    name: b.name ?? `Sucursal ${b.id}`,
+    address: b.address ?? null,
+    reference: b.address_reference ?? null,
+  }));
 }
 
 export async function createShippingMethodApi(

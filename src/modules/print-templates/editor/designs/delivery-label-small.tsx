@@ -95,6 +95,18 @@ export function deliveryLabelSmallDesign(
           emptyText: "—",
         }),
       ])}
+      {/* Cobro al entregar y flete. */}
+      {shipping("paymentNotice", {
+        ...centered,
+        fontSizePt: 9,
+        fontWeight: 700,
+        margin: sides({ top: 1 }),
+        ...hideIfEmpty("paymentNotice", "delivery_label"),
+      })}
+      {shipping("freightNotice", {
+        ...centered,
+        ...hideIfEmpty("freightNotice", "delivery_label"),
+      })}
     </Element>
   );
 }

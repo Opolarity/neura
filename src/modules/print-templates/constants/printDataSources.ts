@@ -1696,6 +1696,20 @@ export const PRINT_DATA_SOURCES: Record<PrintDataSourceId, PrintDataSource> = {
         type: "text",
         align: "left",
       },
+      // «CONTRA ENTREGA · COBRAR S/ 120.00» o «PAGADO · NO COBRAR».
+      {
+        key: "paymentNotice",
+        label: "Cobro al entregar",
+        type: "text",
+        align: "left",
+      },
+      // Quién paga el flete del courier; vacío si no hay courier.
+      {
+        key: "freightNotice",
+        label: "Flete",
+        type: "text",
+        align: "left",
+      },
     ],
     mockValues: {
       recipientName: "JUAN CARLOS PÉREZ GÓMEZ",
@@ -1705,6 +1719,8 @@ export const PRINT_DATA_SOURCES: Record<PrintDataSourceId, PrintDataSource> = {
       addressReference: "Frente al parque",
       receptionPerson: "Rosa Gómez",
       senderAddress: "Jr. Gamarra 456 La Victoria",
+      paymentNotice: "CONTRA ENTREGA · COBRAR S/ 120.00",
+      freightNotice: "FLETE: PAGADO POR LA TIENDA",
     },
   },
   // Etiqueta de código de barras (generateBarcodePdf): una por unidad pedida,

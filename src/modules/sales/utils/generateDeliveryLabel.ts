@@ -51,6 +51,8 @@ export const deliveryLabelPrintData = (
         addressReference: data.addressReference || null,
         receptionPerson: data.receptionPerson || null,
         senderAddress: data.senderAddress || fiscalAddress || null,
+        paymentNotice: data.paymentNotice || null,
+        freightNotice: data.freightNotice || null,
       },
     },
   };
