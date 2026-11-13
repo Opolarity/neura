@@ -58,6 +58,23 @@ export interface PriceRuleItem {
   sales_amount: number;
 }
 
+/**
+ * T-1158: cada vez que el motor aplicó una regla (un grupo de "lleva X paga Y", un pack,
+ * una línea con precio rebajado, un regalo, el envío). Solo para mostrar; no se guarda.
+ */
+export interface RuleApplication {
+  rule_id: number;
+  rule_name: string;
+  rule_code: string | null;
+  kind: PriceRuleItem["kind"];
+  /** Unidades con descuento (en un regalo, las regaladas; 0 en envío y subtotal). */
+  units: number;
+  /** Negativo = recargo. En envío llega en 0: el motor no conoce el costo del método. */
+  discount_amount: number;
+  /** Las unidades con descuento salieron gratis. */
+  free: boolean;
+}
+
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
@@ -115,10 +132,12 @@ export async function applyPriceRules<T extends CartItemForRules>(
   couponError: string | null;
   /** T-1158: unidades y descuento de cada regla, para guardarlos con el pedido. */
   ruleItems: PriceRuleItem[];
+  /** T-1158: cada vez que se aplicó cada regla, para listarlas en la venta. */
+  ruleApplications: RuleApplication[];
   /** true si no se pudo consultar al motor: los ítems vuelven sin cambios. */
   failed: boolean;
 }> {
-  const empty = { gifts: [], appliedRules: [], discounts: [], shippingRule: null, couponDiscountId: null, couponError: null, ruleItems: [] };
+  const empty = { gifts: [], appliedRules: [], discounts: [], shippingRule: null, couponDiscountId: null, couponError: null, ruleItems: [], ruleApplications: [] };
   try {
     if (items.length === 0) return { items, ...empty, failed: false };
 
@@ -143,6 +162,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       couponDiscountId?: number | null;
       couponError?: string | null;
       ruleItems?: unknown[];
+      ruleApplications?: unknown[];
     };
     try {
       data = await invokeFunction("process-price-rules", {
@@ -210,6 +230,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       couponDiscountId: data?.couponDiscountId ?? null,
       couponError: data?.couponError ?? null,
       ruleItems: Array.isArray(data?.ruleItems) ? (data.ruleItems as PriceRuleItem[]) : [],
+      ruleApplications: Array.isArray(data?.ruleApplications) ? (data.ruleApplications as RuleApplication[]) : [],
       failed: false,
     };
 
