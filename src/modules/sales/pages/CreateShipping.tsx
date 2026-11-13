@@ -16,15 +16,31 @@ import { useQuery } from "@tanstack/react-query";
 import {
   createShippingMethodApi,
   getChannels,
+  getPickupBranches,
   getShippingById,
   updateShippingMethodApi,
 } from "../services/Shipping.service";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Trash } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CourierOriginCombobox } from "../components/shipping/couriers/CourierOriginCombobox";
+import { ShalomConnectDialog } from "../components/shipping/couriers/ShalomConnectDialog";
+import { useCourierSettings } from "../hooks/useCourierSettings";
+import { getCourierCatalog } from "../services/Couriers.service";
+import { COURIER_NAMES } from "../types/Couriers.types";
+import {
+  type CourierMethodCode,
   LocationLevel,
   LocationOption,
   ShippingCost,
+  PICKUP_CODE,
   ShippingZone,
 } from "../types/Shipping.types";
 import { shippingDetailsAdapter } from "../adapters/Shipping.adapter";
@@ -63,6 +79,15 @@ const CreateShipping = () => {
   const { toast } = useToast();
   const [shippingName, setShippingName] = useState<string>("");
   const [shippingCode, setShippingCode] = useState<string>("");
+  // Olva / Shalom: el método es un courier (cotiza; las zonas solo habilitan).
+  const [courierCode, setCourierCode] = useState<CourierMethodCode | null>(null);
+  const [courierOriginId, setCourierOriginId] = useState<string | null>(null);
+  const [courierOriginLabel, setCourierOriginLabel] = useState<string | null>(null);
+  const [courierPackageId, setCourierPackageId] = useState<string | null>(null);
+  const [shalomUsername, setShalomUsername] = useState<string | null>(null);
+  const [shalomConnectOpen, setShalomConnectOpen] = useState(false);
+  // Recojo en tienda (código PICK): sucursal donde se recoge.
+  const [branchId, setBranchId] = useState<number | null>(null);
   const [someChannels, setSomeChannels] = useState<boolean>(false);
   const [channelIds, setChannelIds] = useState<number[]>([]);
   const [zones, setZones] = useState<ShippingZone[]>([]);
@@ -82,10 +107,27 @@ const CreateShipping = () => {
 
   const navigate = useNavigate();
 
+  const { connectShalom, isConnecting, disconnectShalom } = useCourierSettings();
+  const { data: courierCatalog } = useQuery({
+    queryKey: ["courier-catalog", courierCode],
+    queryFn: () => getCourierCatalog(courierCode!),
+    enabled: courierCode !== null,
+    staleTime: Infinity,
+  });
+
   const { data: channels = [] } = useQuery({
     queryKey: ["shipping-channels"],
     queryFn: getChannels,
     staleTime: 5 * 60 * 1000,
+  });
+
+  const isPickupMethod =
+    courierCode === null && shippingCode.trim().toUpperCase() === PICKUP_CODE;
+  const { data: pickupBranches = [] } = useQuery({
+    queryKey: ["shipping-pickup-branches"],
+    queryFn: getPickupBranches,
+    staleTime: 5 * 60 * 1000,
+    enabled: isPickupMethod,
   });
 
   const channelOptions = useMemo<LocationOption[]>(
@@ -169,7 +211,7 @@ const CreateShipping = () => {
 
   const isZoneInvalid = (zone: ShippingZone) => ({
     name: !zone.name.trim(),
-    cost: zone.cost === "" || Number(zone.cost) < 0,
+    cost: courierCode === null && (zone.cost === "" || Number(zone.cost) < 0),
     country: zone.country_ids.length === 0,
   });
 
@@ -194,7 +236,25 @@ const CreateShipping = () => {
       return false;
     }
 
-    if (zones.length === 0) {
+    if (courierCode && !courierOriginId) {
+      toast({
+        title: "Error",
+        description: "Elige la agencia de origen del courier",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (isPickupMethod && branchId === null) {
+      toast({
+        title: "Error",
+        description: "Elige la sucursal de recojo",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (zones.length === 0 && courierCode === null) {
       toast({
         title: "Error",
         description: "Debe agregar al menos una configuración de costo",
@@ -239,8 +299,20 @@ const CreateShipping = () => {
   const handleCreateShipping = async () => {
     if (!validateForm()) return;
 
-    const costs = expandZonesToCosts(zones, catalog);
+    // En un courier las zonas no tienen precio: cotiza el courier.
+    const costs = expandZonesToCosts(
+      courierCode ? zones.map((zone) => ({ ...zone, cost: 0 })) : zones,
+      catalog,
+    );
     const channel_ids = someChannels ? channelIds : [];
+    // En un courier el código es el del courier (OWN-OLVA / OWN-SHALOM).
+    const code = courierCode ?? (isPickupMethod ? PICKUP_CODE : shippingCode);
+    const branchFields = { branch_id: isPickupMethod ? branchId : null };
+    const courierFields = {
+      courier_code: courierCode,
+      courier_origin_id: courierCode ? courierOriginId : null,
+      courier_package_id: courierCode ? courierPackageId : null,
+    };
 
     setLoadingCreate(true);
     try {
@@ -248,8 +320,10 @@ const CreateShipping = () => {
         await updateShippingMethodApi({
           id: Number(id),
           name: shippingName,
-          code: shippingCode,
+          code,
           channel_ids,
+          ...courierFields,
+          ...branchFields,
           costs,
         });
         toast({
@@ -260,8 +334,10 @@ const CreateShipping = () => {
       } else {
         await createShippingMethodApi({
           name: shippingName,
-          code: shippingCode,
+          code,
           channel_ids,
+          ...courierFields,
+          ...branchFields,
           cost: costs,
         });
         toast({
@@ -289,6 +365,14 @@ const CreateShipping = () => {
       setSomeChannels(dataAdapter.channelIds.length > 0);
       setChannelIds(dataAdapter.channelIds);
       setSavedCosts(dataAdapter.costs);
+      setBranchId(dataAdapter.branchId);
+      setCourierCode(dataAdapter.courierCode);
+      setCourierOriginId(dataAdapter.courierOriginId);
+      setCourierOriginLabel(dataAdapter.courierOriginLabel);
+      setCourierPackageId(dataAdapter.courierPackageId);
+      setShalomUsername(
+        dataAdapter.shalomConnected ? (dataAdapter.shalomUsername ?? "Cuenta conectada") : null,
+      );
     } catch (error) {
       console.log(error);
     } finally {
@@ -314,7 +398,11 @@ const CreateShipping = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">
-          {id ? "Actualizar método de envío" : "Crear método de envío"}
+          {courierCode
+            ? `${id ? "Actualizar" : "Crear"} método ${COURIER_NAMES[courierCode]}`
+            : id
+              ? "Actualizar método de envío"
+              : "Crear método de envío"}
         </h1>
         <div className="flex gap-3">
           <Link to="/shipping">
@@ -328,8 +416,8 @@ const CreateShipping = () => {
       </div>
 
       <Card className="flex flex-col gap-4 p-6">
-        <div className="flex flex-row gap-2">
-          <div className="flex-1 flex flex-col gap-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="shipping-name" required>Método de Envío</Label>
             <Input
               id="shipping-name"
@@ -340,47 +428,134 @@ const CreateShipping = () => {
             />
           </div>
 
-          <div className="flex-1 flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="shipping-code">Código</Label>
             <Input
               id="shipping-code"
-              value={shippingCode}
+              value={courierCode ?? shippingCode}
               onChange={handleShippingCode}
               placeholder="Código..."
+              disabled={courierCode !== null}
             />
+            {!courierCode && (
+              <p className="text-xs text-muted-foreground">
+                Usa {PICKUP_CODE} para un recojo en tienda.
+              </p>
+            )}
           </div>
-        </div>
 
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="some-channels"
-              checked={someChannels}
-              onCheckedChange={(checked) => {
-                setSomeChannels(checked === true);
-                if (checked !== true) setChannelIds([]);
-              }}
-            />
-            <Label htmlFor="some-channels">Solo para algunos canales</Label>
-          </div>
-          {someChannels ? (
-            <div className="sm:max-w-md">
+          <div className="flex flex-col gap-2">
+            <Label>Canales de venta</Label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
+              <div className="flex h-10 items-center gap-2 whitespace-nowrap">
+                <Checkbox
+                  id="shipping-channels"
+                  checked={someChannels}
+                  onCheckedChange={(checked) => {
+                    setSomeChannels(checked === true);
+                    if (checked !== true) setChannelIds([]);
+                  }}
+                />
+                <Label htmlFor="shipping-channels" className="font-normal">
+                  Solo algunos
+                </Label>
+              </div>
               <LocationMultiSelect
                 options={channelOptions}
                 value={channelIds}
                 onChange={setChannelIds}
-                placeholder="Canales de venta"
+                placeholder={someChannels ? "Elige los canales" : "Todos los canales"}
                 ariaLabel="Elegir canales de venta"
-                invalid={showErrors && channelIds.length === 0}
+                disabled={!someChannels}
+                invalid={showErrors && someChannels && channelIds.length === 0}
               />
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Disponible en todos los canales.</p>
+          </div>
+
+          {isPickupMethod && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="pickup-branch" required>Sucursal de recojo</Label>
+              <Select
+                value={branchId !== null ? String(branchId) : undefined}
+                onValueChange={(value) => setBranchId(Number(value))}
+              >
+                <SelectTrigger
+                  id="pickup-branch"
+                  aria-required
+                  className={showErrors && branchId === null ? "border-destructive" : undefined}
+                >
+                  <SelectValue placeholder="Selecciona la sucursal" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pickupBranches.map((branch) => (
+                    <SelectItem key={branch.id} value={String(branch.id)}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </div>
 
-        <div className="flex flex-row gap-2 items-end">
-          <Button onClick={addZone} type="button">
+        {courierCode && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label required>Agencia de origen</Label>
+              <CourierOriginCombobox
+                options={courierCatalog?.origins ?? []}
+                value={courierOriginId}
+                fallbackLabel={courierOriginLabel}
+                onSelect={setCourierOriginId}
+              />
+              <p className="text-xs text-muted-foreground">
+                Donde dejas los paquetes para {COURIER_NAMES[courierCode]}.
+              </p>
+            </div>
+            {courierCode === "OWN-SHALOM" && (
+              <div className="flex flex-col gap-2">
+                <Label>Cuenta Shalom Pro</Label>
+                {!id ? (
+                  <p className="flex h-10 items-center text-sm text-muted-foreground">
+                    Guarda el método para conectar la cuenta.
+                  </p>
+                ) : shalomUsername ? (
+                  <div className="flex h-10 items-center gap-3">
+                    <Badge variant="success">Conectada: {shalomUsername}</Badge>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        disconnectShalom(undefined, { onSuccess: () => setShalomUsername(null) })
+                      }
+                    >
+                      Desconectar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    className="self-start"
+                    onClick={() => setShalomConnectOpen(true)}
+                  >
+                    Conectar Shalom Pro
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-row gap-2 items-center justify-between">
+          {!isPickupMethod && (
+            <p className="text-sm text-muted-foreground">
+              {courierCode
+                ? "Zonas donde está habilitado (sin zonas: disponible en todo el país). El precio lo cotiza el courier."
+                : "Zonas y costos de envío"}
+            </p>
+          )}
+          <Button onClick={addZone} type="button" className="ml-auto">
             Agregar Costo
           </Button>
         </div>
@@ -393,7 +568,7 @@ const CreateShipping = () => {
               <TableHead className="min-w-[160px]">Estado</TableHead>
               <TableHead className="min-w-[160px]">Ciudad</TableHead>
               <TableHead className="min-w-[200px]">Distrito</TableHead>
-              <TableHead className="w-[120px]">Costo</TableHead>
+              {!courierCode && <TableHead className="w-[120px]">Costo</TableHead>}
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -401,10 +576,10 @@ const CreateShipping = () => {
             {zones.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={courierCode ? 6 : 7}
                   className="text-center text-muted-foreground"
                 >
-                  No hay costos
+                  {courierCode ? "Sin zonas: disponible en todo el país" : "No hay costos"}
                 </TableCell>
               </TableRow>
             ) : (
@@ -445,6 +620,7 @@ const CreateShipping = () => {
                         />
                       </TableCell>
                     ))}
+                    {!courierCode && (
                     <TableCell className="align-top">
                       <Input
                         value={zone.cost}
@@ -461,6 +637,7 @@ const CreateShipping = () => {
                         className={invalid.cost ? "border-destructive" : undefined}
                       />
                     </TableCell>
+                    )}
                     <TableCell className="align-top">
                       <div className="flex gap-2">
                         <Button
@@ -480,6 +657,15 @@ const CreateShipping = () => {
           </TableBody>
         </Table>
       </Card>
+      <ShalomConnectDialog
+        open={shalomConnectOpen}
+        onOpenChange={setShalomConnectOpen}
+        isConnecting={isConnecting}
+        onConnect={async (username, password) => {
+          await connectShalom({ username, password });
+          setShalomUsername(username);
+        }}
+      />
     </div>
   );
 };

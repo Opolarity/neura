@@ -14,6 +14,10 @@ export interface DeliveryLabelData {
   stateName?: string;
   neighborhoodName?: string;
   senderAddress?: string;
+  /** «CONTRA ENTREGA · COBRAR S/ X» o «PAGADO · NO COBRAR». */
+  paymentNotice?: string;
+  /** Quién paga el flete del courier (vacío sin courier). */
+  freightNotice?: string;
 }
 
 export interface CompanyInfo {

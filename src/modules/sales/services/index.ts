@@ -35,11 +35,19 @@ export const fetchSalesFormData = async (includeCredit = false) => {
   };
 };
 
-// Fetch shipping costs from database
+// Fetch shipping costs from database. Las zonas de Olva / Shalom (métodos
+// OWN-*) no son tarifas: esos se cotizan con «Calcular envío con courier».
 export const fetchShippingCosts = async () => {
-  const { data, error } = await supabase.from("shipping_costs").select("*");
+  const { data, error } = await supabase
+    .from("shipping_costs")
+    .select("*, shipping_methods!inner(code)");
   if (error) throw error;
-  return data;
+  return (data ?? [])
+    .filter((row) => {
+      const code = (row as { shipping_methods?: { code?: string | null } | null }).shipping_methods?.code;
+      return code !== "OWN-OLVA" && code !== "OWN-SHALOM";
+    })
+    .map(({ shipping_methods: _method, ...cost }) => cost);
 };
 
 // Search client by document type and number
