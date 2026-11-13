@@ -14,7 +14,7 @@ import {
   type RuleApplication,
 } from "../rules/applyPriceRules";
 import { applyShippingRule, type ShippingRule } from "../rules/shippingRule";
-import { groupRuleApplications, ruleSavingsByVariation } from "../rules/ruleSavings";
+import { groupRuleApplications, ruleSavingKey, ruleSavingsByVariation } from "../rules/ruleSavings";
 import {
   COUPON_PENDING_MESSAGE,
   couponErrorFromSave,
@@ -309,7 +309,14 @@ export const usePOS = () => {
         setCouponDiscountId(null);
       }
 
-      setAppliedRules(rules.map((r) => ({ message: r.message, rule_name: r.rule_name })));
+      // Solo los mensajes de las reglas que de verdad aplicaron: el motor devuelve en
+      // `discounts` únicamente esas (T-1158).
+      const effectiveRules = new Set(discounts.map((d) => ruleSavingKey(d.name)));
+      setAppliedRules(
+        rules
+          .filter((r) => effectiveRules.has(ruleSavingKey(r.rule_name)))
+          .map((r) => ({ message: r.message, rule_name: r.rule_name })),
+      );
       setShippingRule(rule);
       setRuleItems(engineRuleItems);
       setRuleApplicationRows(engineRuleApplications);
