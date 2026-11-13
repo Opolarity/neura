@@ -436,6 +436,14 @@ export const useCreateSale = () => {
     () => ruleSavingsByVariation(sessionRuleItems, products),
     [sessionRuleItems, products],
   );
+  // Costo del método antes de la regla de envío, para mostrarlo tachado. Solo en ventas
+  // nuevas (al editar, el envío no pasa por la regla) y solo si la regla lo bajó.
+  const shippingCostBeforeRule = useMemo(() => {
+    if (orderId || !formData.withShipping || !shippingRule) return null;
+    const method = allShippingCosts.find((sc) => sc.id.toString() === formData.shippingMethod);
+    const base = Number(method?.cost);
+    return Number.isFinite(base) && base > shippingCostValue ? base : null;
+  }, [orderId, formData.withShipping, formData.shippingMethod, shippingRule, allShippingCosts, shippingCostValue]);
 
   // Computed: Check if selected document type is persona jurídica (company)
   const isPersonaJuridica = useMemo(() => {
@@ -534,7 +542,14 @@ export const useCreateSale = () => {
         });
         updatedNewItems = result.items;
         gifts = result.gifts;
-        setAppliedRules(result.appliedRules.map(r => ({ message: r.message, rule_name: r.rule_name })));
+        // Solo los mensajes de las reglas que de verdad aplicaron: el motor devuelve en
+        // `discounts` únicamente esas (T-1158).
+        const effectiveRules = new Set(result.discounts.map((d) => ruleSavingKey(d.name)));
+        setAppliedRules(
+          result.appliedRules
+            .filter((r) => effectiveRules.has(ruleSavingKey(r.rule_name)))
+            .map((r) => ({ message: r.message, rule_name: r.rule_name })),
+        );
         setShippingRule((prev) => (sameShippingRule(prev, result.shippingRule) ? prev : result.shippingRule));
         setSessionRuleItems(result.ruleItems);
         setSessionRuleApplications(result.ruleApplications);
@@ -2679,6 +2694,7 @@ export const useCreateSale = () => {
     ruleApplications,
     includedRuleSavings,
     variationRuleSavings,
+    shippingCostBeforeRule,
 
     // Coupon (T-340)
     couponCode,

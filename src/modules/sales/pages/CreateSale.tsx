@@ -233,6 +233,7 @@ const CreateSale = () => {
     ruleApplications,
     includedRuleSavings,
     variationRuleSavings,
+    shippingCostBeforeRule,
     couponCode,
     couponError,
     applyCoupon,
@@ -1290,6 +1291,12 @@ const CreateSale = () => {
                       className="w-full text-right"
                       disabled={!formData.shippingMethod}
                     />
+                    {/* T-1158: si una regla bajó el envío, el costo del método tachado. */}
+                    {shippingCostBeforeRule != null && (
+                      <div className="mt-1 text-right text-xs text-muted-foreground line-through">
+                        {formatCurrency(shippingCostBeforeRule)}
+                      </div>
+                    )}
                   </div>
                 </div>
 
