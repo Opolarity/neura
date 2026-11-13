@@ -71,6 +71,7 @@ import { ProductVariationSelector } from "@/shared/components/product-variation-
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
 import { ruleApplicationLabel, ruleSavingKey } from "../rules/ruleSavings";
+import { CommitNumberInput } from "../components/CommitNumberInput";
 import { getSalePaymentStatus } from "../utils/salePaymentStatus";
 import { SalePaymentStatusBadge } from "../components/sales/SalePaymentStatusBadge";
 import { generateDeliveryLabel } from "../utils/generateDeliveryLabel";
@@ -814,32 +815,14 @@ const CreateSale = () => {
                             </TableCell>
                             <TableCell className="align-top">
                               <div className="flex flex-col items-center">
-                                <Input
-                                  type="number"
-                                  value={
-                                    product.quantity === 0
-                                      ? ""
-                                      : product.quantity
-                                  }
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === "") {
-                                      updateProduct(index, "quantity", 0);
-                                    } else {
-                                      updateProduct(
-                                        index,
-                                        "quantity",
-                                        parseInt(val) || 0,
-                                      );
-                                    }
-                                  }}
-                                  onBlur={() => {
-                                    if (product.quantity < 1) {
-                                      updateProduct(index, "quantity", 1);
-                                    }
-                                  }}
-                                  min="1"
-                                  max={product.maxStock}
+                                {/* Los campos de la tabla aplican el valor al salir del campo:
+                                    mientras se escribe no cambia la venta ni corren las reglas. */}
+                                <CommitNumberInput
+                                  value={product.quantity}
+                                  onCommit={(v) => updateProduct(index, "quantity", v)}
+                                  integer
+                                  minValue={1}
+                                  maxValue={product.maxStock}
                                   className="w-16 text-center"
                                   disabled={
                                     isPhySituation ||
@@ -854,21 +837,9 @@ const CreateSale = () => {
                             </TableCell>
                             <TableCell className="align-top">
                               <div className="relative flex items-center">
-                                <Input
-                                  type="number"
-                                  value={
-                                    product.price === 0 ? "" : product.price
-                                  }
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    updateProduct(
-                                      index,
-                                      "price",
-                                      val === "" ? 0 : parseFloat(val) || 0,
-                                    );
-                                  }}
-                                  min="0"
-                                  step="0.01"
+                                <CommitNumberInput
+                                  value={product.price}
+                                  onCommit={(v) => updateProduct(index, "price", v)}
                                   className={cn(
                                     "w-24 text-center",
                                     product.fromOrder &&
@@ -892,28 +863,14 @@ const CreateSale = () => {
                             </TableCell>
                             <TableCell className="align-top">
                               <div className="relative flex items-center">
-                                <Input
-                                  type="number"
-                                  value={
-                                    product.discountAmount === 0
-                                      ? ""
-                                      : product.discountAmount
-                                  }
+                                <CommitNumberInput
+                                  value={product.discountAmount}
                                   readOnly={
                                     isComSituation ||
                                     isPhySituation ||
                                     (isVirSituation && !productsUnlocked)
                                   }
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    updateProduct(
-                                      index,
-                                      "discountAmount",
-                                      val === "" ? 0 : parseFloat(val) || 0,
-                                    );
-                                  }}
-                                  min="0"
-                                  step="0.01"
+                                  onCommit={(v) => updateProduct(index, "discountAmount", v)}
                                   className={cn(
                                     "w-20 text-center",
                                     (isComSituation ||

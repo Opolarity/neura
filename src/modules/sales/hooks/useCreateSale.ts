@@ -604,10 +604,16 @@ export const useCreateSale = () => {
 
       setCartGifts(gifts);
 
-      // Rebuild in original order: fromOrder items keep their price, new items get ruled prices
+      // Rebuild in original order: fromOrder items keep their price, new items get ruled prices.
+      // Del motor solo se toma el precio: cantidad, descuento unitario y tipo de inventario son
+      // de cada línea. Se empareja por posición (el motor devuelve los ítems en el mismo orden):
+      // buscar por variación hacía que una segunda línea de la misma variación (otro tipo de
+      // inventario) se volviera copia de la primera.
+      let ruledIndex = 0;
       const updatedRegular = regularItems.map(item => {
         if (item.fromOrder) return item;
-        return updatedNewItems.find(u => u.variationId === item.variationId) ?? item;
+        const ruled = updatedNewItems[ruledIndex++];
+        return ruled ? { ...item, price: ruled.price } : item;
       });
 
       const pricesChanged = updatedRegular.some((u, i) => u.price !== regularItems[i].price);
