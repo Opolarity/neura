@@ -3,6 +3,7 @@
 // =============================================
 
 import { Type } from "@/types";
+import type { PriceRuleItem } from "../rules/applyPriceRules";
 
 // Wizard step type
 export type POSStep = 1 | 2 | 3 | 4 | 5 | 6;
@@ -263,6 +264,8 @@ export interface CreatePOSOrderRequest {
 
   /** T-340: id en `discounts` del cupón canjeado; create-order registra su uso. */
   couponDiscountId?: number | null;
+  /** T-1158: `ruleItems` del motor con el ahorro del envío completado (reporte de reglas). */
+  priceRuleItems?: PriceRuleItem[];
 
   // Discounts
   discounts?: Array<{

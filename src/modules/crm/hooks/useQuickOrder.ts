@@ -96,6 +96,7 @@ const initialDraft = (
     lines: [],
     ruleDiscounts: [],
     appliedRules: [],
+    ruleItems: [],
     withShipping: false,
     shipping: {
       countryId: catalogs.countries[0]?.id ?? null,
@@ -468,7 +469,7 @@ export const useQuickOrder = ({
     const regular = current.lines.filter((l) => !l.isGift);
     if (regular.length === 0) {
       if (current.ruleDiscounts.length || current.appliedRules.length || current.lines.length) {
-        onDraftChangeRef.current({ ...current, lines: [], ruleDiscounts: [], appliedRules: [] });
+        onDraftChangeRef.current({ ...current, lines: [], ruleDiscounts: [], appliedRules: [], ruleItems: [] });
       }
       return;
     }
@@ -510,6 +511,7 @@ export const useQuickOrder = ({
         ],
         ruleDiscounts: res.discounts.map((d) => ({ name: d.name, amount: d.amount, code: d.code })),
         appliedRules: res.appliedRules.map((r) => ({ name: r.rule_name, message: r.message })),
+        ruleItems: res.ruleItems,
       });
     })();
     return () => {

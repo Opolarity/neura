@@ -80,6 +80,7 @@ export const createPOSOrder = async (orderData: CreatePOSOrderRequest) => {
       initial_situation_id: orderData.initialSituationId,
       discounts: orderData.discounts || [],
       coupon_discount_id: orderData.couponDiscountId ?? null,
+      price_rule_items: orderData.priceRuleItems ?? [],
     },
   });
   return data;

@@ -16,6 +16,7 @@ import type {
   Situation,
   State,
 } from "@/modules/sales/types";
+import type { PriceRuleItem } from "@/modules/sales/rules/applyPriceRules";
 
 /** Una prenda del carrito: una variación (talla/color) de un producto. */
 export interface QuickOrderLine {
@@ -107,6 +108,8 @@ export interface QuickOrderDraft {
   ruleDiscounts: { name: string; amount: number; code: string }[];
   /** Mensajes de las reglas aplicadas ("2x1 en polos"…), para que el vendedor sepa por qué cambió el precio. */
   appliedRules: { name: string; message: string }[];
+  /** T-1158: unidades y descuento de cada regla (reporte de reglas de precios). */
+  ruleItems?: PriceRuleItem[];
   manualDiscounts: QuickOrderManualDiscount[];
   withShipping: boolean;
   shipping: QuickOrderShipping;
