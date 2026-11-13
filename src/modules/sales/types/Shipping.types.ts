@@ -5,6 +5,8 @@ interface ShippingData {
     min_cost: number | null;
     max_cost: number | null;
     zones: string | null;
+    /** Canales de venta del método; vacío = todos. */
+    channels?: Array<{ id: number; name: string }>;
   }>;
   page: {
     page: number;
@@ -36,6 +38,8 @@ export interface Shipping {
   minCost: number;
   maxCost: number;
   zones: string;
+  /** Canales de venta del método; vacío = todos. */
+  channels: Array<{ id: number; name: string }>;
 }
 
 //LOCATION
@@ -102,8 +106,8 @@ export interface ShippingZone {
 export interface ShippingPayload {
   name: string;
   code: string;
-  // null = disponible en todos los canales de venta.
-  channel_id: number | null;
+  // Vacío = disponible en todos los canales de venta.
+  channel_ids: number[];
   cost: Array<{
     name: string;
     cost: number;
@@ -118,7 +122,7 @@ export interface ShippingEdit {
   id: number;
   name: string;
   code: string;
-  channel_id: number | null;
+  channel_ids: number[];
   costs: Array<{
     name: string;
     cost: number;
@@ -134,7 +138,7 @@ export interface ShippingDetailsApiResponse {
     id: number;
     name: string;
     code: string;
-    channel_id?: number | null;
+    channel_ids?: number[];
     shipping_costs: Array<{
       id: number;
       name: string;
@@ -151,7 +155,7 @@ export interface ShippingDetails {
   id: number;
   name: string;
   code: string;
-  channelId: number | null;
+  channelIds: number[];
   costs: Array<{
     id: number;
     name: string;

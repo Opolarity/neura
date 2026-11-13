@@ -1,11 +1,4 @@
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -44,6 +37,7 @@ import {
   expandZonesToCosts,
   findDuplicateLocations,
   groupCostsIntoZones,
+  normalizeSearch,
   pruneZone,
 } from "../utils/shippingZones";
 
@@ -69,8 +63,8 @@ const CreateShipping = () => {
   const { toast } = useToast();
   const [shippingName, setShippingName] = useState<string>("");
   const [shippingCode, setShippingCode] = useState<string>("");
-  const [onlyOneChannel, setOnlyOneChannel] = useState<boolean>(false);
-  const [channelId, setChannelId] = useState<number | null>(null);
+  const [someChannels, setSomeChannels] = useState<boolean>(false);
+  const [channelIds, setChannelIds] = useState<number[]>([]);
   const [zones, setZones] = useState<ShippingZone[]>([]);
   const [savedCosts, setSavedCosts] = useState<ShippingCost[] | null>(null);
   const [showErrors, setShowErrors] = useState<boolean>(false);
@@ -93,6 +87,18 @@ const CreateShipping = () => {
     queryFn: getChannels,
     staleTime: 5 * 60 * 1000,
   });
+
+  const channelOptions = useMemo<LocationOption[]>(
+    () =>
+      channels.map((channel) => ({
+        id: channel.id,
+        label: channel.name,
+        hint: "",
+        parentId: null,
+        search: normalizeSearch(channel.name),
+      })),
+    [channels],
+  );
 
   const catalog = useMemo(
     () =>
@@ -179,10 +185,10 @@ const CreateShipping = () => {
       return false;
     }
 
-    if (onlyOneChannel && channelId === null) {
+    if (someChannels && channelIds.length === 0) {
       toast({
         title: "Error",
-        description: "Elige el canal de venta o desmarca \"Solo para un canal\"",
+        description: "Elige al menos un canal de venta o desmarca \"Solo para algunos canales\"",
         variant: "destructive",
       });
       return false;
@@ -234,7 +240,7 @@ const CreateShipping = () => {
     if (!validateForm()) return;
 
     const costs = expandZonesToCosts(zones, catalog);
-    const channel_id = onlyOneChannel ? channelId : null;
+    const channel_ids = someChannels ? channelIds : [];
 
     setLoadingCreate(true);
     try {
@@ -243,7 +249,7 @@ const CreateShipping = () => {
           id: Number(id),
           name: shippingName,
           code: shippingCode,
-          channel_id,
+          channel_ids,
           costs,
         });
         toast({
@@ -255,7 +261,7 @@ const CreateShipping = () => {
         await createShippingMethodApi({
           name: shippingName,
           code: shippingCode,
-          channel_id,
+          channel_ids,
           cost: costs,
         });
         toast({
@@ -280,8 +286,8 @@ const CreateShipping = () => {
       const dataAdapter = shippingDetailsAdapter(data);
       setShippingName(dataAdapter.name);
       setShippingCode(dataAdapter.code);
-      setOnlyOneChannel(dataAdapter.channelId !== null);
-      setChannelId(dataAdapter.channelId);
+      setSomeChannels(dataAdapter.channelIds.length > 0);
+      setChannelIds(dataAdapter.channelIds);
       setSavedCosts(dataAdapter.costs);
     } catch (error) {
       console.log(error);
@@ -348,39 +354,29 @@ const CreateShipping = () => {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <Checkbox
-              id="only-one-channel"
-              checked={onlyOneChannel}
+              id="some-channels"
+              checked={someChannels}
               onCheckedChange={(checked) => {
-                setOnlyOneChannel(checked === true);
-                if (checked !== true) setChannelId(null);
+                setSomeChannels(checked === true);
+                if (checked !== true) setChannelIds([]);
               }}
             />
-            <Label htmlFor="only-one-channel">Solo para un canal</Label>
+            <Label htmlFor="some-channels">Solo para algunos canales</Label>
           </div>
-          <Select
-            value={channelId !== null ? String(channelId) : undefined}
-            onValueChange={(value) => setChannelId(Number(value))}
-            disabled={!onlyOneChannel}
-          >
-            <SelectTrigger
-              className="sm:max-w-sm"
-              aria-label="Canal de venta"
-              aria-required={onlyOneChannel}
-            >
-              <SelectValue
-                placeholder={
-                  onlyOneChannel ? "Selecciona un canal" : "Todos los canales"
-                }
+          {someChannels ? (
+            <div className="sm:max-w-md">
+              <LocationMultiSelect
+                options={channelOptions}
+                value={channelIds}
+                onChange={setChannelIds}
+                placeholder="Canales de venta"
+                ariaLabel="Elegir canales de venta"
+                invalid={showErrors && channelIds.length === 0}
               />
-            </SelectTrigger>
-            <SelectContent>
-              {channels.map((channel) => (
-                <SelectItem key={channel.id} value={String(channel.id)}>
-                  {channel.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Disponible en todos los canales.</p>
+          )}
         </div>
 
         <div className="flex flex-row gap-2 items-end">
