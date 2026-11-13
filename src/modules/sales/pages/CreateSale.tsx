@@ -605,6 +605,12 @@ const CreateSale = () => {
         <form
           id="sale-form"
           onSubmit={handleSubmit}
+          // Enter en un campo de texto no envía el formulario (el navegador lo hace por
+          // defecto): la venta se crea solo con el botón. Los campos que usan Enter
+          // (buscadores, cantidades) lo reciben antes; textareas y botones no se tocan.
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.target instanceof HTMLInputElement) e.preventDefault();
+          }}
           className="flex-1 space-y-6"
           style={{ width: "70%" }}
         >
@@ -1015,6 +1021,11 @@ const CreateSale = () => {
                           handleInputChange("documentNumber", e.target.value)
                         }
                         onBlur={() => handleSearchClient()}
+                        // Enter busca al cliente: sale del campo y corre la misma búsqueda
+                        // que al perder el foco (una sola vez).
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur();
+                        }}
                         disabled={isAnonymousPurchase}
                         className={isAnonymousPurchase ? "opacity-50" : ""}
                       />
