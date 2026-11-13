@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { formatDateDisplay } from '@/shared/utils/date';
+import { getPerformanceCoverage, partialCoverageNotice } from './priceRulePerformanceCoverage';
 import type {
   PriceRulePerformance,
   PriceRuleReportRow,
@@ -35,7 +36,7 @@ export function generatePriceRulesReportExcel(
     'Vigencia hasta',
     'Aplicaciones',
     'Pedidos',
-    'Venta generada',
+    'Venta de los pedidos',
     '% de uso',
   ];
 
@@ -78,23 +79,34 @@ export function generatePriceRulesReportExcel(
     { wch: 15 }, // Vigencia hasta
     { wch: 13 }, // Aplicaciones
     { wch: 10 }, // Pedidos
-    { wch: 16 }, // Venta generada
+    { wch: 20 }, // Venta de los pedidos
     { wch: 10 }, // % de uso
   ];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Reglas de precio');
-  if (performance) appendPerformanceSheets(wb, performance);
+  // Si el rango termina antes de la implementación no hay desempeño que exportar.
+  if (performance) {
+    const coverage = getPerformanceCoverage(performance.tracked_from, startDate, endDate);
+    if (coverage.kind !== 'none') {
+      appendPerformanceSheets(wb, performance, coverage.kind === 'partial' ? partialCoverageNotice(coverage) : null);
+    }
+  }
   XLSX.writeFile(wb, `reporte-reglas-precio-${startDate}-${endDate}.xlsx`);
 }
 
 /** T-1158: hojas de desempeño por regla y de productos vendidos con cada regla. */
-function appendPerformanceSheets(wb: XLSX.WorkBook, performance: PriceRulePerformance): void {
+function appendPerformanceSheets(
+  wb: XLSX.WorkBook,
+  performance: PriceRulePerformance,
+  partialNotice: string | null,
+): void {
   const since = performance.tracked_from
-    ? `Datos registrados por regla desde el ${formatDateDisplay(performance.tracked_from)}; los pedidos anteriores no tienen este detalle.`
-    : 'Todavía no hay pedidos con este detalle.';
+    ? `Solo ventas creadas desde el ${formatDateDisplay(performance.tracked_from)}, cuando empezó el registro por regla. Venta de la promoción es lo que pagaron las unidades de cada regla; sumada entre reglas no es el total vendido.`
+    : 'Todavía no hay ventas con este detalle.';
 
   const rulesSheet = XLSX.utils.aoa_to_sheet([
+    ...(partialNotice ? [[partialNotice]] : []),
     [since],
     [],
     [
@@ -105,7 +117,7 @@ function appendPerformanceSheets(wb: XLSX.WorkBook, performance: PriceRulePerfor
       'Unidades vendidas',
       'Unidades bonificadas',
       'Unidades regaladas',
-      'Venta generada',
+      'Venta de la promoción',
       'Descuento otorgado',
       'Descuento en regalos',
       'Ahorro de envío',
@@ -130,12 +142,12 @@ function appendPerformanceSheets(wb: XLSX.WorkBook, performance: PriceRulePerfor
   ]);
   rulesSheet['!cols'] = [
     { wch: 40 }, { wch: 24 }, { wch: 12 }, { wch: 10 }, { wch: 17 }, { wch: 20 }, { wch: 18 },
-    { wch: 16 }, { wch: 18 }, { wch: 20 }, { wch: 16 }, { wch: 16 }, { wch: 11 },
+    { wch: 22 }, { wch: 18 }, { wch: 20 }, { wch: 16 }, { wch: 16 }, { wch: 11 },
   ];
   XLSX.utils.book_append_sheet(wb, rulesSheet, 'Desempeño por regla');
 
   const productsSheet = XLSX.utils.aoa_to_sheet([
-    ['Regla', 'Producto', 'Variación', 'SKU', 'Tipo', 'Pedidos', 'Unidades', 'Unidades bonificadas', 'Venta', 'Descuento'],
+    ['Regla', 'Producto', 'Variación', 'SKU', 'Tipo', 'Pedidos', 'Unidades', 'Unidades bonificadas', 'Venta de la promoción', 'Descuento'],
     ...performance.products.map((p) => [
       p.rule_name,
       p.product_name,
@@ -153,7 +165,7 @@ function appendPerformanceSheets(wb: XLSX.WorkBook, performance: PriceRulePerfor
       : []),
   ]);
   productsSheet['!cols'] = [
-    { wch: 40 }, { wch: 40 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, { wch: 14 }, { wch: 14 },
+    { wch: 40 }, { wch: 40 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 14 },
   ];
   XLSX.utils.book_append_sheet(wb, productsSheet, 'Productos por regla');
 }

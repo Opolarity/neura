@@ -1,13 +1,22 @@
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Gift, Loader2, PackageSearch, Target } from 'lucide-react';
+import { CalendarClock, Gift, Loader2, PackageSearch, Target } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MultiSelect } from '@/shared/components/MultiSelect';
+import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateDisplay } from '@/shared/utils/date';
 import { KpiCard } from '../shared/KpiCard';
 import { usePriceRulePerformance } from '../../hooks/usePriceRulePerformance';
+import { useClientPagination } from '../../hooks/useClientPagination';
 import type { PriceRulePerformanceRow } from '../../services/reports.service';
 import type { ReportsFilters } from '../../types/reports.types';
+import {
+  getPerformanceCoverage,
+  noCoverageNotice,
+  partialCoverageNotice,
+} from '../../utils/priceRulePerformanceCoverage';
 
 interface Props {
   filters: ReportsFilters;
@@ -29,12 +38,23 @@ export function PriceRulePerformance({ filters }: Props) {
   const loading = report.isLoading;
   const kpis = data?.kpis;
   const rules = data?.rules ?? [];
-  const products = data?.products ?? [];
+  // Memoizado: la paginación vuelve a la página 1 cuando cambia el arreglo.
+  const products = useMemo(() => data?.products ?? [], [data]);
+  const productPages = useClientPagination(products);
   // Con una sola regla la columna "Regla" de productos sobra.
   const singleRule = rules.length === 1;
   // Unidades, venta y descuento de varias reglas son una suma: una unidad que
   // tomaron dos reglas acumulables cuenta en las dos.
   const sumHint = kpis && kpis.rules > 1 ? `Suma de ${n(kpis.rules)} reglas` : undefined;
+  // Esa suma no es lo vendido: el total de los pedidos está en "Venta con regla".
+  const salesHint =
+    kpis && kpis.rules > 1
+      ? `Suma de ${n(kpis.rules)} reglas, no es el total vendido`
+      : 'lo que pagaron las unidades en promoción';
+  // El detalle por regla existe desde la implementación: si el rango empieza
+  // antes se avisa qué parte se cuenta, y si termina antes no hay nada que medir.
+  const coverage = getPerformanceCoverage(data?.tracked_from, filters.startDate, filters.endDate);
+  const noCoverage = coverage.kind === 'none';
 
   return (
     <Card>
@@ -46,196 +66,148 @@ export function PriceRulePerformance({ filters }: Props) {
               Desempeño por regla
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              {data?.tracked_from
-                ? `Unidades, venta y descuento que el sistema registró por regla desde el ${formatDateDisplay(data.tracked_from)}. Los pedidos anteriores no tienen este detalle.`
-                : 'Todavía no hay pedidos con este detalle: se registra desde que se activó en el sistema.'}
+              {coverage.kind !== 'empty'
+                ? `Solo cuenta ventas creadas desde el ${formatDateDisplay(coverage.since)}, cuando empezó a registrarse qué vendió y cuánto descontó cada regla. Las ventas anteriores no aparecen aquí, aunque se hayan editado después.`
+                : 'Todavía no hay ventas con este detalle: se registra desde que se activó en el sistema.'}
             </p>
           </div>
-          <div className="w-full sm:w-80">
-            <MultiSelect
-              options={ruleOptions}
-              value={selectedRuleIds}
-              onChange={setSelectedRuleIds}
-              placeholder="Todas las reglas"
-              showSearch
-              showClear
-              disabled={ruleOptions.length === 0 && !hasSelection}
-            />
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          <KpiCard title="Pedidos" value={kpis?.orders ?? 0} subtitle="donde aplicó" loading={loading} />
-          <KpiCard
-            title="Unidades vendidas"
-            value={kpis?.units ?? 0}
-            subtitle={
-              kpis
-                ? [
-                    `${n(kpis.discounted_units)} bonificadas`,
-                    kpis.gift_units > 0 ? `${n(kpis.gift_units)} regaladas` : null,
-                    sumHint,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')
-                : undefined
-            }
-            loading={loading}
-          />
-          <KpiCard
-            title="Venta generada"
-            value={formatCurrency(kpis?.sales ?? 0)}
-            subtitle={sumHint ?? 'de las unidades de la promoción'}
-            loading={loading}
-          />
-          <KpiCard
-            title="Descuento otorgado"
-            value={formatCurrency(kpis?.discount ?? 0)}
-            subtitle={sumHint ?? 'incluye regalos y envío'}
-            loading={loading}
-          />
-          <KpiCard
-            title="Ticket promedio"
-            value={formatCurrency(kpis?.avg_ticket ?? 0)}
-            subtitle="de esos pedidos"
-            loading={loading}
-          />
-          <KpiCard title="Productos" value={kpis?.products ?? 0} subtitle="distintos vendidos" loading={loading} />
-        </div>
-
-        {/* Una fila por regla */}
-        <div className="rounded-md border">
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : rules.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-10">
-              Sin datos para el período seleccionado
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/40">
-                    <th className="text-left  px-4 py-3 font-medium text-muted-foreground">Regla</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Pedidos</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Unidades</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Bonificadas</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Venta generada</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Descuento</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Ticket promedio</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Productos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rules.map((r) => (
-                    <tr key={r.id ?? `deleted-${r.name}`} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3">
-                        <RuleName row={r} onSelect={r.id ? () => setSelectedRuleIds([String(r.id)]) : undefined} />
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">{n(r.orders)}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {r.units > 0 ? n(r.units) : dash}
-                        {r.gift_units > 0 && (
-                          <p className="text-[11px] text-muted-foreground">+{n(r.gift_units)} regaladas</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums hidden md:table-cell">
-                        {r.discounted_units > 0 ? n(r.discounted_units) : dash}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums font-medium">
-                        {r.units > 0 ? formatCurrency(r.sales) : dash}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums">
-                        {formatCurrency(r.discount)}
-                        {(r.gift_discount !== 0 || r.shipping_discount !== 0) && (
-                          <p className="text-[11px] text-muted-foreground">
-                            {[
-                              r.gift_discount !== 0 ? `regalos ${formatCurrency(r.gift_discount)}` : null,
-                              r.shipping_discount !== 0 ? `envío ${formatCurrency(r.shipping_discount)}` : null,
-                            ]
-                              .filter(Boolean)
-                              .join(' · ')}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums hidden sm:table-cell">{formatCurrency(r.avg_ticket)}</td>
-                      <td className="px-4 py-3 text-right tabular-nums hidden lg:table-cell">
-                        {r.products > 0 ? n(r.products) : dash}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {!noCoverage && (
+            <div className="w-full sm:w-80">
+              <MultiSelect
+                options={ruleOptions}
+                value={selectedRuleIds}
+                onChange={setSelectedRuleIds}
+                placeholder="Todas las reglas"
+                showSearch
+                showClear
+                disabled={ruleOptions.length === 0 && !hasSelection}
+              />
             </div>
           )}
         </div>
+      </CardHeader>
 
-        {/* Productos vendidos con la regla */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium flex items-center gap-2">
-            <PackageSearch className="w-4 h-4" />
-            Productos vendidos con {hasSelection && singleRule ? `"${rules[0].name}"` : 'las reglas'}
-          </h3>
+      {noCoverage ? (
+        <CardContent>
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <CalendarClock className="w-6 h-6 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground max-w-md">{noCoverageNotice(coverage.since)}</p>
+          </div>
+        </CardContent>
+      ) : (
+        <CardContent className="space-y-6">
+          {coverage.kind === 'partial' && (
+            <Alert>
+              <CalendarClock className="h-4 w-4" />
+              <AlertDescription>{partialCoverageNotice(coverage)}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <KpiCard title="Pedidos" value={kpis?.orders ?? 0} subtitle="donde aplicó" loading={loading} />
+            <KpiCard
+              title="Unidades vendidas"
+              value={kpis?.units ?? 0}
+              subtitle={
+                kpis
+                  ? [
+                      `${n(kpis.discounted_units)} bonificadas`,
+                      kpis.gift_units > 0 ? `${n(kpis.gift_units)} regaladas` : null,
+                      sumHint,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                  : undefined
+              }
+              loading={loading}
+            />
+            <KpiCard
+              title="Venta de la promoción"
+              value={formatCurrency(kpis?.sales ?? 0)}
+              subtitle={salesHint}
+              loading={loading}
+            />
+            <KpiCard
+              title="Descuento otorgado"
+              value={formatCurrency(kpis?.discount ?? 0)}
+              subtitle={sumHint ?? 'incluye regalos y envío'}
+              loading={loading}
+            />
+            <KpiCard
+              title="Ticket promedio"
+              value={formatCurrency(kpis?.avg_ticket ?? 0)}
+              subtitle="de esos pedidos"
+              loading={loading}
+            />
+            <KpiCard title="Productos" value={kpis?.products ?? 0} subtitle="distintos vendidos" loading={loading} />
+          </div>
+
+          {/* Una fila por regla */}
           <div className="rounded-md border">
             {loading ? (
               <div className="flex justify-center py-10">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            ) : products.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-10">Sin productos para mostrar</p>
+            ) : rules.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-10">
+                Sin datos para el período seleccionado
+              </p>
             ) : (
-              <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+              <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-muted">
-                    <tr className="border-b">
-                      <th className="text-left  px-4 py-3 font-medium text-muted-foreground">Producto</th>
-                      {!singleRule && (
-                        <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Regla</th>
-                      )}
-                      <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Pedidos</th>
+                  <thead>
+                    <tr className="border-b bg-muted/40">
+                      <th className="text-left  px-4 py-3 font-medium text-muted-foreground">Regla</th>
+                      <th className="text-right px-4 py-3 font-medium text-muted-foreground">Pedidos</th>
                       <th className="text-right px-4 py-3 font-medium text-muted-foreground">Unidades</th>
                       <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Bonificadas</th>
-                      <th className="text-right px-4 py-3 font-medium text-muted-foreground">Venta</th>
+                      <th
+                        className="text-right px-4 py-3 font-medium text-muted-foreground"
+                        title="Lo que pagaron las unidades de la promoción después del descuento de esa regla, sin el resto del pedido"
+                      >
+                        Venta de la promoción
+                      </th>
                       <th className="text-right px-4 py-3 font-medium text-muted-foreground">Descuento</th>
+                      <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Ticket promedio</th>
+                      <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Productos</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {products.map((p) => (
-                      <tr
-                        key={`${p.rule_id ?? p.rule_name}-${p.variation_id ?? 'x'}-${p.is_gift ? 'g' : 's'}`}
-                        className="border-b last:border-0 hover:bg-muted/30 transition-colors"
-                      >
+                    {rules.map((r) => (
+                      <tr key={r.id ?? `deleted-${r.name}`} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium truncate max-w-[260px]">{p.product_name}</span>
-                            {p.is_gift && (
-                              <Badge variant="outline" className="text-xs gap-1">
-                                <Gift className="w-3 h-3" /> Regalo
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {[p.variation_name, p.sku].filter(Boolean).join(' · ')}
-                          </p>
+                          <RuleName row={r} onSelect={r.id ? () => setSelectedRuleIds([String(r.id)]) : undefined} />
                         </td>
-                        {!singleRule && (
-                          <td className="px-4 py-3 hidden md:table-cell text-xs text-muted-foreground max-w-[200px] truncate">
-                            {p.rule_name}
-                          </td>
-                        )}
-                        <td className="px-4 py-3 text-right tabular-nums hidden sm:table-cell">{n(p.orders)}</td>
-                        <td className="px-4 py-3 text-right tabular-nums">{n(p.units)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">{n(r.orders)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          {r.units > 0 ? n(r.units) : dash}
+                          {r.gift_units > 0 && (
+                            <p className="text-[11px] text-muted-foreground">+{n(r.gift_units)} regaladas</p>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-right tabular-nums hidden md:table-cell">
-                          {p.discounted_units > 0 ? n(p.discounted_units) : dash}
+                          {r.discounted_units > 0 ? n(r.discounted_units) : dash}
                         </td>
                         <td className="px-4 py-3 text-right tabular-nums font-medium">
-                          {p.is_gift ? dash : formatCurrency(p.sales)}
+                          {r.units > 0 ? formatCurrency(r.sales) : dash}
                         </td>
-                        <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(p.discount)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">
+                          {formatCurrency(r.discount)}
+                          {(r.gift_discount !== 0 || r.shipping_discount !== 0) && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {[
+                                r.gift_discount !== 0 ? `regalos ${formatCurrency(r.gift_discount)}` : null,
+                                r.shipping_discount !== 0 ? `envío ${formatCurrency(r.shipping_discount)}` : null,
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums hidden sm:table-cell">{formatCurrency(r.avg_ticket)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums hidden lg:table-cell">
+                          {r.products > 0 ? n(r.products) : dash}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -243,13 +215,96 @@ export function PriceRulePerformance({ filters }: Props) {
               </div>
             )}
           </div>
-          {data?.products_truncated && (
-            <p className="text-xs text-muted-foreground">
-              Se muestran los {n(products.length)} productos con más unidades. El Excel trae la lista completa.
-            </p>
-          )}
-        </div>
-      </CardContent>
+
+          {/* Productos vendidos con la regla */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium flex items-center gap-2">
+              <PackageSearch className="w-4 h-4" />
+              Productos vendidos con {hasSelection && singleRule ? `"${rules[0].name}"` : 'las reglas'}
+            </h3>
+            <div className="rounded-md border">
+              {loading ? (
+                <div className="flex justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : products.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-10">Sin productos para mostrar</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40">
+                      <tr className="border-b">
+                        <th className="text-left  px-4 py-3 font-medium text-muted-foreground">Producto</th>
+                        {!singleRule && (
+                          <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Regla</th>
+                        )}
+                        <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Pedidos</th>
+                        <th className="text-right px-4 py-3 font-medium text-muted-foreground">Unidades</th>
+                        <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Bonificadas</th>
+                        <th
+                          className="text-right px-4 py-3 font-medium text-muted-foreground"
+                          title="Lo que pagaron esas unidades después del descuento de la regla"
+                        >
+                          Venta de la promoción
+                        </th>
+                        <th className="text-right px-4 py-3 font-medium text-muted-foreground">Descuento</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {productPages.pageRows.map((p) => (
+                        <tr
+                          key={`${p.rule_id ?? p.rule_name}-${p.variation_id ?? 'x'}-${p.is_gift ? 'g' : 's'}`}
+                          className="border-b last:border-0 hover:bg-muted/30 transition-colors"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium truncate max-w-[260px]">{p.product_name}</span>
+                              {p.is_gift && (
+                                <Badge variant="outline" className="text-xs gap-1">
+                                  <Gift className="w-3 h-3" /> Regalo
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {[p.variation_name, p.sku].filter(Boolean).join(' · ')}
+                            </p>
+                          </td>
+                          {!singleRule && (
+                            <td className="px-4 py-3 hidden md:table-cell text-xs text-muted-foreground max-w-[200px] truncate">
+                              {p.rule_name}
+                            </td>
+                          )}
+                          <td className="px-4 py-3 text-right tabular-nums hidden sm:table-cell">{n(p.orders)}</td>
+                          <td className="px-4 py-3 text-right tabular-nums">{n(p.units)}</td>
+                          <td className="px-4 py-3 text-right tabular-nums hidden md:table-cell">
+                            {p.discounted_units > 0 ? n(p.discounted_units) : dash}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums font-medium">
+                            {p.is_gift ? dash : formatCurrency(p.sales)}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(p.discount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {!loading && products.length > 0 && (
+                <PaginationBar
+                  pagination={productPages.pagination}
+                  onPageChange={productPages.onPageChange}
+                  onPageSizeChange={productPages.onPageSizeChange}
+                />
+              )}
+            </div>
+            {data?.products_truncated && (
+              <p className="text-xs text-muted-foreground">
+                Se muestran los {n(products.length)} productos con más unidades. El Excel trae la lista completa.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      )}
     </Card>
   );
 }

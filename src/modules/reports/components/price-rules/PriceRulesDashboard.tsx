@@ -4,7 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Tags, CheckCircle2, Percent, Zap, Coins } from 'lucide-react';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateDisplay } from '@/shared/utils/date';
+import PaginationBar from '@/shared/components/pagination-bar/PaginationBar';
 import { reportChartColors } from '../shared/reportChartUtils';
+import { useClientPagination } from '../../hooks/useClientPagination';
 import { usePriceRulesDashboard, type PriceRuleView } from '../../hooks/usePriceRulesDashboard';
 import type { PriceRuleReportRow } from '../../services/reports.service';
 import type { ReportsFilters } from '../../types/reports.types';
@@ -22,6 +24,7 @@ interface Props {
 
 export function PriceRulesDashboard({ filters }: Props) {
   const { report, visibleRows, maxApplications, view, setView } = usePriceRulesDashboard(filters);
+  const { pageRows, pagination, onPageChange, onPageSizeChange } = useClientPagination(visibleRows);
 
   const loading = report.isLoading;
   const kpis = report.data?.kpis ?? {
@@ -126,12 +129,17 @@ export function PriceRulesDashboard({ filters }: Props) {
                     <th className="text-left  px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Vigencia</th>
                     <th className="text-left  px-4 py-3 font-medium text-muted-foreground">Uso (aplicaciones)</th>
                     <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Pedidos</th>
-                    <th className="text-right px-4 py-3 font-medium text-muted-foreground">Venta generada</th>
+                    <th
+                      className="text-right px-4 py-3 font-medium text-muted-foreground"
+                      title="Total de los pedidos donde aplicó la regla (lo que pagó el cliente por todo el pedido)"
+                    >
+                      Venta de los pedidos
+                    </th>
                     <th className="text-right px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">% de uso</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleRows.map((row) => (
+                  {pageRows.map((row) => (
                     <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -180,9 +188,9 @@ export function PriceRulesDashboard({ filters }: Props) {
                   ))}
 
                   {/*
-                    Los descuentos que no salen de una regla. Van al pie y sin
-                    barra de uso: no compiten por participación con las reglas,
-                    y por eso su "% de uso" es un guion.
+                    Los descuentos que no salen de una regla. Van al pie de cada
+                    página y sin barra de uso: no compiten por participación con
+                    las reglas, y por eso su "% de uso" es un guion.
                   */}
                   {showOther && other && (
                     <tr className="border-t bg-muted/20">
@@ -215,6 +223,13 @@ export function PriceRulesDashboard({ filters }: Props) {
                 </tbody>
               </table>
             </div>
+          )}
+          {!loading && visibleRows.length > 0 && (
+            <PaginationBar
+              pagination={pagination}
+              onPageChange={onPageChange}
+              onPageSizeChange={onPageSizeChange}
+            />
           )}
         </CardContent>
       </Card>

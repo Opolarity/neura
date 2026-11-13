@@ -140,16 +140,18 @@ export default function PriceRulesReportPage() {
           <>
             Una <strong className="font-medium text-foreground">aplicación</strong> es un descuento
             de regla dentro de un pedido, acreditado a la regla vigente ese día.{' '}
-            <strong className="font-medium text-foreground">Venta generada</strong> es la venta de
-            los pedidos donde aplicó, no el monto descontado (el ERP no lo guarda por regla); un
-            pedido con dos reglas suma en las dos filas, pero{' '}
+            <strong className="font-medium text-foreground">Venta de los pedidos</strong> es el
+            total de los pedidos donde aplicó la regla (todo el pedido); un pedido con dos reglas
+            suma en las dos filas, pero{' '}
             <strong className="font-medium text-foreground">Venta con regla</strong> lo cuenta una
-            vez. <strong className="font-medium text-foreground">Otros descuentos</strong> junta lo
+            vez y es el total vendido. <strong className="font-medium text-foreground">Otros descuentos</strong> junta lo
             que no sale de una regla (manual, por producto, recargo de Mercado Pago).{' '}
             <strong className="font-medium text-foreground">Reglas activas</strong> es el catálogo
             de hoy y no cambia con el rango. En{' '}
-            <strong className="font-medium text-foreground">Desempeño por regla</strong>, la venta
-            es solo lo que pagaron las unidades de la promoción.
+            <strong className="font-medium text-foreground">Desempeño por regla</strong>,{' '}
+            <strong className="font-medium text-foreground">Venta de la promoción</strong> es solo lo
+            que pagaron las unidades que tomó cada regla; sumada entre reglas no es el total vendido.
+            Esa sección cuenta solo ventas creadas desde que se implementó el registro por regla.
           </>
         }
       />
