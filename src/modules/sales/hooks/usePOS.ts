@@ -7,8 +7,10 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   applyPriceRules,
   isFranchiseRow,
+  ruleItemsForOrder,
   type GiftItem,
   type OrderDiscountRule,
+  type PriceRuleItem,
 } from "../rules/applyPriceRules";
 import { applyShippingRule, type ShippingRule } from "../rules/shippingRule";
 import {
@@ -169,6 +171,9 @@ export const usePOS = () => {
   const [ruleDiscounts, setRuleDiscounts] = useState<OrderDiscountRule[]>([]);
   // T-360: regla de envío del motor; ajusta el costo del método elegido.
   const [shippingRule, setShippingRule] = useState<ShippingRule | null>(null);
+  // T-1158: unidades y descuento de cada regla de la última corrida del motor,
+  // para guardarlos con la venta (reporte de reglas de precios).
+  const [ruleItems, setRuleItems] = useState<PriceRuleItem[]>([]);
   // T-340: cupón aplicado (código que viaja al motor), id que el motor devolvió
   // para registrar el uso y motivo del último rechazo. Un cupón rechazado no queda
   // aplicado: se suelta el código y el motivo se muestra hasta aplicar otro o
@@ -251,6 +256,7 @@ export const usePOS = () => {
       setAppliedRules([]);
       setRuleDiscounts([]);
       setShippingRule(null);
+      setRuleItems([]);
       // Sin carrito no hay nada que validar: el código se conserva y se vuelve a
       // validar al agregar productos.
       setCouponDiscountId(null);
@@ -266,6 +272,7 @@ export const usePOS = () => {
         shippingRule: rule,
         couponDiscountId: couponId,
         couponError: couponErr,
+        ruleItems: engineRuleItems,
         failed,
       } = await applyPriceRules(
         regularItems,
@@ -298,6 +305,7 @@ export const usePOS = () => {
 
       setAppliedRules(rules.map((r) => ({ message: r.message, rule_name: r.rule_name })));
       setShippingRule(rule);
+      setRuleItems(engineRuleItems);
       // Quedan exactamente las filas de esta respuesta: una regla que el motor deja de
       // devolver (p. ej. el % del cupón retirado) se cae y el total se recalcula sin ella.
       setRuleDiscounts(
@@ -1236,6 +1244,12 @@ export const usePOS = () => {
           ...orderDiscounts.map((d) => ({ name: d.name, discount_amount: d.amount, code: d.code || "CUSTOM" })),
           ...ruleDiscounts.map((r) => ({ name: r.name, discount_amount: r.discount_amount, code: r.code })),
         ],
+        // T-1158: el ahorro del envío es el costo del método menos lo cobrado.
+        priceRuleItems: ruleItemsForOrder(
+          ruleItems,
+          customer.requiresShipping ? shipping.shippingCost : null,
+          shippingCostValue,
+        ),
       };
 
       const result = await createPOSOrder(orderData);
@@ -1310,6 +1324,8 @@ export const usePOS = () => {
     formData,
     orderDiscounts,
     ruleDiscounts,
+    ruleItems,
+    shippingCostValue,
     couponCode,
     couponDiscountId,
     toast,

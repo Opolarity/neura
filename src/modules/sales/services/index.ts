@@ -144,6 +144,7 @@ export const createOrder = async (orderData: CreateOrderRequest) => {
       consignament: orderData.isConsignment ?? false,
       discounts: orderData.discounts || [],
       coupon_discount_id: orderData.couponDiscountId ?? null,
+      price_rule_items: orderData.priceRuleItems ?? [],
     },
   });
   return data;
@@ -215,6 +216,8 @@ export const updateOrder = async (
       })),
       consignament: orderData.isConsignment ?? false,
       discounts: orderData.discounts || [],
+      // T-1158: solo los productos agregados en esta edición pasan por el motor.
+      price_rule_items: orderData.priceRuleItems ?? [],
     },
   });
   return data;

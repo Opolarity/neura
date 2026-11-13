@@ -36,6 +36,53 @@ export interface DiscountResult {
   note?: string;
 }
 
+/**
+ * T-1158: fila de `ruleItems` del motor: qué unidades tomó cada regla y cuánto les
+ * descontó, decidido antes de promediar el precio de la línea. Viaja tal cual a
+ * create-order / update-order como `price_rule_items` para el reporte de reglas.
+ */
+export interface PriceRuleItem {
+  rule_id: number;
+  rule_name: string;
+  rule_code: string | null;
+  kind: "item" | "subtotal" | "surcharge" | "gift" | "shipping";
+  variation_id: number | null;
+  product_id: number | null;
+  /** Unidades que entraron en la promoción (pagadas y bonificadas). */
+  quantity: number;
+  /** De esas, las que recibieron el descuento. */
+  discounted_qty: number;
+  unit_price: number | null;
+  /** Negativo = recargo. */
+  discount_amount: number;
+  sales_amount: number;
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * T-1158: filas a guardar con el pedido. El motor no conoce el costo del envío: la
+ * fila de envío se completa con lo que el cliente se ahorró (costo del método − lo
+ * cobrado) y se quita si no hubo envío o no se ahorró nada. Mismo criterio que
+ * `_shared/order-price-rule-items.ts` en el backend.
+ */
+export function ruleItemsForOrder(
+  rows: PriceRuleItem[],
+  baseShippingCost: number | null,
+  chargedShippingCost: number | null,
+): PriceRuleItem[] {
+  // Sin costo del método o sin envío cobrado (null / NaN) no hay ahorro que registrar.
+  const saved =
+    Number.isFinite(baseShippingCost) && Number.isFinite(chargedShippingCost)
+      ? round2((baseShippingCost as number) - (chargedShippingCost as number))
+      : 0;
+  return rows.flatMap((r) => {
+    if (r.kind !== "shipping") return [r];
+    if (saved <= 0) return [];
+    return [{ ...r, discount_amount: saved, sales_amount: round2(chargedShippingCost ?? 0) }];
+  });
+}
+
 // Fila de order_discounts escrita por el motor de reglas (con el código de la regla).
 export interface OrderDiscountRule {
   name: string;
@@ -66,10 +113,12 @@ export async function applyPriceRules<T extends CartItemForRules>(
   couponDiscountId: number | null;
   /** T-340: motivo por el que el motor rechazó el cupón. */
   couponError: string | null;
+  /** T-1158: unidades y descuento de cada regla, para guardarlos con el pedido. */
+  ruleItems: PriceRuleItem[];
   /** true si no se pudo consultar al motor: los ítems vuelven sin cambios. */
   failed: boolean;
 }> {
-  const empty = { gifts: [], appliedRules: [], discounts: [], shippingRule: null, couponDiscountId: null, couponError: null };
+  const empty = { gifts: [], appliedRules: [], discounts: [], shippingRule: null, couponDiscountId: null, couponError: null, ruleItems: [] };
   try {
     if (items.length === 0) return { items, ...empty, failed: false };
 
@@ -93,6 +142,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       shippingRule?: { enabled?: boolean; operator?: string | null; value?: number | null; reason?: string };
       couponDiscountId?: number | null;
       couponError?: string | null;
+      ruleItems?: unknown[];
     };
     try {
       data = await invokeFunction("process-price-rules", {
@@ -159,6 +209,7 @@ export async function applyPriceRules<T extends CartItemForRules>(
       shippingRule,
       couponDiscountId: data?.couponDiscountId ?? null,
       couponError: data?.couponError ?? null,
+      ruleItems: Array.isArray(data?.ruleItems) ? (data.ruleItems as PriceRuleItem[]) : [],
       failed: false,
     };
 

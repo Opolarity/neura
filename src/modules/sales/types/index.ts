@@ -2,6 +2,8 @@
 // Sales Module Types
 // =============================================
 
+import type { PriceRuleItem } from "../rules/applyPriceRules";
+
 // Form Data Types
 export interface SaleFormData {
   documentType: string;
@@ -261,6 +263,8 @@ export interface CreateOrderRequest {
   isConsignment?: boolean;
   /** T-340: id en `discounts` del cupón canjeado; create-order registra su uso. */
   couponDiscountId?: number | null;
+  /** T-1158: `ruleItems` del motor con el ahorro del envío completado (reporte de reglas). */
+  priceRuleItems?: PriceRuleItem[];
   discounts?: Array<{
     name: string;
     discount_amount: number;

@@ -22,6 +22,7 @@ import {
   getIdInventoryTypeAdapter,
 } from "@/modules/sales/adapters";
 import type { CreateOrderRequest } from "@/modules/sales/types";
+import { ruleItemsForOrder } from "@/modules/sales/rules/applyPriceRules";
 import type {
   QuickOrderCatalogs,
   QuickOrderDraft,
@@ -201,6 +202,9 @@ export const createQuickOrderApi = async (
   const s = draft.shipping;
   const payments = draft.withPayment ? validEntries(draft.payments) : [];
   const changeEntries = draft.withPayment ? validEntries(draft.changeEntries) : [];
+  const manualPriceVariations = new Set(
+    draft.lines.filter((l) => !l.isGift && l.manualPrice).map((l) => l.variationId),
+  );
 
   // En personalizado create-order también recibe el shipping_methods.id de la
   // tarifa elegida (lo que Añadir venta guarda en shippingMethodId); la tarifa
@@ -275,6 +279,15 @@ export const createQuickOrderApi = async (
         code: "CUSTOM",
       })),
     ],
+    // T-1158: una línea con precio puesto a mano no se vendió con la regla, y el
+    // panel no aplica la regla de envío (ruleItemsForOrder quita esa fila).
+    priceRuleItems: ruleItemsForOrder(
+      (draft.ruleItems ?? []).filter(
+        (r) => r.kind !== "item" || r.variation_id === null || !manualPriceVariations.has(r.variation_id),
+      ),
+      null,
+      null,
+    ),
   };
 
   const response = (await createOrder(request)) as { order?: { id?: number } } | null;

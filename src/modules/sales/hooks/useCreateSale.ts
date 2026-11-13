@@ -4,7 +4,13 @@
 // =============================================
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { applyPriceRules, isFranchiseRow, type GiftItem } from "../rules/applyPriceRules";
+import {
+  applyPriceRules,
+  isFranchiseRow,
+  ruleItemsForOrder,
+  type GiftItem,
+  type PriceRuleItem,
+} from "../rules/applyPriceRules";
 import { applyShippingRule, sameShippingRule, type ShippingRule } from "../rules/shippingRule";
 import {
   COUPON_PENDING_MESSAGE,
@@ -222,6 +228,9 @@ export const useCreateSale = () => {
   const [appliedRules, setAppliedRules] = useState<{ message: string; rule_name: string }[]>([]);
   // T-360: regla de envío del motor (envío gratis, descuento o precio fijo de envío).
   const [shippingRule, setShippingRule] = useState<ShippingRule | null>(null);
+  // T-1158: unidades y descuento de cada regla para los productos que pasaron por
+  // el motor en esta sesión (en una venta creada, solo los agregados al editarla).
+  const [sessionRuleItems, setSessionRuleItems] = useState<PriceRuleItem[]>([]);
   // T-340: cupón aplicado (solo en ventas nuevas, decisión de Diego), id que el
   // motor devolvió para registrar el uso y motivo del último rechazo. Un cupón
   // rechazado no queda aplicado: se suelta el código y el motivo se muestra hasta
@@ -426,6 +435,7 @@ export const useCreateSale = () => {
       if (products.some(i => i.isGift)) setProducts(regularItems);
       setCartGifts([]);
       setShippingRule(null);
+      setSessionRuleItems([]);
       // Sin carrito no hay nada que validar: el código se conserva y se vuelve a
       // validar al agregar productos.
       setCouponDiscountId(null);
@@ -489,6 +499,7 @@ export const useCreateSale = () => {
         gifts = result.gifts;
         setAppliedRules(result.appliedRules.map(r => ({ message: r.message, rule_name: r.rule_name })));
         setShippingRule((prev) => (sameShippingRule(prev, result.shippingRule) ? prev : result.shippingRule));
+        setSessionRuleItems(result.ruleItems);
 
         // Los descuentos del motor se mergean contra savedPriceRules, NUNCA contra
         // orderDiscounts: esa lista es solo de descuentos manuales (CUSTOM) y las filas del
@@ -529,6 +540,7 @@ export const useCreateSale = () => {
         });
       } else {
         setShippingRule(null);
+        setSessionRuleItems([]);
         // Ningún producto nuevo que evaluar: se sueltan las reglas no persistidas de la sesión.
         setSavedPriceRules((prev) => (prev.some((r) => r.id == null) ? prev.filter((r) => r.id != null) : prev));
       }
@@ -2258,6 +2270,15 @@ export const useCreateSale = () => {
                 }))
               : []),
           ],
+          // T-1158: el ahorro del envío es el costo del método menos lo cobrado. Al
+          // editar una venta el envío no pasa por la regla, así que no se registra.
+          priceRuleItems: ruleItemsForOrder(
+            sessionRuleItems,
+            !orderId && formData.withShipping
+              ? Number(allShippingCosts.find((sc) => sc.id.toString() === formData.shippingMethod)?.cost ?? NaN)
+              : null,
+            formData.withShipping ? parseFloat(formData.shippingCost) || 0 : null,
+          ),
         };
 
         let createdOrderId = orderId ? parseInt(orderId) : null;
@@ -2399,6 +2420,8 @@ export const useCreateSale = () => {
       isAnonymousPurchase,
       isConsignment,
       savedPriceRules,
+      sessionRuleItems,
+      allShippingCosts,
       couponCode,
       couponDiscountId,
       toast,
