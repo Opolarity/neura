@@ -428,9 +428,10 @@ export const priceRulesGuide: ReportGuide = {
     'Mide cuánto se usan las reglas de descuento automáticas y, en "Desempeño por regla", qué vendió y cuánto descontó cada una. El uso sale de los descuentos registrados en cada pedido; el desempeño, del detalle que el sistema guarda por regla al crear el pedido.',
   rules: [
     'Una aplicación es un descuento de regla dentro de un pedido, contado una sola vez.',
-    'Venta generada es la venta de los pedidos donde aplicó la regla, no el monto descontado: el sistema descuenta por unidad dentro de cada línea y no guarda ese monto atribuido a la regla.',
+    'En Reglas por aplicación, Venta de los pedidos es el total de los pedidos donde aplicó la regla (todo el pedido, no solo los productos en promoción). Un pedido con dos reglas suma en las dos filas.',
+    'En Desempeño por regla, Venta de la promoción es lo que pagaron solo las unidades que tomó la regla, después de su descuento. Con varias reglas es una suma por regla y no es el total vendido: una unidad que tomaron dos reglas cuenta en las dos. El total vendido es Venta con regla.',
     'Otros descuentos junta lo que no sale de una regla (descuento manual, por producto, recargo de Mercado Pago) y queda fuera del % de uso.',
-    'Desempeño por regla solo tiene pedidos desde que se activó el registro (la fecha está en el subtítulo de la sección); los anteriores no tienen ese detalle.',
+    'Desempeño por regla solo cuenta ventas creadas desde la implementación del registro por regla (la fecha está en el subtítulo de la sección). Las anteriores no aparecen, aunque se editen después, porque solo tendrían el detalle de la edición. Si el rango empieza antes de esa fecha, un aviso dice qué días se cuentan; si termina antes, la sección no muestra datos y el Excel no trae sus hojas.',
     'En Desempeño por regla cada regla se mide con sus propias unidades: en un "lleva 2 paga 1" sobre 3 unidades cuentan solo las 2 del grupo, y dos reglas del mismo pedido no se mezclan.',
   ],
   cards: [
@@ -453,8 +454,8 @@ export const priceRulesGuide: ReportGuide = {
       source: 'Detalle por regla de cada pedido.',
     },
     {
-      title: 'Venta generada (Desempeño por regla)',
-      what: 'Lo que pagaron esas unidades después de la regla. No es el total del pedido.',
+      title: 'Venta de la promoción (Desempeño por regla)',
+      what: 'Lo que pagaron las unidades de la promoción después del descuento de la regla, sin el resto del pedido. Con varias reglas es la suma de cada una y no el total vendido (eso es Venta con regla).',
       source: 'Detalle por regla de cada pedido.',
     },
     {
@@ -476,7 +477,7 @@ export const priceRulesGuide: ReportGuide = {
   charts: [
     {
       title: 'Reglas por aplicación',
-      text: 'Una fila por regla con su código (etiqueta gris; algunas reglas no tienen), estado (activa, apagada o Eliminada si ya no existe pero tuvo aplicaciones), aplicaciones, pedidos, venta generada y participación. La barra morada compara el uso de cada regla con la más usada, no es un porcentaje del total.',
+      text: 'Una fila por regla con su código (etiqueta gris; algunas reglas no tienen), estado (activa, apagada o Eliminada si ya no existe pero tuvo aplicaciones), aplicaciones, pedidos, venta de los pedidos (el total de los pedidos donde aplicó) y participación. Se pagina como el resto de tablas. La barra morada compara el uso de cada regla con la más usada, no es un porcentaje del total.',
     },
     {
       title: 'Desempeño por regla',
@@ -484,7 +485,7 @@ export const priceRulesGuide: ReportGuide = {
     },
     {
       title: 'Productos vendidos con la regla',
-      text: 'Una fila por producto y regla, con pedidos, unidades, bonificadas, venta y descuento. Los regalos aparecen con su etiqueta. Muestra hasta 500 productos; el Excel trae la lista completa.',
+      text: 'Una fila por producto y regla, con pedidos, unidades, bonificadas, venta de la promoción y descuento. Los regalos aparecen con su etiqueta. Se pagina y muestra hasta 500 productos; el Excel trae la lista completa.',
     },
   ],
   excel: 'Una hoja con una fila por regla y los datos de la tabla, más la fila de Otros descuentos. Otra con el desempeño de cada regla y otra con los productos vendidos con cada regla.',
