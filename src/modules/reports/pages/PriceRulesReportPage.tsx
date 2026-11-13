@@ -4,7 +4,11 @@ import { Download, Loader2 } from 'lucide-react';
 import { toast } from '@/shared/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { useReportsFilters } from '../context/ReportsFiltersContext';
-import { priceRulesReportService, filterOptionsService } from '../services/reports.service';
+import {
+  priceRulesReportService,
+  priceRulePerformanceService,
+  filterOptionsService,
+} from '../services/reports.service';
 import { defaultSituationIds, isSameIdSet } from '../types/reports.types';
 import { TabSkeleton } from '../components/shared/TabSkeleton';
 import { ReportsFilterBar } from '../components/shared/ReportsFilterBar';
@@ -17,6 +21,9 @@ import { priceRulesGuide } from '../guides/reportGuides';
 
 const PriceRulesDashboard = lazy(() =>
   import('../components/price-rules/PriceRulesDashboard').then((m) => ({ default: m.PriceRulesDashboard })),
+);
+const PriceRulePerformance = lazy(() =>
+  import('../components/price-rules/PriceRulePerformance').then((m) => ({ default: m.PriceRulePerformance })),
 );
 
 export default function PriceRulesReportPage() {
@@ -71,12 +78,17 @@ export default function PriceRulesReportPage() {
 
     setIsExporting(true);
     try {
-      const report = await priceRulesReportService.getReport(filters);
+      // T-1158: el desempeño por regla va completo (todas las reglas, hasta 5000
+      // productos), sin la selección de reglas de la pantalla.
+      const [report, performance] = await Promise.all([
+        priceRulesReportService.getReport(filters),
+        priceRulePerformanceService.get(filters, null, 5000),
+      ]);
       if (report.table.length === 0) {
         toast({ title: 'No hay reglas para el rango seleccionado', variant: 'warning' });
         return;
       }
-      generatePriceRulesReportExcel(report.table, report.other, filters.startDate, filters.endDate);
+      generatePriceRulesReportExcel(report.table, report.other, filters.startDate, filters.endDate, performance);
       toast({ title: `Reporte exportado: ${report.table.length} reglas`, variant: 'success' });
     } catch (error) {
       toastError(error, 'Error al generar el reporte. Inténtalo de nuevo.');
@@ -135,12 +147,15 @@ export default function PriceRulesReportPage() {
             vez. <strong className="font-medium text-foreground">Otros descuentos</strong> junta lo
             que no sale de una regla (manual, por producto, recargo de Mercado Pago).{' '}
             <strong className="font-medium text-foreground">Reglas activas</strong> es el catálogo
-            de hoy y no cambia con el rango.
+            de hoy y no cambia con el rango. En{' '}
+            <strong className="font-medium text-foreground">Desempeño por regla</strong>, la venta
+            es solo lo que pagaron las unidades de la promoción.
           </>
         }
       />
       <Suspense fallback={<TabSkeleton />}>
         <PriceRulesDashboard filters={filters} />
+        <PriceRulePerformance filters={filters} />
       </Suspense>
     </div>
   );

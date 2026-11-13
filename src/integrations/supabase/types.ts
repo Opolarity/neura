@@ -13334,6 +13334,24 @@ export type Database = {
         }
         Returns: Json
       }
+      sp_rpt_price_rule_performance: {
+        Args: {
+          p_branch_ids?: number[]
+          p_city_id?: number
+          p_country_id?: number
+          p_end_date?: string
+          p_neighborhood_id?: number
+          p_payment_method_ids?: number[]
+          p_price_list_codes?: string[]
+          p_products_limit?: number
+          p_rule_ids?: number[]
+          p_sale_type_ids?: number[]
+          p_situation_ids?: number[]
+          p_start_date?: string
+          p_state_id?: number
+        }
+        Returns: Json
+      }
       sp_rpt_price_rules_report: {
         Args: {
           p_branch_id?: number

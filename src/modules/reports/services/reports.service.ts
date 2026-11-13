@@ -961,3 +961,86 @@ export const priceRulesReportService = {
   getReport: (f: ReportsFilters) =>
     rpc<PriceRulesReport>('sp_rpt_price_rules_report', mapCustomerFilters(f)),
 };
+
+// ============================================================
+// PRICE RULE PERFORMANCE (T-1158)
+// ============================================================
+// Lee order_price_rule_items: lo que el motor decidió en cada pedido, regla por
+// regla. Registra desde el despliegue de T-1158 (`tracked_from`); los pedidos
+// anteriores no tienen estas filas. Cada regla se mide con sus propias filas,
+// así que dos reglas del mismo pedido no se mezclan.
+
+export interface PriceRulePerformanceKpis {
+  rules: number;
+  /** Pedidos distintos con al menos una de las reglas elegidas. */
+  orders: number;
+  /** Unidades que entraron en las promociones (pagadas y bonificadas), suma de las reglas. */
+  units: number;
+  /** De esas, las que recibieron el descuento. */
+  discounted_units: number;
+  gift_units: number;
+  /** Lo que pagaron las unidades de la promoción, suma de las reglas. */
+  sales: number;
+  /** Descuento otorgado: incluye el valor de los regalos y el ahorro de envío. */
+  discount: number;
+  /** Total promedio de los pedidos donde aplicó (cada pedido una vez). */
+  avg_ticket: number;
+  products: number;
+}
+
+export interface PriceRulePerformanceRow {
+  /** null si la regla se borró (se identifica por el nombre que quedó copiado). */
+  id: number | null;
+  name: string;
+  code: string | null;
+  rule_type: 'automatic' | 'coupon' | null;
+  is_active: boolean;
+  is_deleted: boolean;
+  orders: number;
+  units: number;
+  discounted_units: number;
+  gift_units: number;
+  sales: number;
+  discount: number;
+  gift_discount: number;
+  shipping_discount: number;
+  avg_ticket: number;
+  products: number;
+}
+
+export interface PriceRulePerformanceProduct {
+  rule_id: number | null;
+  rule_name: string;
+  variation_id: number | null;
+  product_id: number | null;
+  product_name: string;
+  sku: string | null;
+  variation_name: string | null;
+  is_gift: boolean;
+  orders: number;
+  units: number;
+  discounted_units: number;
+  sales: number;
+  discount: number;
+}
+
+export interface PriceRulePerformance {
+  /** Primera fila registrada; null = todavía no hay datos. */
+  tracked_from: string | null;
+  /** Todas las reglas con datos en el rango, aunque se haya filtrado por regla. */
+  rule_options: { id: number; name: string }[];
+  kpis: PriceRulePerformanceKpis;
+  rules: PriceRulePerformanceRow[];
+  products: PriceRulePerformanceProduct[];
+  /** true si había más productos que el límite pedido. */
+  products_truncated: boolean;
+}
+
+export const priceRulePerformanceService = {
+  get: (f: ReportsFilters, ruleIds: number[] | null, productsLimit = 500) =>
+    rpc<PriceRulePerformance>('sp_rpt_price_rule_performance', {
+      ...mapCustomerFilters(f),
+      p_rule_ids: ruleIds && ruleIds.length > 0 ? ruleIds : undefined,
+      p_products_limit: productsLimit,
+    }),
+};
