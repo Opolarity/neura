@@ -425,11 +425,13 @@ export const customersGuide: ReportGuide = {
 export const priceRulesGuide: ReportGuide = {
   name: 'regla de precios',
   summary:
-    'Mide cuánto se usan las reglas de descuento automáticas. Los datos salen de los descuentos registrados en cada pedido del período, acreditados a la regla que estaba vigente ese día.',
+    'Mide cuánto se usan las reglas de descuento automáticas y, en "Desempeño por regla", qué vendió y cuánto descontó cada una. El uso sale de los descuentos registrados en cada pedido; el desempeño, del detalle que el sistema guarda por regla al crear el pedido.',
   rules: [
     'Una aplicación es un descuento de regla dentro de un pedido, contado una sola vez.',
     'Venta generada es la venta de los pedidos donde aplicó la regla, no el monto descontado: el sistema descuenta por unidad dentro de cada línea y no guarda ese monto atribuido a la regla.',
     'Otros descuentos junta lo que no sale de una regla (descuento manual, por producto, recargo de Mercado Pago) y queda fuera del % de uso.',
+    'Desempeño por regla solo tiene pedidos desde que se activó el registro (la fecha está en el subtítulo de la sección); los anteriores no tienen ese detalle.',
+    'En Desempeño por regla cada regla se mide con sus propias unidades: en un "lleva 2 paga 1" sobre 3 unidades cuentan solo las 2 del grupo, y dos reglas del mismo pedido no se mezclan.',
   ],
   cards: [
     { title: 'Reglas activas / apagadas', what: 'El catálogo de hoy. No cambia con el rango.', source: 'Reglas de precios.' },
@@ -440,14 +442,52 @@ export const priceRulesGuide: ReportGuide = {
       what: 'Valor de los pedidos que tuvieron al menos una regla (un pedido con dos reglas cuenta una vez), y "N de M pedidos (X % del total)" sobre los pedidos del período.',
       source: 'Pedidos y sus descuentos.',
     },
+    {
+      title: 'Pedidos (Desempeño por regla)',
+      what: 'Pedidos distintos donde la regla elegida registró unidades, regalo o envío. Con varias reglas, cada pedido cuenta una vez.',
+      source: 'Detalle por regla de cada pedido.',
+    },
+    {
+      title: 'Unidades vendidas',
+      what: 'Unidades que entraron en la promoción, las pagadas y las bonificadas. Abajo: cuántas recibieron el descuento y cuántas se regalaron.',
+      source: 'Detalle por regla de cada pedido.',
+    },
+    {
+      title: 'Venta generada (Desempeño por regla)',
+      what: 'Lo que pagaron esas unidades después de la regla. No es el total del pedido.',
+      source: 'Detalle por regla de cada pedido.',
+    },
+    {
+      title: 'Descuento otorgado',
+      what: 'Lo que la regla descontó, incluido el valor de los regalos (a precio de lista) y el ahorro de envío. Un recargo resta.',
+      source: 'Detalle por regla de cada pedido.',
+    },
+    {
+      title: 'Ticket promedio',
+      what: 'Total promedio de los pedidos donde aplicó la regla (el pedido completo, con envío).',
+      source: 'Pedidos.',
+    },
+    {
+      title: 'Productos',
+      what: 'Variaciones distintas vendidas con la regla (sin contar regalos).',
+      source: 'Detalle por regla de cada pedido.',
+    },
   ],
   charts: [
     {
       title: 'Reglas por aplicación',
       text: 'Una fila por regla con su código (etiqueta gris; algunas reglas no tienen), estado (activa, apagada o Eliminada si ya no existe pero tuvo aplicaciones), aplicaciones, pedidos, venta generada y participación. La barra morada compara el uso de cada regla con la más usada, no es un porcentaje del total.',
     },
+    {
+      title: 'Desempeño por regla',
+      text: 'Elegí una o varias reglas en el selector (o tocá el nombre de una regla en la tabla) para ver solo sus datos. Con varias reglas, unidades, venta y descuento son la suma de las reglas: una unidad que tomaron dos reglas acumulables cuenta en las dos.',
+    },
+    {
+      title: 'Productos vendidos con la regla',
+      text: 'Una fila por producto y regla, con pedidos, unidades, bonificadas, venta y descuento. Los regalos aparecen con su etiqueta. Muestra hasta 500 productos; el Excel trae la lista completa.',
+    },
   ],
-  excel: 'Una fila por regla con los mismos datos de la tabla, más la fila de Otros descuentos.',
+  excel: 'Una hoja con una fila por regla y los datos de la tabla, más la fila de Otros descuentos. Otra con el desempeño de cada regla y otra con los productos vendidos con cada regla.',
   validation: [
     { check: 'Reglas activas', how: 'Contá en Descuentos > Reglas de precios las activas y las apagadas.' },
     {
@@ -457,6 +497,10 @@ export const priceRulesGuide: ReportGuide = {
     {
       check: 'Venta con regla',
       how: 'En Lista de ventas filtrá el mismo rango y estados; el "M" del subtítulo es ese total de pedidos (con usuario administrador, o con la Sede filtrada).',
+    },
+    {
+      check: 'Unidades y descuento de una regla',
+      how: 'Abrí un pedido de la regla en Lista de ventas: las unidades de los productos de la promoción y su precio antes y después del descuento deben coincidir con la fila del producto.',
     },
   ],
 };

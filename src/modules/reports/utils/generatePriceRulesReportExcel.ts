@@ -1,6 +1,10 @@
 import * as XLSX from 'xlsx';
 import { formatDateDisplay } from '@/shared/utils/date';
-import type { PriceRuleReportRow, PriceRulesOther } from '../services/reports.service';
+import type {
+  PriceRulePerformance,
+  PriceRuleReportRow,
+  PriceRulesOther,
+} from '../services/reports.service';
 
 /**
  * El Excel sale del mismo payload que pinta la pantalla, no de un SP aparte:
@@ -11,12 +15,16 @@ import type { PriceRuleReportRow, PriceRulesOther } from '../services/reports.se
  * pestaña — ese recorta la vista, la descarga baja el listado completo — y
  * cierra con la línea de "Otros descuentos" para que el total del archivo
  * cuadre con todos los descuentos del período.
+ *
+ * T-1158: con `performance` suma dos hojas, "Desempeño por regla" y "Productos
+ * por regla", con lo que el sistema registró por regla (desde el despliegue).
  */
 export function generatePriceRulesReportExcel(
   rows: PriceRuleReportRow[],
   other: PriceRulesOther | undefined,
   startDate: string,
   endDate: string,
+  performance?: PriceRulePerformance,
 ): void {
   const headerRow = [
     'Regla',
@@ -76,5 +84,76 @@ export function generatePriceRulesReportExcel(
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Reglas de precio');
+  if (performance) appendPerformanceSheets(wb, performance);
   XLSX.writeFile(wb, `reporte-reglas-precio-${startDate}-${endDate}.xlsx`);
+}
+
+/** T-1158: hojas de desempeño por regla y de productos vendidos con cada regla. */
+function appendPerformanceSheets(wb: XLSX.WorkBook, performance: PriceRulePerformance): void {
+  const since = performance.tracked_from
+    ? `Datos registrados por regla desde el ${formatDateDisplay(performance.tracked_from)}; los pedidos anteriores no tienen este detalle.`
+    : 'Todavía no hay pedidos con este detalle.';
+
+  const rulesSheet = XLSX.utils.aoa_to_sheet([
+    [since],
+    [],
+    [
+      'Regla',
+      'Código',
+      'Estado',
+      'Pedidos',
+      'Unidades vendidas',
+      'Unidades bonificadas',
+      'Unidades regaladas',
+      'Venta generada',
+      'Descuento otorgado',
+      'Descuento en regalos',
+      'Ahorro de envío',
+      'Ticket promedio',
+      'Productos',
+    ],
+    ...performance.rules.map((r) => [
+      r.name,
+      r.code ?? 'Sin código',
+      r.is_deleted ? 'Eliminada' : r.is_active ? 'Activa' : 'Inactiva',
+      r.orders,
+      r.units,
+      r.discounted_units,
+      r.gift_units,
+      r.sales,
+      r.discount,
+      r.gift_discount,
+      r.shipping_discount,
+      r.avg_ticket,
+      r.products,
+    ]),
+  ]);
+  rulesSheet['!cols'] = [
+    { wch: 40 }, { wch: 24 }, { wch: 12 }, { wch: 10 }, { wch: 17 }, { wch: 20 }, { wch: 18 },
+    { wch: 16 }, { wch: 18 }, { wch: 20 }, { wch: 16 }, { wch: 16 }, { wch: 11 },
+  ];
+  XLSX.utils.book_append_sheet(wb, rulesSheet, 'Desempeño por regla');
+
+  const productsSheet = XLSX.utils.aoa_to_sheet([
+    ['Regla', 'Producto', 'Variación', 'SKU', 'Tipo', 'Pedidos', 'Unidades', 'Unidades bonificadas', 'Venta', 'Descuento'],
+    ...performance.products.map((p) => [
+      p.rule_name,
+      p.product_name,
+      p.variation_name ?? '',
+      p.sku ?? '',
+      p.is_gift ? 'Regalo' : 'Vendido',
+      p.orders,
+      p.units,
+      p.discounted_units,
+      p.is_gift ? 0 : p.sales,
+      p.discount,
+    ]),
+    ...(performance.products_truncated
+      ? [[], [`Lista recortada a los ${performance.products.length} productos con más unidades.`]]
+      : []),
+  ]);
+  productsSheet['!cols'] = [
+    { wch: 40 }, { wch: 40 }, { wch: 22 }, { wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, { wch: 14 }, { wch: 14 },
+  ];
+  XLSX.utils.book_append_sheet(wb, productsSheet, 'Productos por regla');
 }
