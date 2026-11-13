@@ -16,6 +16,7 @@ export const shippingAdapter = (response?: ShippingApiResponse) => {
       minCost: item.min_cost ?? 0,
       maxCost: item.max_cost ?? 0,
       zones: item.zones ?? "",
+      channels: item.channels ?? [],
     }),
   );
 
@@ -37,7 +38,7 @@ export const shippingDetailsAdapter = (
     id: shipping?.id ?? 0,
     name: shipping?.name ?? "",
     code: shipping?.code ?? "",
-    channelId: shipping?.channel_id ?? null,
+    channelIds: shipping?.channel_ids ?? [],
     costs: Array.isArray(shipping?.shipping_costs)
       ? shipping!.shipping_costs.map((cost) => ({
           id: cost.id,

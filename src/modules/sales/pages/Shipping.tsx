@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Plus, Edit, Trash } from 'lucide-react';
@@ -109,6 +110,7 @@ const Shipping = () => {
               <TableHead className="min-w-[150px]">Nombre</TableHead>
               <TableHead className="min-w-[100px]">Precio</TableHead>
               <TableHead className="min-w-[200px]">Zonas</TableHead>
+              <TableHead className="min-w-[140px]">Canales</TableHead>
               {/* Se envuelve el th entero y no su texto: una celda vacía sigue
                   ocupando su ancho y deja un hueco muerto. */}
               <ComponentPermission codeIn={ACTION_CODES}>
@@ -152,6 +154,19 @@ const Shipping = () => {
                       : `S/ ${shipping.minCost.toFixed(2)} - S/ ${shipping.maxCost.toFixed(2)}`}
                   </TableCell>
                   <TableCell>{shipping.zones}</TableCell>
+                  <TableCell>
+                    {shipping.channels.length === 0 ? (
+                      <span className="text-muted-foreground">Todos</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {shipping.channels.map((channel) => (
+                          <Badge key={channel.id} variant="secondary">
+                            {channel.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </TableCell>
                   <ComponentPermission codeIn={ACTION_CODES}>
                     <TableCell>
                       <div className="flex gap-2">
