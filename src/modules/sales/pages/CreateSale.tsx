@@ -70,6 +70,7 @@ import { useCreateSale } from "../hooks/useCreateSale";
 import { ProductVariationSelector } from "@/shared/components/product-variation-selector";
 import { cn } from "@/shared/utils/utils";
 import { formatCurrency, calculateLineSubtotal } from "../utils";
+import { ruleApplicationLabel, ruleSavingKey } from "../rules/ruleSavings";
 import { getSalePaymentStatus } from "../utils/salePaymentStatus";
 import { SalePaymentStatusBadge } from "../components/sales/SalePaymentStatusBadge";
 import { generateDeliveryLabel } from "../utils/generateDeliveryLabel";
@@ -238,6 +239,9 @@ const CreateSale = () => {
     // Applied price rules
     appliedRules,
     shippingRule,
+    ruleApplications,
+    includedRuleSavings,
+    variationRuleSavings,
     couponCode,
     couponError,
     applyCoupon,
@@ -771,6 +775,11 @@ const CreateSale = () => {
                     <TableBody>
                       {paginatedTableProducts.map(({ product, originalIndex }) => {
                         const index = originalIndex;
+                        // T-1158: lo que las reglas le descontaron a la línea (ya está en el precio).
+                        const lineRuleSaving =
+                          product.fromOrder || product.isGift
+                            ? undefined
+                            : variationRuleSavings.get(product.variationId);
                         return (
                           <TableRow
                             key={index}
@@ -779,14 +788,16 @@ const CreateSale = () => {
                               "animate-highlight-row",
                             )}
                           >
-                            <TableCell>
+                            {/* Celdas alineadas arriba: los campos, el subtotal y el botón quedan en una
+                                misma línea, y los textos de debajo (stock, precios tachados) en otra. */}
+                            <TableCell className="align-top">
                               <img
                                 src={product.imageUrl ?? placeholderImage}
                                 alt={product.productName}
                                 className="w-12 h-12 object-cover rounded"
                               />
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">
                               <div className="flex flex-col">
                                 <span className="font-medium">
                                   {product.productName} (
@@ -801,7 +812,7 @@ const CreateSale = () => {
                                 </span>
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">
                               <div className="flex flex-col items-center">
                                 <Input
                                   type="number"
@@ -841,7 +852,7 @@ const CreateSale = () => {
                                 </span>
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">
                               <div className="relative flex items-center">
                                 <Input
                                   type="number"
@@ -873,8 +884,13 @@ const CreateSale = () => {
                                   <Lock className="absolute right-2 w-3 h-3 text-muted-foreground pointer-events-none" />
                                 )}
                               </div>
+                              {lineRuleSaving ? (
+                                <div className="mt-1 w-24 text-center text-xs text-muted-foreground line-through">
+                                  {formatCurrency(product.originalPrice)}
+                                </div>
+                              ) : null}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">
                               <div className="relative flex items-center">
                                 <Input
                                   type="number"
@@ -918,10 +934,18 @@ const CreateSale = () => {
                                   )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {formatCurrency(calculateLineSubtotal(product))}
+                            <TableCell className="text-right align-top">
+                              <div className="flex h-10 items-center justify-end font-medium">
+                                {formatCurrency(calculateLineSubtotal(product))}
+                              </div>
+                              {/* T-1158: con promo, el subtotal a precio de lista. */}
+                              {lineRuleSaving ? (
+                                <div className="mt-1 text-xs text-muted-foreground line-through">
+                                  {formatCurrency(product.originalPrice * product.quantity)}
+                                </div>
+                              ) : null}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="align-top">
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -1852,28 +1876,57 @@ const CreateSale = () => {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Descuento regla de precios</span>
-                  <span>{formatCurrency(savedPriceRules.reduce((sum, r) => sum + r.discount_amount, 0))}</span>
+                  {/* T-1158: suma también lo que las reglas ya descontaron dentro de los
+                      precios y del envío; eso no se vuelve a restar del total. */}
+                  <span>
+                    {formatCurrency(
+                      savedPriceRules.reduce((sum, r) => sum + r.discount_amount, 0) - includedRuleSavings,
+                    )}
+                  </span>
                 </div>
 
                 {savedPriceRules.length > 0 && (
                   <div className="flex flex-col gap-1">
-                    {savedPriceRules.map((r, i) => (
-                      // Las reglas que el motor acaba de aplicar aún no tienen id (se les asigna
-                      // al guardar), así que la key cae al código+nombre+posición.
-                      <div key={r.id ?? `${r.code}-${r.name}-${i}`} className="flex justify-between text-xs text-muted-foreground">
-                        <span>{r.name}</span>
-                        {
-                          // Monto 0 = el descuento ya viene aplicado al precio de cada línea.
-                          // Cualquier otro monto (los de subtotal son negativos) se muestra tal cual.
-                          r.discount_amount !== 0 ?
-                            (
-                              <span>{formatCurrency(r.discount_amount)}</span>
-                            ) : (
-                              <span>{r.name === shippingRuleName(shippingRule) ? "Inc. en envío" : "Inc. en productos"}</span>
-                            )
-                        }
-                      </div>
-                    ))}
+                    {savedPriceRules.map((r, i) => {
+                      // Monto 0 = el descuento ya viene aplicado al precio de cada línea (o al
+                      // envío). Si es de esta sesión, se lista cada vez que se aplicó (T-1158);
+                      // las ya guardadas no traen ese detalle.
+                      const applications =
+                        r.id == null && r.discount_amount === 0
+                          ? (ruleApplications.get(ruleSavingKey(r.name)) ?? [])
+                          : [];
+                      const includedIn =
+                        applications.some((a) => a.kind === "shipping") || r.name === shippingRuleName(shippingRule)
+                          ? "Inc. en envío"
+                          : "Inc. en productos";
+                      return (
+                        // Las reglas que el motor acaba de aplicar aún no tienen id (se les asigna
+                        // al guardar), así que la key cae al código+nombre+posición.
+                        <div key={r.id ?? `${r.code}-${r.name}-${i}`} className="flex flex-col text-xs text-muted-foreground">
+                          <div className="flex justify-between gap-2">
+                            <span>{r.name}</span>
+                            {
+                              // Los de subtotal son negativos y sí cambian el total: se muestran tal cual.
+                              r.discount_amount !== 0 ? (
+                                <span className="shrink-0">{formatCurrency(r.discount_amount)}</span>
+                              ) : (
+                                <span className="shrink-0">{includedIn}</span>
+                              )
+                            }
+                          </div>
+                          {applications.length > 0 && (
+                            <ul className="ml-1 mt-0.5 flex flex-col gap-0.5 border-l pl-2">
+                              {applications.map((a, j) => (
+                                <li key={j} className="flex justify-between gap-2">
+                                  <span>{ruleApplicationLabel(a)}</span>
+                                  <span className="shrink-0">{formatCurrency(-a.discount_amount)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 

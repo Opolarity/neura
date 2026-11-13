@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, User } from "lucide-react";
 import type { POSCartItem, POSCustomerData } from "../../types/POS.types";
 import { formatCurrency } from "../../adapters/POS.adapter";
-import type { OrderDiscountRule } from "../../rules/applyPriceRules";
+import type { OrderDiscountRule, RuleApplication } from "../../rules/applyPriceRules";
 import { shippingRuleName, type ShippingRule } from "../../rules/shippingRule";
+import { ruleApplicationLabel, ruleSavingKey } from "../../rules/ruleSavings";
 
 interface POSSummaryProps {
   cart: POSCartItem[];
@@ -12,6 +13,8 @@ interface POSSummaryProps {
   discountAmount: number;
   ruleDiscounts: OrderDiscountRule[];
   shippingRule: ShippingRule | null;
+  /** T-1158: cada vez que se aplicó cada regla (lo de las que guardan 0 ya está en los precios). */
+  ruleApplications: Map<string, RuleApplication[]>;
   shippingCost: number;
   total: number;
 
@@ -24,6 +27,7 @@ export default function POSSummary({
   discountAmount,
   ruleDiscounts,
   shippingRule,
+  ruleApplications,
   shippingCost,
   total
 }: POSSummaryProps) {
@@ -52,16 +56,39 @@ export default function POSSummary({
             <span className="font-medium">S/ {formatCurrency(subtotal)}</span>
           </div>
 
-          {ruleDiscounts.map((r, i) =>
-          <div key={`${r.code}-${r.name}-${i}`} className="flex justify-between text-xs">
-              <span className="text-muted-foreground truncate max-w-[200px]">{r.name}</span>
-              <span className="text-muted-foreground">
-                {r.discount_amount !== 0 ?
-              `${r.discount_amount > 0 ? "+" : "-"} S/ ${formatCurrency(Math.abs(r.discount_amount))}` :
-              r.name === shippingRuleName(shippingRule) ? "Inc. en envío" : "Inc. en productos"}
-              </span>
-            </div>
-          )}
+          {ruleDiscounts.map((r, i) => {
+            // Monto 0 = el descuento ya viene aplicado al precio de cada línea (o al envío);
+            // debajo se lista cada vez que se aplicó (T-1158).
+            const applications =
+              r.discount_amount === 0 ? ruleApplications.get(ruleSavingKey(r.name)) ?? [] : [];
+            const includedIn =
+              applications.some((a) => a.kind === "shipping") || r.name === shippingRuleName(shippingRule)
+                ? "Inc. en envío"
+                : "Inc. en productos";
+            return (
+              <div key={`${r.code}-${r.name}-${i}`} className="flex flex-col text-xs">
+                <div className="flex justify-between gap-2">
+                  <span className="text-muted-foreground truncate max-w-[200px]">{r.name}</span>
+                  <span className="text-muted-foreground">
+                    {r.discount_amount !== 0 ?
+                    `${r.discount_amount > 0 ? "+" : "-"} S/ ${formatCurrency(Math.abs(r.discount_amount))}` :
+                    includedIn}
+                  </span>
+                </div>
+                {applications.length > 0 &&
+                <ul className="ml-1 mt-0.5 flex flex-col gap-0.5 border-l pl-2 text-muted-foreground">
+                    {applications.map((a, j) =>
+                  <li key={j} className="flex justify-between gap-2">
+                        <span>{ruleApplicationLabel(a)}</span>
+                        <span className="shrink-0">
+                          {`${a.discount_amount > 0 ? "-" : "+"} S/ ${formatCurrency(Math.abs(a.discount_amount))}`}
+                        </span>
+                      </li>
+                  )}
+                  </ul>
+                }
+              </div>);
+          })}
 
           {discountAmount !== 0 &&
           <div className="flex justify-between">

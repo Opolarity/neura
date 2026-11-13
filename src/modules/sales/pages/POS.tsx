@@ -111,6 +111,8 @@ export default function POS() {
                 appliedRules={pos.appliedRules}
                 ruleDiscounts={pos.ruleDiscounts}
                 shippingRule={pos.shippingRule}
+                ruleApplications={pos.ruleApplications}
+                variationRuleSavings={pos.variationRuleSavings}
                 couponCode={pos.couponCode}
                 couponError={pos.couponError}
                 onApplyCoupon={pos.applyCoupon}
@@ -183,6 +185,7 @@ export default function POS() {
                 discountAmount={pos.discountAmount}
                 ruleDiscounts={pos.ruleDiscounts}
                 shippingRule={pos.shippingRule}
+                ruleApplications={pos.ruleApplications}
                 shippingCost={pos.shippingCostValue}
                 total={pos.total}
 
