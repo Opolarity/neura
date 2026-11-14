@@ -837,9 +837,11 @@ export const useCreateSale = () => {
   }, []);
 
   // Load order data for editing (using consolidated Edge Function)
-  const loadOrderData = async (id: number) => {
+  // silent: recarga la venta sin el loader de pantalla completa (guardado desde
+  // el courier, que no debe desmontar la sección mientras genera la guía).
+  const loadOrderData = async (id: number, opts: { silent?: boolean } = {}) => {
     try {
-      setLoading(true);
+      if (!opts.silent) setLoading(true);
 
       // Parallel calls: order data + products
       const [data, productsData] = await Promise.all([
@@ -949,7 +951,7 @@ export const useCreateSale = () => {
       console.error("Error loading order:", error);
       toastError(error, "No se pudo cargar la venta");
     } finally {
-      setLoading(false);
+      if (!opts.silent) setLoading(false);
     }
   };
 
@@ -2183,57 +2185,51 @@ export const useCreateSale = () => {
     });
   };
 
-  // Handle form submission
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
+  // Validaciones previas a guardar (avisa con toast y devuelve false si falta algo).
+  const validateSale = (): boolean => {
+    if (products.length === 0) {
+      toast({
+        title: "Error",
+        description: "Agregue al menos un producto",
+        variant: "destructive",
+      });
+      return false;
+    }
 
-      if (products.length === 0) {
-        toast({
-          title: "Error",
-          description: "Agregue al menos un producto",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (!orderSituation) {
+      toast({
+        title: "Error",
+        description: "Seleccione un estado para el pedido",
+        variant: "destructive",
+      });
+      return false;
+    }
 
-      if (!orderSituation) {
-        toast({
-          title: "Error",
-          description: "Seleccione un estado para el pedido",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (!formData.saleType) {
+      toast({
+        title: "Error",
+        description: "Seleccione un canal de venta",
+        variant: "destructive",
+      });
+      return false;
+    }
 
-      if (!formData.saleType) {
-        toast({
-          title: "Error",
-          description: "Seleccione un canal de venta",
-          variant: "destructive",
-        });
-        return;
-      }
+    // Cupón aplicado que el motor aún no confirmó: guardar ahora lo dejaría sin
+    // registrar su uso.
+    if (!orderId && couponCode && !couponDiscountId) {
+      toast({
+        title: "Error",
+        description: COUPON_PENDING_MESSAGE,
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
 
-      // Cupón aplicado que el motor aún no confirmó: guardar ahora lo dejaría sin
-      // registrar su uso.
-      if (!orderId && couponCode && !couponDiscountId) {
-        toast({
-          title: "Error",
-          description: COUPON_PENDING_MESSAGE,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setSaving(true);
-
-      // Debug: Log saleType value being sent
-      console.log("[CreateSale] Submitting with saleType:", formData.saleType);
-
-      try {
-        // RUM: se mide la operacion completa (varias llamadas)
-        return await measure("venta_guardar", async () => {
+  // Guarda la venta (crea o actualiza, comprobantes y situación) y devuelve su id.
+  // No recarga ni navega: eso lo decide quien la llama. Los errores se propagan.
+  const persistSale = async (): Promise<number | null> => {
         const orderData = {
           documentType: isAnonymousPurchase ? "0" : formData.documentType,
           documentNumber: isAnonymousPurchase ? " " : formData.documentNumber,
@@ -2420,6 +2416,46 @@ export const useCreateSale = () => {
           setSavedOrderSituation(orderSituation);
         }
 
+        return createdOrderId;
+  };
+
+  const handleSaveError = (error: unknown) => {
+    console.error("Error saving sale:", error);
+    const couponReason = orderId ? null : couponErrorFromSave(error);
+    if (couponReason) {
+      // create-order no creó la venta porque el cupón ya no se puede usar. Se
+      // retira (el motor recalcula sin él) y la venta queda en pantalla.
+      setCouponCode(null);
+      setCouponDiscountId(null);
+      setCouponError(couponReason);
+      toast({
+        title: "Cupón retirado",
+        description: couponRemovedOnSaveMessage(couponReason),
+        variant: "destructive",
+      });
+    } else {
+      toastError(error, orderId
+          ? "No se pudo actualizar la venta"
+          : "No se pudo crear la venta");
+    }
+  };
+
+  // Handle form submission
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!validateSale()) return;
+
+      setSaving(true);
+
+      // Debug: Log saleType value being sent
+      console.log("[CreateSale] Submitting with saleType:", formData.saleType);
+
+      try {
+        // RUM: se mide la operacion completa (varias llamadas)
+        return await measure("venta_guardar", async () => {
+        await persistSale();
+
         toast({
           title: "Éxito",
           description: orderId
@@ -2435,24 +2471,7 @@ export const useCreateSale = () => {
         }
         });
       } catch (error) {
-        console.error("Error saving sale:", error);
-        const couponReason = orderId ? null : couponErrorFromSave(error);
-        if (couponReason) {
-          // create-order no creó la venta porque el cupón ya no se puede usar. Se
-          // retira (el motor recalcula sin él) y la venta queda en pantalla.
-          setCouponCode(null);
-          setCouponDiscountId(null);
-          setCouponError(couponReason);
-          toast({
-            title: "Cupón retirado",
-            description: couponRemovedOnSaveMessage(couponReason),
-            variant: "destructive",
-          });
-        } else {
-          toastError(error, orderId
-              ? "No se pudo actualizar la venta"
-              : "No se pudo crear la venta");
-        }
+        handleSaveError(error);
       } finally {
         setSaving(false);
       }
@@ -2479,6 +2498,57 @@ export const useCreateSale = () => {
       toast,
       navigate,
     ],
+  );
+
+  // ── Guardado desde el envío con courier ─────────────────────────────────
+  // El courier (cotizar con precio del courier, generar guía) lee la venta de la
+  // BD, así que antes se guarda lo que haya en pantalla, sin recargar la página.
+  // Se corre en el render siguiente al pedido: así toma el estado ya actualizado
+  // (p. ej. el costo de envío que se acaba de poner con "usar precio del courier"),
+  // con el total recalculado, y no el de la closure de quien lo pidió.
+  const saveInPlace = async (): Promise<number | null> => {
+    if (orderId && !isDirty) return parseInt(orderId);
+    if (!validateSale()) return null;
+    setSaving(true);
+    try {
+      const id = await measure("venta_guardar", () => persistSale());
+      if (!id) return null;
+      if (orderId) {
+        // Vuelve a leer la venta: ids de pagos y comprobantes subidos, productos
+        // originales (para no repetir devoluciones) y el snapshot de isDirty.
+        await loadOrderData(id, { silent: true });
+        toast({ title: "Venta guardada", variant: "success" });
+      } else {
+        toast({ title: "Venta creada correctamente", variant: "success" });
+        navigate(`/sales/edit/${id}`, { replace: true });
+      }
+      return id;
+    } catch (error) {
+      handleSaveError(error);
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  };
+  const saveInPlaceRef = useRef(saveInPlace);
+  saveInPlaceRef.current = saveInPlace;
+  const pendingSaves = useRef<Array<(id: number | null) => void>>([]);
+  const [saveTick, setSaveTick] = useState(0);
+  useEffect(() => {
+    if (saveTick === 0 || pendingSaves.current.length === 0) return;
+    const waiting = pendingSaves.current;
+    pendingSaves.current = [];
+    saveInPlaceRef.current().then((id) => waiting.forEach((resolve) => resolve(id)));
+  }, [saveTick]);
+
+  /** Guarda la venta sin recargar; resuelve con su id o null si no se pudo. */
+  const requestSaveInPlace = useCallback(
+    () =>
+      new Promise<number | null>((resolve) => {
+        pendingSaves.current.push(resolve);
+        setSaveTick((t) => t + 1);
+      }),
+    [],
   );
 
   // ── Cancelación de pedido ────────────────────────────────────────────────
@@ -2649,6 +2719,7 @@ export const useCreateSale = () => {
     removeProduct,
     updateProduct,
     handleSubmit,
+    requestSaveInPlace,
     navigate,
 
     // Change entry actions

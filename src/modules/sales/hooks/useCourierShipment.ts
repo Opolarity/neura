@@ -41,6 +41,9 @@ export const useCourierShipment = (orderId: number | null) => {
     enabled: orderId != null,
   });
   const setFreightChoice = (payer: FreightPayer) => queryClient.setQueryData(freightKey, payer);
+  // Generar, anular o desvincular cambia lo que hay que pagar en la billetera
+  // (Envíos › Pagos de guías).
+  const refreshPayments = () => queryClient.invalidateQueries({ queryKey: ["courier-payments"] });
 
   const raw = query.data?.shipment ?? null;
   const shipment: CourierShipment | null = raw
@@ -62,6 +65,7 @@ export const useCourierShipment = (orderId: number | null) => {
     mutationFn: (pickupKey: string | null) => createCourierShipment(orderId!, pickupKey, freightChoice),
     onSuccess: ({ label, ...data }) => {
       setOrderCourier(keepCod(data));
+      refreshPayments();
       const number = data.shipment?.trackingNumber;
       toast({ title: number ? `Guía ${number} generada` : "Guía generada", variant: "success" });
       if (label && number) openPdf(label, `rotulo-${number}.pdf`);
@@ -85,6 +89,7 @@ export const useCourierShipment = (orderId: number | null) => {
     mutationFn: () => cancelCourierShipment(orderId!),
     onSuccess: (data) => {
       setOrderCourier(keepCod(data));
+      refreshPayments();
       toast({ title: "Guía anulada en Shalom", variant: "success" });
     },
     onError: (error) => toastError(error, "No se pudo anular la guía"),
@@ -92,7 +97,10 @@ export const useCourierShipment = (orderId: number | null) => {
 
   const remove = useMutation({
     mutationFn: () => removeCourierShipment(orderId!),
-    onSuccess: (data) => setOrderCourier(keepCod(data)),
+    onSuccess: (data) => {
+      setOrderCourier(keepCod(data));
+      refreshPayments();
+    },
     onError: (error) => toastError(error, "No se pudo quitar el envío"),
   });
 
