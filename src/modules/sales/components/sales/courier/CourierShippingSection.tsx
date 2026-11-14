@@ -3,11 +3,11 @@ import {
   Check,
   ChevronDown,
   Download,
-  ExternalLink,
   Loader2,
   PackageSearch,
   RefreshCw,
   Truck,
+  Wallet,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,11 @@ interface CourierShippingSectionProps {
   currentMethodName?: string;
   /** "Usar el precio del courier": cambia el costo de envío del formulario. */
   onUseCourierPrice: (cost: number) => void;
+  /**
+   * Guarda la venta con lo que hay en pantalla (sin recargar) antes de que el
+   * courier la lea de la BD. Resuelve false si no se pudo guardar.
+   */
+  onSaveSale: () => Promise<boolean>;
   /** Contra entrega de la venta y el saldo que se cobra. */
   cashOnDelivery: { enabled: boolean; balance: number };
   /**
@@ -125,10 +130,12 @@ export function CourierShippingSection({
   currentShippingCost,
   currentMethodName,
   onUseCourierPrice,
+  onSaveSale,
   cashOnDelivery,
   locked = false,
 }: CourierShippingSectionProps) {
   const { toast } = useToast();
+  const [savingSale, setSavingSale] = useState(false);
   const [calculateOpen, setCalculateOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -185,14 +192,30 @@ export function CourierShippingSection({
 
   const hasDestination = !!destination.stateName;
 
+  const saveSale = async () => {
+    setSavingSale(true);
+    try {
+      return await onSaveSale();
+    } finally {
+      setSavingSale(false);
+    }
+  };
+
+  // La guía se registra con la dirección y el cliente guardados: primero se
+  // guarda lo que haya en pantalla.
+  const handleConfirmCreate = async () => {
+    if (!(await saveSale())) return;
+    createShipment(needsPickupKey ? pickupKey : null);
+  };
+
   const handleApply = async (option: CourierQuoteOption, useCourierPrice: boolean) => {
     await applyQuote(option);
     if (useCourierPrice) {
       onUseCourierPrice(option.cost);
-      toast({
-        title: "Envío aplicado",
-        description: `Costo de envío: ${formatSoles(option.cost)}. Guarda la venta con "Actualizar Venta".`,
-      });
+      // Se guarda solo: el costo nuevo entra en el total sin "Actualizar Venta".
+      if (await saveSale()) {
+        toast({ title: "Envío aplicado", description: `Costo de envío: ${formatSoles(option.cost)}.` });
+      }
     } else {
       toast({ title: "Envío aplicado", description: "Se mantuvo el precio actual." });
     }
@@ -295,6 +318,15 @@ export function CourierShippingSection({
                   )}
                   Rótulo
                 </Button>
+                {/* Olva con pago online pendiente (link de PagoEfectivo vigente). */}
+                {shipment.paymentUrl && (
+                  <Button type="button" variant="outline" size="sm" asChild>
+                    <a href={shipment.paymentUrl} target="_blank" rel="noreferrer">
+                      <Wallet className="mr-2 h-4 w-4" />
+                      Pagar flete
+                    </a>
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="outline"
@@ -378,8 +410,8 @@ export function CourierShippingSection({
           {/* 4. Acciones antes de la guía */}
           {!shipment.trackingNumber && (
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" onClick={handleGenerateClick} disabled={isCreating || locked}>
-                {isCreating ? (
+              <Button type="button" onClick={handleGenerateClick} disabled={isCreating || savingSale || locked}>
+                {isCreating || savingSale ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Truck className="mr-2 h-4 w-4" />
@@ -406,18 +438,7 @@ export function CourierShippingSection({
             </div>
           )}
 
-          {/* Avisos de la guía: pago del flete en Olva o rastreo caído */}
-          {shipment.trackingNumber && shipment.paymentUrl && (
-            <a
-              href={shipment.paymentUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-sm font-medium hover:underline"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Pagar el flete en Olva
-            </a>
-          )}
+          {/* Aviso de la guía: rastreo caído */}
           {shipment.trackingError && (
             <p className="text-xs text-muted-foreground">
               No se pudo consultar el estado: {shipment.trackingError}
@@ -507,7 +528,7 @@ export function CourierShippingSection({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => createShipment(needsPickupKey ? pickupKey : null)}>
+            <AlertDialogAction onClick={handleConfirmCreate}>
               Generar guía
             </AlertDialogAction>
           </AlertDialogFooter>

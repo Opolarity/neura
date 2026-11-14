@@ -210,6 +210,7 @@ const CreateSale = () => {
     removeProduct,
     updateProduct,
     handleSubmit,
+    requestSaveInPlace,
     navigate,
     // Notes actions
     setNewNoteText,
@@ -1514,11 +1515,24 @@ const CreateSale = () => {
                     onUseCourierPrice={(cost) =>
                       handleInputChange("shippingCost", cost.toFixed(2))
                     }
+                    onSaveSale={async () => (await requestSaveInPlace()) != null}
                   />
                 ) : (
-                  <p className="border-t pt-4 text-xs text-muted-foreground">
-                    Guarda la venta para calcular el envío con Olva o Shalom.
-                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4">
+                    <p className="text-xs text-muted-foreground">
+                      El envío con Olva o Shalom se calcula sobre la venta creada.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={saving || !formData.withShipping}
+                      onClick={() => requestSaveInPlace()}
+                    >
+                      {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Crear venta y calcular envío
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>
