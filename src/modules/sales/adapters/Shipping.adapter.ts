@@ -3,6 +3,7 @@ import {
   ShippingApiResponse,
   ShippingDetails,
   ShippingDetailsApiResponse,
+  isCourierMethodCode,
 } from "../types/Shipping.types";
 import { PaginationState } from "@/shared/components/pagination/Pagination";
 
@@ -17,6 +18,8 @@ export const shippingAdapter = (response?: ShippingApiResponse) => {
       maxCost: item.max_cost ?? 0,
       zones: item.zones ?? "",
       channels: item.channels ?? [],
+      courierCode: isCourierMethodCode(item.code) ? item.code : null,
+      branchName: item.branch_name ?? null,
     }),
   );
 
@@ -39,6 +42,17 @@ export const shippingDetailsAdapter = (
     name: shipping?.name ?? "",
     code: shipping?.code ?? "",
     channelIds: shipping?.channel_ids ?? [],
+    branchId: shipping?.branch_id ?? null,
+    courierCode: isCourierMethodCode(shipping?.courier_code)
+      ? shipping!.courier_code!
+      : isCourierMethodCode(shipping?.code)
+        ? shipping!.code
+        : null,
+    courierOriginId: shipping?.courier_origin_id ?? null,
+    courierOriginLabel: shipping?.courier_origin_label ?? null,
+    courierPackageId: shipping?.courier_package_id ?? null,
+    shalomConnected: shipping?.shalom_connected === true,
+    shalomUsername: shipping?.shalom_username ?? null,
     costs: Array.isArray(shipping?.shipping_costs)
       ? shipping!.shipping_costs.map((cost) => ({
           id: cost.id,

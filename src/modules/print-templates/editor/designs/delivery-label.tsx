@@ -159,6 +159,32 @@ export function deliveryLabelDesign(
               ),
             ],
           ),
+          // Cobro al entregar y flete, en un recuadro que se vea de lejos.
+          box(
+            {
+              direction: "column",
+              alignX: "center",
+              gapMm: 1,
+              margin: sides({ top: 4, right: 2, left: 2 }),
+              padding: sides({ top: 2, right: 2, bottom: 2, left: 2 }),
+              borderWidth: sides({ top: 0.6, right: 0.6, bottom: 0.6, left: 0.6 }),
+              ...hideIfEmpty("paymentNotice", "delivery_label"),
+            },
+            [
+              shipping("paymentNotice", {
+                fontSizePt: 14,
+                align: "center",
+                widthMode: "fill",
+                letterSpacingPt: SPACED,
+              }),
+              shipping("freightNotice", {
+                fontSizePt: 10,
+                align: "center",
+                widthMode: "fill",
+                ...hideIfEmpty("freightNotice", "delivery_label"),
+              }),
+            ],
+          ),
         ],
       )}
     </Element>

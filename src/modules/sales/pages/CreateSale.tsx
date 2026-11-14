@@ -92,6 +92,16 @@ import { useAuth } from "@/modules/auth";
 import { WhatsAppIcon } from "@/shared/components/WhatsAppIcon";
 import { shippingRuleName } from "../rules/shippingRule";
 import { CouponInput } from "../components/CouponInput";
+import { CourierShippingSection } from "../components/sales/courier/CourierShippingSection";
+import { CashOnDeliverySection } from "../components/sales/courier/CashOnDeliverySection";
+import { useCashOnDelivery } from "../hooks/useCashOnDelivery";
+import { useCourierShipment } from "../hooks/useCourierShipment";
+import { COURIER_NAMES } from "../types/Couriers.types";
+import {
+  freightNotice,
+  getPendingBalance,
+  paymentNotice,
+} from "../utils/couriers";
 
 const hasHtmlTags = (text: string) => /<\/?[a-z][\s\S]*>/i.test(text);
 
@@ -200,6 +210,7 @@ const CreateSale = () => {
     removeProduct,
     updateProduct,
     handleSubmit,
+    requestSaveInPlace,
     navigate,
     // Notes actions
     setNewNoteText,
@@ -257,6 +268,16 @@ const CreateSale = () => {
     // Signals
     lastSavedAt,
   } = useCreateSale();
+
+  // Contra entrega y courier (Olva / Shalom), ver services/Couriers.service.ts.
+  const pendingBalance = getPendingBalance(payments, total);
+  const { cod, saveCod } = useCashOnDelivery(createdOrderId ?? null);
+  const { shipment: courierShipment } = useCourierShipment(createdOrderId ?? null);
+  // Con courier aplicado, el método de envío de la venta es Olva / Shalom.
+  const courierMethodName = courierShipment
+    ? COURIER_NAMES[courierShipment.option.courier]
+    : null;
+  const codActive = !!cod?.enabled && pendingBalance > 0;
 
   const [invoicesModalOpen, setInvoicesModalOpen] = useState(false);
   const [returnsModalOpen, setReturnsModalOpen] = useState(false);
@@ -1260,7 +1281,12 @@ const CreateSale = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Método de Envío</Label>
-                    {availableShippingCosts.length > 0 ? (
+                    {courierMethodName ? (
+                      <div className="text-sm p-2 border rounded-md bg-muted/50">
+                        {courierMethodName}{" "}
+                        <span className="text-muted-foreground">· courier</span>
+                      </div>
+                    ) : availableShippingCosts.length > 0 ? (
                       <Select
                         value={formData.shippingMethod}
                         onValueChange={(v) =>
@@ -1300,7 +1326,7 @@ const CreateSale = () => {
                       }
                       placeholder="0"
                       className="w-full text-right"
-                      disabled={!formData.shippingMethod}
+                      disabled={!formData.shippingMethod && !courierMethodName}
                     />
                     {/* T-1158: si una regla bajó el envío, el costo del método tachado. */}
                     {shippingCostBeforeRule != null && (
@@ -1446,6 +1472,69 @@ const CreateSale = () => {
                   </div>
                 </div>
               </CardContent>
+
+              {/* Envío con courier (Olva / Shalom): fuera del bloqueo de arriba
+                  para poder seguir el estado cuando el pedido ya salió. */}
+              <CardContent className="pt-0 space-y-4">
+                {createdOrderId && (
+                  <CashOnDeliverySection
+                    cod={cod}
+                    onChange={saveCod}
+                    balance={pendingBalance}
+                    disabled={isPhySituation || !formData.withShipping}
+                  />
+                )}
+                {createdOrderId ? (
+                  <CourierShippingSection
+                    cashOnDelivery={{ enabled: codActive, balance: pendingBalance }}
+                    locked={isPhySituation || !formData.withShipping}
+                    orderId={createdOrderId}
+                    destination={{
+                      stateName: filteredStates.find(
+                        (s) => s.id.toString() === formData.stateId,
+                      )?.name,
+                      cityName: filteredCities.find(
+                        (c) => c.id.toString() === formData.cityId,
+                      )?.name,
+                      neighborhoodName: filteredNeighborhoods.find(
+                        (n) => n.id.toString() === formData.neighborhoodId,
+                      )?.name,
+                      address: formData.address || undefined,
+                      reference: formData.addressReference || undefined,
+                      countryId: Number(formData.countryId) || undefined,
+                      stateId: Number(formData.stateId) || undefined,
+                      cityId: Number(formData.cityId) || undefined,
+                      neighborhoodId: Number(formData.neighborhoodId) || undefined,
+                    }}
+                    currentShippingCost={Number(formData.shippingCost) || 0}
+                    currentMethodName={
+                      availableShippingCosts.find(
+                        (s) => s.id.toString() === formData.shippingMethod,
+                      )?.name
+                    }
+                    onUseCourierPrice={(cost) =>
+                      handleInputChange("shippingCost", cost.toFixed(2))
+                    }
+                    onSaveSale={async () => (await requestSaveInPlace()) != null}
+                  />
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4">
+                    <p className="text-xs text-muted-foreground">
+                      El envío con Olva o Shalom se calcula sobre la venta creada.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={saving || !formData.withShipping}
+                      onClick={() => requestSaveInPlace()}
+                    >
+                      {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Crear venta y calcular envío
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
             </Card>
           )}
         </form>
@@ -1522,6 +1611,8 @@ const CreateSale = () => {
                         stateName: stateObj?.name,
                         neighborhoodName: neighObj?.name,
                         senderAddress: userBranchAddress,
+                        paymentNotice: paymentNotice(cod, pendingBalance),
+                        freightNotice: freightNotice(courierShipment),
                       });
                     }}
                   >
@@ -1556,7 +1647,7 @@ const CreateSale = () => {
                         stateName: stateObj?.name,
                         cityName: cityObj?.name,
                         neighborhoodName: neighObj?.name,
-                        shippingMethodName: shippingObj?.name,
+                        shippingMethodName: courierMethodName ?? shippingObj?.name,
                         saleDate: formData.saleDate,
                         orderId: createdOrderId ?? undefined,
                         direccionPartida: userBranchAddress,
