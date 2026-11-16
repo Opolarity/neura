@@ -30,6 +30,10 @@ interface SupportConversationProps {
 const EVENT_LABEL: Record<string, string> = {
   approved: "La solicitud fue aprobada y convertida en tarea.",
   rejected: "La solicitud fue revisada y descartada.",
+  // S-103: los que Tasks manda hoy con content vacío
+  converted_to_task: "La solicitud fue aceptada y convertida en tarea.",
+  closed: "La solicitud fue cerrada.",
+  reopened: "La solicitud fue reabierta.",
 };
 
 /** Mensajes seguidos del mismo autor dentro de este margen van agrupados. */
