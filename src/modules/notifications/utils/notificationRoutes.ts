@@ -21,6 +21,8 @@ export function getNotificationPath(
   notification: Notification,
   userPermissionCodes: string[],
 ): string | null {
+  // S-103: la notificación trae su destino (ej: /support?open=<id>).
+  if (notification.linkPath) return notification.linkPath;
   for (const code of notification.permissionCodes) {
     const path = routeByCode.get(code);
     if (path && userPermissionCodes.includes(code)) return path;

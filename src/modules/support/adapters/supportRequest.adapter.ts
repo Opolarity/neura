@@ -127,6 +127,8 @@ export const adaptSupportRequestDetail = (
     lastMessageAt: item.last_message_at ?? null,
     // El detalle no calcula no leídos: abrirlo es justamente leerlo
     hasUnread: false,
+    // El detalle no consulta el dueño (S-103): solo lo usa el toast del listado
+    isMine: false,
     lastMessage: adaptLastMessage(item.last_message),
   };
 };
