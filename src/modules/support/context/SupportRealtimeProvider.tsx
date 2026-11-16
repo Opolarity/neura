@@ -127,7 +127,12 @@ export function SupportRealtimeProvider({ children }: { children: ReactNode }) {
     try {
       const { requests } = adaptSupportRequestsResponse(await getSupportRequestsByIds(ids));
       requests
-        .filter((request) => request.hasUnread && request.id !== openRequestRef.current)
+        // S-103: el toast es solo para quien creó la solicitud (el resto de
+        // la empresa ve el "no leído" en el listado, sin aviso)
+        .filter(
+          (request) =>
+            request.isMine && request.hasUnread && request.id !== openRequestRef.current,
+        )
         .forEach((request) => {
           const code = request.code !== null ? `S-${request.code} · ` : "";
           toast({

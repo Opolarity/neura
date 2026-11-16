@@ -52,6 +52,7 @@ export const adaptSupportRequestsResponse = (
       createdAt: item.created_at,
       updatedAt: item.updated_at,
       hasUnread: item.has_unread === true,
+      isMine: item.is_mine === true,
       lastMessage: adaptLastMessage(item.last_message),
     };
   });

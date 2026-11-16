@@ -65,7 +65,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
       if (notifyNew) {
         page.items
-          .filter((n) => !knownIds.current.has(n.id) && !n.isRead)
+          // Las personales (hoy solo "soporte respondió", S-103) no suenan aquí:
+          // SupportRealtimeProvider ya muestra su toast con el botón "Ver".
+          .filter((n) => !knownIds.current.has(n.id) && !n.isRead && !n.isPersonal)
           .forEach((n) => toast({ title: n.title, description: n.message ?? undefined, variant: "info" }));
       }
 

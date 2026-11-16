@@ -10,6 +10,10 @@ export interface NotificationApi {
   module_code: string | null;
   entity_id: string | null;
   permission_codes: string[];
+  /** Destino explícito del click (S-103). Opcional: backend anterior no lo manda. */
+  link_path?: string | null;
+  /** Notificación personal, de un solo destinatario (S-103). */
+  is_personal?: boolean;
   created_at: string;
   is_read: boolean;
   read_at: string | null;
@@ -33,6 +37,10 @@ export interface Notification {
   moduleCode: string | null;
   entityId: string | null;
   permissionCodes: string[];
+  /** Ruta a la que lleva el click; null = se deriva de permissionCodes. */
+  linkPath: string | null;
+  /** Solo para el usuario de la sesión (ej: "soporte respondió tu ticket"). */
+  isPersonal: boolean;
   createdAt: string;
   isRead: boolean;
   readAt: string | null;

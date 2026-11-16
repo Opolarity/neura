@@ -20,6 +20,8 @@ export function adaptNotification(raw: NotificationApi): Notification {
     moduleCode: raw.module_code ?? null,
     entityId: raw.entity_id ?? null,
     permissionCodes: raw.permission_codes ?? [],
+    linkPath: typeof raw.link_path === 'string' && raw.link_path.startsWith('/') ? raw.link_path : null,
+    isPersonal: raw.is_personal === true,
     createdAt: raw.created_at,
     isRead: !!raw.is_read,
     readAt: raw.read_at ?? null,

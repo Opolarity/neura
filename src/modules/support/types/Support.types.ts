@@ -70,6 +70,11 @@ export interface SupportRequestApiItem {
    * lo calcula get-support-requests). Opcional: backend anterior no lo manda.
    */
   has_unread?: boolean;
+  /**
+   * La creó el usuario de la sesión (S-103, lo calcula get-support-requests).
+   * Opcional: backend anterior no lo manda.
+   */
+  is_mine?: boolean;
 }
 
 /** Último mensaje del hilo tal como lo devuelve la API (sin contenido). */
@@ -151,6 +156,8 @@ export interface SupportRequestListItem {
   updatedAt: string;
   /** Hay respuestas de soporte sin leer (false si el backend no lo informa). */
   hasUnread: boolean;
+  /** La creó el usuario de la sesión (false si el backend no lo informa). */
+  isMine: boolean;
   /** Último mensaje del hilo; null sin conversación o con API anterior. */
   lastMessage: SupportLastMessage | null;
 }
