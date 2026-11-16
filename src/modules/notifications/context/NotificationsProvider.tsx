@@ -123,6 +123,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       knownIds.current = new Set();
       setUnreadCount(0);
       setHasMore(false);
+      // La próxima sesión arranca "cargando": quien compara contra la primera
+      // página (el toast de soporte, S-103) no toma el feed vacío como base.
+      setLoading(true);
       return;
     }
 

@@ -7,14 +7,13 @@ import {
   useRef,
   type ReactNode,
 } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { ToastAction } from "@/components/ui/toast";
 import { toast } from "@/shared/hooks/use-toast";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
-import { getSupportRequestsByIds } from "../services/SupportRequests.service";
-import { adaptSupportRequestsResponse } from "../adapters/supportRequests.adapter";
+import { useNotifications } from "@/modules/notifications/hooks/useNotifications";
 import { useSupportUnread } from "./SupportUnreadProvider";
 
 /** Recibe los ids de las solicitudes con respuesta nueva (ya agrupados). */
@@ -36,7 +35,7 @@ const SupportRealtimeContext = createContext<SupportRealtimeContextType>({
 const CHANNEL = "support-requests";
 const EVENT = "support_reply";
 
-/** Ventana para agrupar ráfagas: N eventos seguidos = un refetch y un toast por solicitud. */
+/** Ventana para agrupar ráfagas: N eventos seguidos = un solo refetch. */
 const DEBOUNCE_MS = 1_000;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -61,13 +60,15 @@ const DISCONNECT_WAIT_TRIES = 20;
 /**
  * Tiempo real del chat de soporte (T-997). UN solo canal para toda la app:
  * cuando el backend avisa que soporte respondió, se reparte la señal al
- * detalle abierto, al listado y al contador del menú, y se muestra un toast.
+ * detalle abierto, al listado y al contador del menú.
  *
  * El evento es SOLO una señal: viaja por un canal público (cualquiera con la
- * anon key podría emitirlo), así que nunca se pinta su contenido. Todo se
- * vuelve a pedir al servidor y el toast sale solo si el servidor confirma que
- * esa solicitud tiene respuestas sin leer; el S-n y el título salen de esa
- * respuesta, no del evento.
+ * anon key podría emitirlo), así que nunca se pinta su contenido; todo se
+ * vuelve a pedir al servidor.
+ *
+ * El toast (S-103) sale de la notificación personal que el backend crea para
+ * el dueño de la solicitud: solo le llega a él y dice qué pasó (respuesta,
+ * rechazo, cierre o tarea creada).
  *
  * Vive en DashboardLayout (dentro del router, para poder navegar desde el
  * toast) y solo con sesión. El polling de 20 s del detalle sigue como
@@ -80,13 +81,10 @@ export function SupportRealtimeProvider({ children }: { children: ReactNode }) {
   // usuario (onAuthStateChange y getSession) y eso volvía a crear el canal.
   const userId = user?.id ?? null;
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const { refresh: refreshUnreadCount } = useSupportUnread();
 
   const listenersRef = useRef(new Set<SupportReplyListener>());
   const openRequestRef = useRef<string | null>(null);
-  const pathnameRef = useRef(pathname);
-  pathnameRef.current = pathname;
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
   const refreshCountRef = useRef(refreshUnreadCount);
@@ -120,41 +118,56 @@ export function SupportRealtimeProvider({ children }: { children: ReactNode }) {
       }
     });
     refreshCountRef.current();
-
-    // En la propia pantalla de Tickets la fila ya se marca: no hace falta toast
-    if (pathnameRef.current === "/support") return;
-
-    try {
-      const { requests } = adaptSupportRequestsResponse(await getSupportRequestsByIds(ids));
-      requests
-        // S-103: el toast es solo para quien creó la solicitud (el resto de
-        // la empresa ve el "no leído" en el listado, sin aviso)
-        .filter(
-          (request) =>
-            request.isMine && request.hasUnread && request.id !== openRequestRef.current,
-        )
-        .forEach((request) => {
-          const code = request.code !== null ? `S-${request.code} · ` : "";
-          toast({
-            title: "Soporte respondió tu solicitud",
-            description: `${code}${request.title}`,
-            action: (
-              <ToastAction
-                altText="Ver la solicitud"
-                onClick={() =>
-                  navigateRef.current(`/support?open=${encodeURIComponent(request.id)}`)
-                }
-              >
-                Ver
-              </ToastAction>
-            ),
-          });
-        });
-    } catch (error) {
-      // Sin confirmación del servidor no hay toast: el aviso es prescindible
-      console.error("[support-realtime] no se pudo confirmar la respuesta:", error);
-    }
+    // S-103: el toast ya no sale de aquí. Lo da la notificación personal del
+    // dueño (efecto de abajo), que sabe QUÉ pasó: respuesta, rechazo, cierre o
+    // tarea creada. Esta señal solo refresca detalle, listado y contador.
   }, []);
+
+  // S-103: toast de las notificaciones personales nuevas (solo le llegan al
+  // dueño de la solicitud), con su título real y el botón "Ver". Lo que ya
+  // estaba sin leer al cargar no suena: sigue en la campana.
+  const {
+    notifications,
+    loading: notificationsLoading,
+    markAsRead: markNotificationRead,
+  } = useNotifications();
+  const toastedRef = useRef<Set<number> | null>(null);
+  useEffect(() => {
+    toastedRef.current = null;
+  }, [userId]);
+  useEffect(() => {
+    if (!userId || notificationsLoading) return;
+    const personal = notifications.filter((n) => n.isPersonal && !n.isRead);
+    if (toastedRef.current === null) {
+      toastedRef.current = new Set(personal.map((n) => n.id));
+      return;
+    }
+    const seen = toastedRef.current;
+    personal
+      .filter((n) => !seen.has(n.id))
+      .forEach((n) => {
+        seen.add(n.id);
+        // Con esa solicitud abierta en el detalle, el hilo ya lo muestra
+        if (n.entityId && n.entityId === openRequestRef.current) return;
+        const linkPath = n.linkPath;
+        toast({
+          title: n.title,
+          description: n.message ?? undefined,
+          variant: "info",
+          action: linkPath ? (
+            <ToastAction
+              altText="Ver la solicitud"
+              onClick={() => {
+                void markNotificationRead(n.id);
+                navigateRef.current(linkPath);
+              }}
+            >
+              Ver
+            </ToastAction>
+          ) : undefined,
+        });
+      });
+  }, [userId, notifications, notificationsLoading, markNotificationRead]);
 
   useEffect(() => {
     if (!userId) return;
