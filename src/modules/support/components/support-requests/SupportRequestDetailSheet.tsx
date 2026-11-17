@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
@@ -19,8 +19,6 @@ import type {
   SupportRequestDetail,
 } from "../../types/Support.types";
 import { formatSupportCodes } from "../../utils/requestCodes";
-import { SupportRichText } from "./SupportRichText";
-import { SupportAttachmentLink } from "./SupportAttachmentLink";
 import { SupportConversation } from "./SupportConversation";
 import { SupportReplyBox } from "./SupportReplyBox";
 import { SupportRequestsErrorState } from "./SupportRequestsErrorState";
@@ -94,37 +92,6 @@ const DetailBody = ({ detail }: { detail: SupportRequestDetail }) => {
 
       <Separator />
 
-      <div className="space-y-2">
-        <SectionTitle>Descripción</SectionTitle>
-        {detail.descriptionHtml ? (
-          // Una palabra o URL larga baja de línea en vez de dar scroll horizontal
-          <SupportRichText
-            html={detail.descriptionHtml}
-            className="[overflow-wrap:anywhere]"
-          />
-        ) : (
-          <p className="text-sm text-muted-foreground">Sin descripción.</p>
-        )}
-      </div>
-
-      {detail.attachments.length > 0 && (
-        <>
-          <Separator />
-          <div className="space-y-2">
-            <SectionTitle>Adjuntos ({detail.attachments.length})</SectionTitle>
-            <ul className="space-y-1">
-              {detail.attachments.map((file) => (
-                <li key={file.id}>
-                  <SupportAttachmentLink file={file} />
-                </li>
-              ))}
-            </ul>
-          </div>
-        </>
-      )}
-
-      <Separator />
-
       <div className="space-y-3">
         <SectionTitle>Seguimiento</SectionTitle>
         {task ? (
@@ -180,9 +147,9 @@ const DetailBody = ({ detail }: { detail: SupportRequestDetail }) => {
 };
 
 /**
- * Panel lateral de la solicitud con dos pestañas: Detalle (datos, descripción,
- * adjuntos y seguimiento de la tarea) y Chat (el hilo con el equipo de
- * soporte). La caja de respuesta queda fija abajo en las dos.
+ * Panel lateral de la solicitud con dos pestañas: Chat (la descripción como
+ * primer mensaje y el hilo con el equipo de soporte) y Detalle (datos y
+ * seguimiento de la tarea). La caja de respuesta queda fija abajo en las dos.
  */
 export const SupportRequestDetailSheet = ({
   open,
@@ -205,15 +172,31 @@ export const SupportRequestDetailSheet = ({
   const chatCount = messages.filter((m) => m.origin !== "system").length;
   const supportCount = messages.filter((m) => m.origin === "internal").length;
 
-  // Pestaña elegida por solicitud. Sin elección, se entra por el chat si ya
-  // hay conversación; si no, por el detalle, que es lo primero que hay que leer.
+  // La descripción (con sus adjuntos) abre el chat como primer mensaje de
+  // quien reportó: el hilo se lee entero en un solo lugar. No viene de la API,
+  // así que no cuenta en el "(n)" de la pestaña.
+  const chatMessages = useMemo<SupportMessage[]>(() => {
+    if (!detail || (!detail.descriptionHtml && detail.attachments.length === 0)) {
+      return messages;
+    }
+    const description: SupportMessage = {
+      id: `description-${detail.id}`,
+      origin: "external",
+      authorName: detail.reporterName || null,
+      event: null,
+      content: "",
+      descriptionHtml: detail.descriptionHtml,
+      createdAt: detail.createdAt,
+      attachments: detail.attachments,
+    };
+    return [description, ...messages];
+  }, [detail, messages]);
+
+  // Pestaña elegida por solicitud. Sin elección se entra por el chat: ahí
+  // está la descripción, que es lo primero que hay que leer.
   const [tabChoice, setTabChoice] = useState<{ id: string; tab: SheetTab } | null>(null);
   const tab: SheetTab =
-    tabChoice && tabChoice.id === detailId
-      ? tabChoice.tab
-      : detail && detail.messages.length > 0
-        ? "chat"
-        : "detail";
+    tabChoice && tabChoice.id === detailId ? tabChoice.tab : "chat";
   const selectTab = (next: SheetTab) => {
     if (detailId) setTabChoice({ id: detailId, tab: next });
   };
@@ -331,7 +314,7 @@ export const SupportRequestDetailSheet = ({
                 className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
               >
                 <SupportConversation
-                  messages={messages}
+                  messages={chatMessages}
                   refreshError={refreshError}
                   onRetryMessage={onRetryMessage}
                   onDiscardMessage={onDiscardMessage}
