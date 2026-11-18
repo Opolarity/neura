@@ -29,7 +29,6 @@ import type {
 import type {
   ChatbotPromptSettingHistoryResponse,
   ChatbotPromptSettingSaveResponse,
-  ChatbotPromptSettingsDiscardResponse,
   ChatbotPromptSettingsListResponse,
   ChatbotPromptSettingsPublishResponse,
 } from "../types/chatbotBehavior.types";
@@ -648,11 +647,6 @@ export const saveChatbotPromptSettingDraftApi = async (
 export const publishChatbotPromptSettingsApi = async (): Promise<ChatbotPromptSettingsPublishResponse> => {
   const { data, error } = await db.rpc("sp_crm_chatbot_prompt_settings_publish");
   return unwrap(data as ChatbotPromptSettingsPublishResponse | null, error, "No se pudo publicar.");
-};
-
-export const discardChatbotPromptSettingsApi = async (): Promise<ChatbotPromptSettingsDiscardResponse> => {
-  const { data, error } = await db.rpc("sp_crm_chatbot_prompt_settings_discard", {});
-  return unwrap(data as ChatbotPromptSettingsDiscardResponse | null, error, "No se pudieron descartar los cambios.");
 };
 
 /** Lo que se publicó de un ajuste, del más nuevo al más viejo (audit_log). */
