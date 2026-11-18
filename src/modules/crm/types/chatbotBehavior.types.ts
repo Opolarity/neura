@@ -85,12 +85,6 @@ export interface ChatbotPromptSettingsPublishResponse {
   published?: number;
 }
 
-export interface ChatbotPromptSettingsDiscardResponse {
-  success: boolean;
-  error?: string;
-  discarded?: number;
-}
-
 export interface ChatbotPromptSettingHistoryResponse {
   success: boolean;
   error?: string;
