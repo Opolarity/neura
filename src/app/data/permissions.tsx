@@ -139,6 +139,10 @@ interface RoutePermission extends WithNode<ComponentPermission> {
   // Obligatorio: decide si la ruta aparece en el sidebar. Antes se deducía del
   // path (las que tenían `:` no se mostraban), ahora es explícito.
   showSidebar: boolean;
+  // Lienzo propio: la ruta se monta a pantalla completa, fuera del
+  // DashboardLayout (sin sidebar ni header del ERP), y el sidebar la abre en
+  // una pestaña nueva. Hoy solo los chats del CRM (CrmCanvasLayout).
+  canvas?: boolean;
 }
 interface SubModulePermission extends WithNode<RoutePermission> { }
 interface ModulePermission extends WithNode<SubModulePermission> {
@@ -436,8 +440,10 @@ export const APP_PERMISSIONS_CONFIG = [
               // La bandeja lee chat_conversations del canal CHBOTW: hoy el ERP
               // comparte numero con el chatbot, asi que los mensajes que el bot
               // ya registra son los mismos que ve el equipo.
-              { name: "Chats", path: "/crm/conversations", code: "crm_conversations.list", element: <CrmInboxPage />, showSidebar: true, node: [] },
-              { name: "Chats Status", path: "/crm/board", code: "crm_board.list", element: <CrmBoardPage />, showSidebar: true, node: [] },
+              // Chats y Chats Status van en su propio lienzo (canvas), como el
+              // editor visual del ecommerce: pantalla completa y pestaña nueva.
+              { name: "Chats", path: "/crm/conversations", code: "crm_conversations.list", element: <CrmInboxPage />, showSidebar: true, canvas: true, node: [] },
+              { name: "Chats Status", path: "/crm/board", code: "crm_board.list", element: <CrmBoardPage />, showSidebar: true, canvas: true, node: [] },
               // Mide ventas por sale_type, no conversaciones: es el unico del
               // CRM que funciona en produccion sin depender del chat.
               { name: "Rendimiento por canal", path: "/crm/channels", code: "crm_channels.list", element: <CrmChannelsPage />, showSidebar: true, node: [] },
@@ -470,10 +476,28 @@ export type LeafPermissionCode =
 //#endregion
 
 //#region DATA ADAPTERS
-export function getRoutes(modules: ModulePermission[]): Pick<RoutePermission, "code" | "path" | "element">[] {
+export function getRoutes(
+  modules: ModulePermission[]
+): (Pick<RoutePermission, "code" | "path" | "element"> & { canvas: boolean })[] {
   return modules.flatMap((module) =>
     module.node.flatMap((subModule) =>
-      subModule.node.map(({ code, path, element }) => ({ code, path, element }))
+      subModule.node.map(({ code, path, element, canvas }) => ({
+        code,
+        path,
+        element,
+        canvas: canvas === true,
+      }))
+    )
+  );
+}
+
+/** Rutas con lienzo propio, en el orden de la config: las pestañas del lienzo. */
+export function getCanvasRoutes(modules: ModulePermission[]): Pick<RoutePermission, "code" | "name" | "path">[] {
+  return modules.flatMap((module) =>
+    module.node.flatMap((subModule) =>
+      subModule.node
+        .filter((route) => route.canvas === true)
+        .map(({ code, name, path }) => ({ code, name, path }))
     )
   );
 }
@@ -487,7 +511,7 @@ export function getSidebar(modules: ModulePermission[]) {
       { code: subModule.code, name: subModule.name },
       ...subModule.node
         .filter((route) => route.showSidebar)
-        .map(({ code, name, path }) => ({ code, name, path })),
+        .map(({ code, name, path, canvas }) => ({ code, name, path, canvas: canvas === true })),
     ]),
   }));
 }
@@ -502,7 +526,7 @@ export function getFilterSidebar(modules: ModulePermission[], codes: string[]) {
         const routes = subModule.node
           .filter((route) => route.showSidebar)
           .filter((route) => codes.includes(route.code))
-          .map(({ code, name, path }) => ({ code, name, path }));
+          .map(({ code, name, path, canvas }) => ({ code, name, path, canvas: canvas === true }));
 
         return routes.length > 0
           ? [{ code: subModule.code, name: subModule.name }, ...routes]
