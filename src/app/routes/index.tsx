@@ -14,6 +14,7 @@ import { supportRoutes } from "@/modules/support";
 import { trainingRoutes } from "@/modules/training";
 import { profileRoutes } from "@/modules/profile";
 import ReportsLayout from "@/modules/reports/pages/ReportsLayout";
+import CrmCanvasLayout from "@/modules/crm/layouts/CrmCanvasLayout";
 import SplashPage from "@/shared/components/splash/SplashPage";
 
 // El editor visual del ecommerce va aparte: trae craft.js, CodeMirror y los
@@ -32,6 +33,7 @@ const PrintTemplateViewPage = lazy(
 // path que todavía no esté declarado aquí.
 const allRoutes = getRoutes(APP_PERMISSIONS_CONFIG).map((route) => ({
   path: route.path,
+  canvas: route.canvas,
   element: (
     <ProtectedRoute key={route.path} code={route.code}>
       {route.element}
@@ -39,11 +41,18 @@ const allRoutes = getRoutes(APP_PERMISSIONS_CONFIG).map((route) => ({
   ),
 }));
 
+const toRoute = ({ path, element }: (typeof allRoutes)[number]) => ({ path, element });
+
+// Las rutas con lienzo propio (los chats del CRM) se montan fuera del
+// DashboardLayout, como el editor visual: a pantalla completa y con su barra.
+const canvasRoutes = allRoutes.filter((route) => route.canvas).map(toRoute);
+const layoutRoutes = allRoutes.filter((route) => !route.canvas);
+
 // Las páginas de Reportes deben colgar de <ReportsLayout/>, que provee el
 // ReportsFiltersContext compartido entre pestañas; montadas planas, los
 // filtros usan el contexto por defecto (no-op) y dejan de responder.
-const reportRoutes = allRoutes.filter((route) => route.path.startsWith("/reports/"));
-const protectedRoutes = allRoutes.filter((route) => !route.path.startsWith("/reports/"));
+const reportRoutes = layoutRoutes.filter((route) => route.path.startsWith("/reports/")).map(toRoute);
+const protectedRoutes = layoutRoutes.filter((route) => !route.path.startsWith("/reports/")).map(toRoute);
 
 export const router = createBrowserRouter([
   {
@@ -105,6 +114,17 @@ export const router = createBrowserRouter([
         </ProtectedRoute>
       </ProtectedLayout>
     ),
+  },
+  // Chats del CRM: lienzo propio, sin sidebar ni header del ERP. El sidebar
+  // los abre en una pestaña nueva; cada ruta sigue con su ProtectedRoute.
+  {
+    errorElement: <RouteError />,
+    element: (
+      <ProtectedLayout>
+        <CrmCanvasLayout />
+      </ProtectedLayout>
+    ),
+    children: canvasRoutes,
   },
   {
     errorElement: <RouteError />,

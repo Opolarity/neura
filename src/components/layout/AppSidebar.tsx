@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronDown, EllipsisVertical, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Store, Ticket, User, UserPen } from "lucide-react";
+import { BookOpen, ChevronDown, EllipsisVertical, ExternalLink, GraduationCap, LayoutDashboard, LifeBuoy, LogOut, Store, Ticket, User, UserPen } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { APP_PERMISSIONS_CONFIG, getFilterSidebar } from "@/app/data/permissions";
@@ -70,6 +70,10 @@ const SUB_LABEL_COLORS = "text-sidebar-foreground/70";
 const TOOLTIP_COLORS = "border-0 bg-sidebar-primary text-sidebar-primary-foreground";
 
 const USER_POPOVER_CODE = "__user__";
+
+// Las rutas con lienzo propio (los chats del CRM) se abren en otra pestaña:
+// el ERP se queda abierto en la suya.
+const NEW_TAB_PROPS = { target: "_blank", rel: "noopener" } as const;
 
 // Las opciones de Soporte. Viven aquí y no en APP_PERMISSIONS_CONFIG a
 // propósito: Soporte está fuera del sistema de permisos (ver routes/index.tsx),
@@ -151,11 +155,13 @@ function SidebarModule({
                   <Link
                     key={subItem.code}
                     to={subItem.path}
+                    {...(subItem.canvas ? NEW_TAB_PROPS : {})}
                     onClick={() => onPopoverOpenChange(null)}
                     data-active={subItem.path === pathname}
                     className={`flex w-full items-center rounded-md px-2 py-1.5 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
                   >
                     {subItem.name}
+                    {subItem.canvas && <ExternalLink className="ml-auto size-3.5 shrink-0" aria-hidden />}
                   </Link>
                 );
               }
@@ -213,8 +219,9 @@ function SidebarModule({
                       isActive={subItem.path === pathname}
                       className={SUB_BUTTON_COLORS}
                     >
-                      <Link to={subItem.path}>
+                      <Link to={subItem.path} {...(subItem.canvas ? NEW_TAB_PROPS : {})}>
                         <span className="text-sm">{subItem.name}</span>
+                        {subItem.canvas && <ExternalLink className="ml-auto size-3.5 shrink-0" aria-hidden />}
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
