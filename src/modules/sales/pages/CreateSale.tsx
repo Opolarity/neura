@@ -538,7 +538,7 @@ const CreateSale = () => {
         </DialogContent>
       </Dialog>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -551,7 +551,7 @@ const CreateSale = () => {
             {orderId ? "Editar venta" : "Crear venta"}
           </h1>
         </div>
-        <div className="flex gap-3 select-none">
+        <div className="flex flex-wrap gap-3 select-none">
           {cambiosReturns.length > 0 && (
             <Button variant="outline" onClick={() => setCambiosModalOpen(true)}>
               Cambios
@@ -601,8 +601,8 @@ const CreateSale = () => {
         </div>
       </div>
 
-      <div className="flex gap-6 items-start">
-        {/* Main Form - 70% */}
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
+        {/* Main Form - 70% from xl, full width below */}
         <form
           id="sale-form"
           onSubmit={handleSubmit}
@@ -612,8 +612,7 @@ const CreateSale = () => {
           onKeyDown={(e) => {
             if (e.key === "Enter" && e.target instanceof HTMLInputElement) e.preventDefault();
           }}
-          className="flex-1 space-y-6"
-          style={{ width: "70%" }}
+          className="min-w-0 space-y-6 xl:flex-1"
         >
           {/* Products Section - First */}
           <Card>
@@ -641,7 +640,7 @@ const CreateSale = () => {
             <CardContent className="space-y-4">
               <div
                 className={cn(
-                  "flex gap-3 select-none",
+                  "flex flex-wrap gap-3 select-none",
                   (isPhySituation || (isVirSituation && !productsUnlocked)) &&
                   "opacity-50 pointer-events-none",
                 )}
@@ -666,7 +665,7 @@ const CreateSale = () => {
                 </Select>
 
                 {/* Product Search */}
-                <div className="flex-1">
+                <div className="flex-1 min-w-[12rem]">
                   <ProductVariationSelector
                     selectedVariation={selectedVariation}
                     onSelect={setSelectedVariation}
@@ -686,9 +685,11 @@ const CreateSale = () => {
                         className="w-full justify-start text-muted-foreground font-normal"
                       >
                         <Search className="w-4 h-4 mr-2" />
-                        {selectedVariation
-                          ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
-                          : "Buscar por nombre o SKU..."}
+                        <span className="truncate">
+                          {selectedVariation
+                            ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
+                            : "Buscar por nombre o SKU..."}
+                        </span>
                       </Button>
                     }
                   />
@@ -966,7 +967,7 @@ const CreateSale = () => {
                 isPhySituation && "opacity-50 pointer-events-none",
               )}
             >
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Canal de Venta</Label>
                   <Select
@@ -1039,7 +1040,7 @@ const CreateSale = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label>Lista de Precios</Label>
@@ -1075,7 +1076,7 @@ const CreateSale = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Lado izquierdo: Vendedor y Fecha */}
                 <div className="grid grid-cols-2 gap-2">
                   <div>
@@ -1278,7 +1279,7 @@ const CreateSale = () => {
                     "opacity-50 pointer-events-none",
                 )}
               >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Método de Envío</Label>
                     {courierMethodName ? (
@@ -1338,7 +1339,7 @@ const CreateSale = () => {
                 </div>
 
                 {/* Fila 1: País y Departamento */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>País</Label>
                     <Select
@@ -1379,7 +1380,7 @@ const CreateSale = () => {
                 </div>
 
                 {/* Fila 2: Provincia y Distrito */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Provincia</Label>
                     <Select
@@ -1423,7 +1424,7 @@ const CreateSale = () => {
                 </div>
 
                 {/* Fila 3: Dirección y Referencia */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Dirección</Label>
                     <Input
@@ -1451,7 +1452,7 @@ const CreateSale = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label>Persona que Recibe</Label>
                     <Input
@@ -1539,11 +1540,8 @@ const CreateSale = () => {
           )}
         </form>
 
-        {/* Sidebar - 30% */}
-        <aside
-          className="flex-shrink-0 sticky top-6 space-y-4"
-          style={{ width: "30%" }}
-        >
+        {/* Sidebar - 30% from xl, below the form on smaller screens */}
+        <aside className="min-w-0 space-y-4 xl:w-[30%] xl:flex-shrink-0 xl:sticky xl:top-6">
           {/* Order Status */}
           <Card>
             <CardHeader className="pb-2">
@@ -1570,7 +1568,7 @@ const CreateSale = () => {
             </CardContent>
             <CardFooter>
               {createdOrderId && (
-                <div className="flex gap-3 select-none">
+                <div className="flex flex-wrap gap-3 select-none">
                   <em
                     className="italic text-sm underline cursor-pointer"
                     onClick={() => setHistoryModalOpen(true)}
