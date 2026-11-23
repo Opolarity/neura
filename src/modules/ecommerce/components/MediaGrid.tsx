@@ -41,7 +41,7 @@ const MediaGrid = ({ medios, loading, onSelect, onDelete }: MediaGridProps) => {
       {medios.map((medio) => (
         <Card
           key={medio.id}
-          className="group relative overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+          className="group relative overflow-hidden cursor-pointer select-none hover:ring-2 hover:ring-primary/40 transition-all"
           onClick={() => onSelect(medio)}
         >
           <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">

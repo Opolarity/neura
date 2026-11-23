@@ -41,7 +41,7 @@ const MediaDropzone = ({ onUpload, uploading }: MediaDropzoneProps) => {
       onDrop={handleDrop}
       onClick={() => !uploading && inputRef.current?.click()}
       className={`
-        shrink-0 flex flex-row items-center justify-center gap-3 rounded-lg border-2 border-dashed p-3 cursor-pointer transition-colors
+        shrink-0 flex flex-row items-center justify-center gap-3 rounded-lg border-2 border-dashed p-3 cursor-pointer select-none transition-colors
         ${dragOver ? "border-primary bg-primary/5" : "border-border bg-muted/30 hover:border-muted-foreground/40"}
         ${uploading ? "pointer-events-none opacity-60" : ""}
       `}

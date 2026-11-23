@@ -158,7 +158,7 @@ function SidebarModule({
                     {...(subItem.canvas ? NEW_TAB_PROPS : {})}
                     onClick={() => onPopoverOpenChange(null)}
                     data-active={subItem.path === pathname}
-                    className={`flex w-full items-center rounded-md px-2 py-1.5 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
+                    className={`flex w-full select-none items-center rounded-md px-2 py-1.5 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
                   >
                     {subItem.name}
                     {subItem.canvas && <ExternalLink className="ml-auto size-3.5 shrink-0" aria-hidden />}
@@ -418,7 +418,7 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
                   to="/profile"
                   onClick={() => setOpenPopoverCode(null)}
                   data-active={pathname === "/profile"}
-                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
+                  className={`flex w-full select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
                 >
                   <UserPen className="size-4" />
                   <span>Mi perfil</span>
@@ -438,7 +438,7 @@ export function AppSidebar({ posSessionOpen = false }: { posSessionOpen?: boolea
                     to={to}
                     onClick={() => setOpenPopoverCode(null)}
                     data-active={pathname === to}
-                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 pl-4 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
+                    className={`flex w-full select-none items-center gap-2 rounded-md px-2 py-1.5 pl-4 text-sm text-sidebar-foreground transition-colors hover:bg-white/5 hover:text-white ${SUB_BUTTON_COLORS}`}
                   >
                     <Icon className="size-4" />
                     <span>{label}</span>

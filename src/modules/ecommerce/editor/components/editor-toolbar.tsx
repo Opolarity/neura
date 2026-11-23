@@ -476,7 +476,7 @@ export function EditorToolbar({ onSaveDraft, onPublish, onPublishPrivate, onSche
             to={editorDashboardPath()}
             title="Volver a mis paginas"
             aria-label="Volver a mis paginas"
-            className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
+            className="flex aspect-square size-8 shrink-0 select-none items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
           >
             N
           </Link>

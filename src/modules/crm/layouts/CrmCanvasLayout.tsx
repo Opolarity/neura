@@ -44,7 +44,7 @@ export default function CrmCanvasLayout() {
             to="/"
             title="Ir al ERP"
             aria-label="Ir al ERP"
-            className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
+            className="flex aspect-square size-8 shrink-0 select-none items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
           >
             N
           </Link>
@@ -58,7 +58,7 @@ export default function CrmCanvasLayout() {
                   to={tab.path}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                    "select-none rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
                     active && "bg-muted font-semibold text-foreground"
                   )}
                 >

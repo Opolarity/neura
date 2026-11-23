@@ -350,7 +350,7 @@ function LinkTreeNode({
                                         e.stopPropagation()
                                         onRemove(link.id)
                                     }}
-                                    className="text-destructive hover:text-destructive/80 p-1 cursor-pointer"
+                                    className="text-destructive hover:text-destructive/80 p-1 cursor-pointer select-none"
                                     title="Eliminar"
                                 >
                                     <Trash2 className="h-3.5 w-3.5" />
