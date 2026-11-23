@@ -612,7 +612,7 @@ const CreateSale = () => {
           onKeyDown={(e) => {
             if (e.key === "Enter" && e.target instanceof HTMLInputElement) e.preventDefault();
           }}
-          className="flex-1 space-y-6"
+          className="flex-1 min-w-0 space-y-6"
           style={{ width: "70%" }}
         >
           {/* Products Section - First */}
@@ -666,7 +666,7 @@ const CreateSale = () => {
                 </Select>
 
                 {/* Product Search */}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <ProductVariationSelector
                     selectedVariation={selectedVariation}
                     onSelect={setSelectedVariation}
@@ -686,9 +686,11 @@ const CreateSale = () => {
                         className="w-full justify-start text-muted-foreground font-normal"
                       >
                         <Search className="w-4 h-4 mr-2" />
-                        {selectedVariation
-                          ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
-                          : "Buscar por nombre o SKU..."}
+                        <span className="truncate">
+                          {selectedVariation
+                            ? `${selectedVariation.productTitle} - ${selectedVariation.terms.map((t) => t.name).join(" / ") || selectedVariation.sku}`
+                            : "Buscar por nombre o SKU..."}
+                        </span>
                       </Button>
                     }
                   />
