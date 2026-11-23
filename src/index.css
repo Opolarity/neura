@@ -158,6 +158,17 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Clicking an action control must not select its text. */
+  button,
+  [role="button"],
+  [role="menuitem"],
+  [role="tab"],
+  [type="button"],
+  [type="submit"],
+  [type="reset"] {
+    @apply select-none;
+  }
 }
 
 /* Quill WYSIWYG Editor Styles */

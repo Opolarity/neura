@@ -147,7 +147,7 @@ export function CustomLayer({ children }: { children?: React.ReactNode }) {
             <div
               onClick={handleDuplicate}
               title="Duplicar"
-              className="flex items-center px-2.5 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="flex select-none items-center px-2.5 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               <Copy className="h-3.5 w-3.5" />
             </div>
@@ -158,7 +158,7 @@ export function CustomLayer({ children }: { children?: React.ReactNode }) {
               actions.setHidden(id, !hidden)
             }}
             title={hidden ? "Mostrar" : "Ocultar"}
-            className="flex items-center px-2.5 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="flex select-none items-center px-2.5 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             {hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
           </div>

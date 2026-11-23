@@ -321,7 +321,7 @@ function EditableFAQSettings() {
                                                     duplicateFAQ(index)
                                                 }}
                                                 title="Duplicar"
-                                                className="flex items-center px-2.5 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                                                className="flex select-none items-center px-2.5 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                                             >
                                                 <Copy className="h-3.5 w-3.5" />
                                             </div>
@@ -332,7 +332,7 @@ function EditableFAQSettings() {
                                                     removeFAQ(index)
                                                 }}
                                                 title="Eliminar"
-                                                className="flex items-center px-2.5 py-2.5 text-destructive hover:text-destructive/80 hover:bg-destructive/10 transition-colors cursor-pointer"
+                                                className="flex select-none items-center px-2.5 py-2.5 text-destructive hover:text-destructive/80 hover:bg-destructive/10 transition-colors cursor-pointer"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </div>

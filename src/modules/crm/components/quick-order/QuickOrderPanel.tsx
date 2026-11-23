@@ -392,7 +392,7 @@ export const QuickOrderPanel = ({
               {qo.saleTypeFixed ? (
                 <Link
                   to="/crm/messaging"
-                  className="flex h-8 min-w-0 items-center gap-1.5 rounded-md border bg-muted/40 px-2.5 text-xs hover:bg-muted"
+                  className="flex h-8 min-w-0 select-none items-center gap-1.5 rounded-md border bg-muted/40 px-2.5 text-xs hover:bg-muted"
                   title="Canal de venta de esta red. Se cambia en Canales de mensajería."
                 >
                   <ChannelIcon channel={conversation.channel} className="h-3.5 w-3.5" />

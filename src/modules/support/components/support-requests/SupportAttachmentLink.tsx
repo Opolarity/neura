@@ -22,7 +22,7 @@ export const SupportAttachmentLink = ({ file }: { file: SupportAttachmentFile })
       href={file.fileUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
+      className="flex select-none items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
     >
       <Paperclip className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       <span className="truncate">{file.fileName}</span>

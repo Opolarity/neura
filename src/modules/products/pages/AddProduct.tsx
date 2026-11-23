@@ -511,7 +511,7 @@ const AddProduct = ({ viewOnly = false }: { viewOnly?: boolean }) => {
                                         return (
                                           <div
                                             key={image.id}
-                                            className={`relative w-16 h-16 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'
+                                            className={`relative w-16 h-16 cursor-pointer select-none rounded-lg overflow-hidden border-2 transition-all ${isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'
                                               }`}
                                             onClick={() => toggleVariationImage(variation.id, image.id)}
                                           >

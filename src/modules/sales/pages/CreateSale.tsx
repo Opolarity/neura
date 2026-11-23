@@ -521,7 +521,7 @@ const CreateSale = () => {
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2 select-none">
             <Button variant="outline" onClick={() => navigate("/sales")}>
               Cancelar
             </Button>
@@ -551,7 +551,7 @@ const CreateSale = () => {
             {orderId ? "Editar venta" : "Crear venta"}
           </h1>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 select-none">
           {cambiosReturns.length > 0 && (
             <Button variant="outline" onClick={() => setCambiosModalOpen(true)}>
               Cambios
@@ -641,7 +641,7 @@ const CreateSale = () => {
             <CardContent className="space-y-4">
               <div
                 className={cn(
-                  "flex gap-3",
+                  "flex gap-3 select-none",
                   (isPhySituation || (isVirSituation && !productsUnlocked)) &&
                   "opacity-50 pointer-events-none",
                 )}
@@ -755,7 +755,7 @@ const CreateSale = () => {
                                 <button
                                   type="button"
                                   aria-label="Cómo se aplica el descuento"
-                                  className="inline-flex text-muted-foreground hover:text-foreground"
+                                  className="inline-flex select-none text-muted-foreground hover:text-foreground"
                                 >
                                   <Info className="w-3.5 h-3.5" />
                                 </button>
@@ -910,7 +910,7 @@ const CreateSale = () => {
                                 </div>
                               ) : null}
                             </TableCell>
-                            <TableCell className="align-top">
+                            <TableCell className="align-top select-none">
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -1518,7 +1518,7 @@ const CreateSale = () => {
                     onSaveSale={async () => (await requestSaveInPlace()) != null}
                   />
                 ) : (
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4 select-none">
                     <p className="text-xs text-muted-foreground">
                       El envío con Olva o Shalom se calcula sobre la venta creada.
                     </p>
@@ -1570,7 +1570,7 @@ const CreateSale = () => {
             </CardContent>
             <CardFooter>
               {createdOrderId && (
-                <div className="flex gap-3">
+                <div className="flex gap-3 select-none">
                   <em
                     className="italic text-sm underline cursor-pointer"
                     onClick={() => setHistoryModalOpen(true)}
@@ -1852,7 +1852,7 @@ const CreateSale = () => {
                   ) : (
                     <button
                       type="button"
-                      className="font-medium text-xs hover:underline flex items-center gap-1"
+                      className="select-none font-medium text-xs hover:underline flex items-center gap-1"
                       onClick={() => {
                         setShowAddDiscount(true);
                         setSignTooltipOpen(true);
@@ -2224,7 +2224,7 @@ const CreateSale = () => {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 select-none">
                   <input
                     type="file"
                     ref={voucherFileInputRef}
@@ -2458,7 +2458,7 @@ const CreateSale = () => {
                             </div>
                           )}
 
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-2 gap-2 select-none">
                             <input
                               type="file"
                               ref={changeVoucherFileInputRef}

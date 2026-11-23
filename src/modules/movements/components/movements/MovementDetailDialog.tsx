@@ -293,7 +293,7 @@ const MovementDetailDialog = ({ movementId, onClose }: MovementDetailDialogProps
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between rounded-lg border border-dashed px-3 py-2 hover:bg-accent"
+                      className="flex select-none items-center justify-between rounded-lg border border-dashed px-3 py-2 hover:bg-accent"
                     >
                       <span className="inline-flex items-center gap-2 text-xs min-w-0">
                         <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />

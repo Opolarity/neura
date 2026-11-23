@@ -189,7 +189,7 @@ const ProductsTable = ({
                         <a
                           href={`/products/edit/${product.id}`}
                           title="Editar producto"
-                          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+                          className="inline-flex select-none items-center justify-center rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
                         >
                           <Edit className="w-4 h-4" />
                         </a>

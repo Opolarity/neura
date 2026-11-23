@@ -95,7 +95,7 @@ export const MessageMedia = ({ media, onPrimary }: { media: Media; onPrimary: bo
       rel="noreferrer noopener"
       download={media.fileName ?? undefined}
       className={cn(
-        "mt-1 flex min-w-0 items-center gap-2.5 rounded-lg px-3 py-2 transition-colors",
+        "mt-1 flex min-w-0 select-none items-center gap-2.5 rounded-lg px-3 py-2 transition-colors",
         onPrimary ? "bg-primary-foreground/15 hover:bg-primary-foreground/25" : "bg-muted hover:bg-muted/70"
       )}
     >
