@@ -1,10 +1,12 @@
 import type { PeticionOptimizar, RespuestaOptimizar } from "./optimizarImagen.worker";
 
-// Mismos ajustes que se aplicaron al storage de los tenants (22-10-2026).
+// Fotos y banners en calidad 90: comprimen menos que con 85 y pierden menos detalle.
+// El storage de los tenants se optimizó con 85 (22-10-2026); lo subido antes
+// de este cambio sigue así.
 // El QR va sin pérdida: un borde difuso puede impedir que se escanee.
 const PERFILES = {
-  foto: { ladoMax: 1600, calidad: 85, sinPerdida: false },
-  banner: { ladoMax: 1920, calidad: 85, sinPerdida: false },
+  foto: { ladoMax: 1600, calidad: 90, sinPerdida: false },
+  banner: { ladoMax: 1920, calidad: 90, sinPerdida: false },
   logo: { ladoMax: 800, calidad: 90, sinPerdida: false },
   qr: { ladoMax: 1200, calidad: 100, sinPerdida: true },
 } as const;
