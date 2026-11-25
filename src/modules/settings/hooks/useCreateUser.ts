@@ -53,7 +53,12 @@ const resolveDefaultAccountTypeIds = (accountTypes: FilterOption[]): number[] =>
         )?.id)
         .filter((id): id is number => id !== undefined);
 
-const useCreateUser = (uid?: string, isEdit?: boolean) => {
+/**
+ * @param afterUpdate al editar, corre después de guardar el usuario y antes de
+ *   volver al listado (la sección "Asistencia y pago"). false = no se sale de
+ *   la pantalla: el usuario ya quedó guardado y lo que faltó se avisó.
+ */
+const useCreateUser = (uid?: string, isEdit?: boolean, afterUpdate?: () => Promise<boolean>) => {
     const navigate = useNavigate();
     const { toast } = useToast();
 
@@ -529,6 +534,7 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
                     description: "Usuario actualizado correctamente",
                     variant: "success",
                 });
+                if (afterUpdate && !(await afterUpdate())) return;
             } else {
                 await createUserApi(payload);
                 toast({
@@ -574,6 +580,8 @@ const useCreateUser = (uid?: string, isEdit?: boolean) => {
         isSearchingDocument,
         isDocumentFound,
         handleDocumentLookup,
+        /** accounts.id del usuario que se edita (ficha de asistencia). */
+        recordId,
     };
 };
 
