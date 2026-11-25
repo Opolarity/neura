@@ -112,6 +112,13 @@ import SuppliersList from "@/modules/suppliers/pages/SuppliersList";
 import Quotations from "@/modules/quotations/pages/Quotations";
 import NewQuotation from "@/modules/quotations/pages/NewQuotation";
 import QuotationDetail from "@/modules/quotations/pages/QuotationDetail";
+import AttendancePage from "@/modules/attendance/pages/AttendancePage";
+import TimesheetPage from "@/modules/attendance/pages/TimesheetPage";
+import HolidaysPage from "@/modules/attendance/pages/HolidaysPage";
+import SchedulesPage from "@/modules/attendance/pages/SchedulesPage";
+import PointsPage from "@/modules/attendance/pages/PointsPage";
+import DevicesPage from "@/modules/attendance/pages/DevicesPage";
+import PaymentsPage from "@/modules/attendance/pages/PaymentsPage";
 import {
   LayoutGrid,
   Tag,
@@ -123,6 +130,7 @@ import {
   Contact,
   MessagesSquare,
   Factory,
+  Clock,
   type LucideIcon,
 } from "lucide-react";
 
@@ -316,6 +324,37 @@ export const APP_PERMISSIONS_CONFIG = [
       },
     ],
   },
+  {
+    // Asistencia traida de multicliente (2026-11-25): marcas, pagos y bolsa de
+    // horas, horarios, feriados, puntos y equipos de marcacion (kiosco y reloj
+    // de huella). El cuadre de horas esta en Reportes; el kiosco publico
+    // (/asistencia) va fuera, en el router; marcar mi asistencia, en el header.
+    name: "Asistencia",
+    icon: Clock,
+    code: "attendance",
+    node: [
+      {
+        code: "attendance.group", name: "Asistencia", node: [
+          {
+            name: "Marcas", path: "/attendance", code: "attendance.list", element: <AttendancePage />, showSidebar: true,
+            node: [
+              { code: "attendance.manage", name: "Registrar y corregir marcas" },
+            ],
+          },
+          { name: "Cuadre de horas", path: "/attendance/timesheet", code: "attendance_timesheet.list", element: <Navigate to="/reports/timesheet" replace />, showSidebar: false, node: [] },
+          // Pagos por trabajador y bolsa de horas (horas extra y feriados con descanso).
+          { name: "Pagos", path: "/attendance/payments", code: "attendance_payments.list", element: <PaymentsPage />, showSidebar: true, node: [] },
+          { name: "Marcar mi asistencia", path: "/attendance/me", code: "attendance.mark_self", element: <Navigate to="/" replace />, showSidebar: false, node: [] },
+          { name: "Horarios", path: "/attendance/schedules", code: "attendance_schedules.list", element: <SchedulesPage />, showSidebar: true, node: [] },
+          { name: "Feriados", path: "/attendance/holidays", code: "attendance_holidays.list", element: <HolidaysPage />, showSidebar: true, node: [] },
+          { name: "Puntos de marcación", path: "/attendance/points", code: "attendance_points.list", element: <PointsPage />, showSidebar: true, node: [] },
+          { name: "Equipos de marcación", path: "/attendance/devices", code: "attendance_devices.list", element: <DevicesPage />, showSidebar: true, node: [] },
+          // attendance.config: la seccion «Asistencia y pago» de Usuarios.
+          { name: "Asistencia y pago", path: "/attendance/settings", code: "attendance.config", element: <Navigate to="/attendance/schedules" replace />, showSidebar: false, node: [] },
+        ]
+      },
+    ],
+  },
 {
   name: "Movimientos",
     icon: Banknote,
@@ -363,6 +402,8 @@ export const APP_PERMISSIONS_CONFIG = [
               { name: "Clientes", path: "/reports/clients", code: "reports_clients.view", element:  <ReportsClientsPage />, showSidebar: true, node: [] },
               { name: "Regla de precios", path: "/reports/price-rules", code: "reports_price_rules.view", element: <PriceRulesReportPage />, showSidebar: true, node: [] },
               { name: "Vendedores", path: "/reports/sellers", code: "reports_sellers.view", element: <ReportsSellersPage />, showSidebar: true, node: [] },
+              // Cuadre de horas de Asistencia.
+              { name: "Cuadre de horas", path: "/reports/timesheet", code: "attendance_timesheet.list", element: <TimesheetPage />, showSidebar: true, node: [] },
             ]
           },
         ],

@@ -2,6 +2,7 @@ import { Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { NotificationPanel } from "@/modules/notifications/components/NotificationPanel";
+import { MyAttendanceButton } from "@/modules/attendance/components/my-attendance/MyAttendanceButton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUserProfile } from "@/modules/auth/hooks/useUserProfile";
@@ -30,6 +31,7 @@ const Header = ({ posSession }: HeaderProps) => {
         </div>
 
         <div className="flex items-center gap-4">
+          <MyAttendanceButton />
           <NotificationPanel />
 
           {!loading && (
