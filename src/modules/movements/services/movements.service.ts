@@ -47,7 +47,8 @@ export const movementTypesApi = async (): Promise<MovementType[]> => {
     )
   `,
     )
-    .eq("modules.code", "MOV");
+    .eq("modules.code", "MOV")
+    .eq("is_active", true);
 
   if (error) throw error;
   return data ?? [];
@@ -57,6 +58,7 @@ export const movementCategoriesApi = async (): Promise<MovementCategory[]> => {
   const { data, error } = await (supabase as any)
     .from("classes")
     .select("id, name")
+    .eq("is_active", true)
     .order("name");
 
   if (error) throw error;
@@ -173,6 +175,7 @@ export const movementClassesApi = async (): Promise<MovementClass[]> => {
     .from("classes")
     .select("id, name, code")
     .eq("module_id", moduleData.id)
+    .eq("is_active", true)
     .order("name");
 
   if (error) throw error;

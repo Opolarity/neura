@@ -15,7 +15,7 @@ export const useInvoiceSeriesForm = () => {
   const [form, setForm] = useState<InvoiceSerieForm>(emptyForm);
   const [accounts, setAccounts] = useState<{ id: number; name: string; document_number: string }[]>([]);
   const [providers, setProviders] = useState<{ id: number; url: string; branch_id: number; description: string | null }[]>([]);
-  const [invoiceTypes, setInvoiceTypes] = useState<{ id: number; name: string; code: string | null }[]>([]);
+  const [invoiceTypes, setInvoiceTypes] = useState<{ id: number; name: string; code: string | null; is_active: boolean }[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -23,11 +23,11 @@ export const useInvoiceSeriesForm = () => {
     const [accRes, provRes, typesRes] = await Promise.all([
       supabase.from("accounts").select("id, name, document_number, document_types!inner(person_type)").eq("is_active", true).eq("document_types.person_type", 2).order("name"),
       supabase.from("invoice_providers").select("id, url, branch_id, description").order("id"),
-      supabase.from("types").select("id, name, code, modules!inner(code)").eq("modules.code", "INV").order("id"),
+      supabase.from("types").select("id, name, code, is_active, modules!inner(code)").eq("modules.code", "INV").order("id"),
     ]);
     if (accRes.data) setAccounts((accRes.data as any[]).map(a => ({ id: a.id, name: a.name, document_number: a.document_number })));
     if (provRes.data) setProviders(provRes.data);
-    if (typesRes.data) setInvoiceTypes((typesRes.data as any[]).map(t => ({ id: t.id, name: t.name, code: t.code })));
+    if (typesRes.data) setInvoiceTypes((typesRes.data as any[]).map(t => ({ id: t.id, name: t.name, code: t.code, is_active: t.is_active })));
   }, []);
 
   const fetchSerie = useCallback(async () => {
@@ -107,7 +107,8 @@ export const useInvoiceSeriesForm = () => {
     form,
     accounts,
     providers,
-    invoiceTypes,
+    // Solo tipos activos; en edición se conserva el tipo que ya tiene la serie.
+    invoiceTypes: invoiceTypes.filter((t) => t.is_active || t.id.toString() === form.invoice_type_id),
     loading,
     saving,
     isEditing,

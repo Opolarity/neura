@@ -128,7 +128,7 @@ export const getInvoiceTypesApi = async () => {
 
   const { data, error } = await supabase
     .from("types")
-    .select("id, name, code")
+    .select("id, name, code, is_active")
     .eq("module_id", moduleData.id)
     .order("name");
 

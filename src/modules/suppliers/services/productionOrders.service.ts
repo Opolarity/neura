@@ -227,6 +227,7 @@ export const productionOrderClassesApi = async (): Promise<
     .from("classes")
     .select("id, name, code")
     .eq("module_id", moduleData.id)
+    .eq("is_active", true)
     .order("name");
 
   if (error) throw error;
@@ -370,13 +371,17 @@ export const searchVariationsApi = async (
   const [bySku, byTitle] = await Promise.all([
     supabase
       .from("variations")
-      .select(VARIATION_SELECT)
+      .select(VARIATION_SELECT.replace("products(", "products!inner("))
       .ilike("sku", `%${search}%`)
+      .eq("is_active", true)
+      .eq("products.is_active", true)
       .limit(OPTIONS_PAGE_SIZE),
     supabase
       .from("variations")
       .select(VARIATION_SELECT.replace("products(", "products!inner("))
       .ilike("products.title", `%${search}%`)
+      .eq("is_active", true)
+      .eq("products.is_active", true)
       .limit(OPTIONS_PAGE_SIZE),
   ]);
 

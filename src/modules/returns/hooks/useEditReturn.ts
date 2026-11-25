@@ -103,8 +103,11 @@ export const useEditReturn = () => {
             setModuleId(moduleData.id);
             const [situationsData, typesData, paymentMethodsData] = await Promise.all([
                 returnsService.getSituations(moduleData.id),
-                returnsService.getTypes(moduleData.id),
-                returnsService.getPaymentMethods(),
+                returnsService.getTypes(moduleData.id, details.return_type_id),
+                returnsService.getPaymentMethods(
+                    false,
+                    (details.payment_methods || []).map((pm: { payment_method_id: number }) => pm.payment_method_id),
+                ),
             ]);
 
             const orderSituationCodeValue = details.order_situation?.code || '';

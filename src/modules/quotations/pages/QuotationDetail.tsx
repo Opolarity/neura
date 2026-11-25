@@ -594,7 +594,8 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
         const { data: classesData } = await supabase
           .from("classes")
           .select("id, name")
-          .eq("module_id", stkModule.id);
+          .eq("module_id", stkModule.id)
+          .eq("is_active", true);
         setStockTypes(
           (classesData ?? []).map((c) => ({ id: c.id, name: c.name })),
         );
@@ -1082,7 +1083,8 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
         const { data: classesData } = await supabase
           .from("classes")
           .select("id, name")
-          .eq("module_id", stkModule.id);
+          .eq("module_id", stkModule.id)
+          .eq("is_active", true);
         setStockTypes(
           (classesData ?? []).map((c) => ({ id: c.id, name: c.name })),
         );
@@ -1093,8 +1095,10 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
       if (sku) {
         const { data: varData } = await supabase
           .from("variations")
-          .select("id, sku, products(title)")
+          .select("id, sku, products!inner(title)")
           .eq("sku", sku)
+          .eq("is_active", true)
+          .eq("products.is_active", true)
           .maybeSingle();
         if (varData) {
           setIngresoVariationId(varData.id);
@@ -1132,8 +1136,10 @@ const QuotationDetail = ({ viewOnly = false }: QuotationDetailProps) => {
     try {
       const { data } = await supabase
         .from("variations")
-        .select("id, sku, products(title)")
+        .select("id, sku, products!inner(title)")
         .or(`sku.ilike.%${term}%,products.title.ilike.%${term}%`)
+        .eq("is_active", true)
+        .eq("products.is_active", true)
         .limit(10);
       setVariationResults(
         (data ?? []).map((v) => ({

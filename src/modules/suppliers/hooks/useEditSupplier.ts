@@ -107,7 +107,11 @@ export const useEditSupplier = ({ supplier, onSaved }: UseEditSupplierOptions) =
   };
 
   return {
-    classes,
+    // Solo clases activas, más las que ya tiene el proveedor aunque estén inactivas.
+    classes: [
+      ...classes,
+      ...supplier.classes.filter((cls) => !classes.some((c) => c.id === cls.id)),
+    ],
     loadingClasses,
     form,
     setForm,

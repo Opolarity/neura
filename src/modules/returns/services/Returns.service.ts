@@ -42,11 +42,13 @@ export const returnsService = {
         return data;
     },
 
-    async getTypes(moduleId: number) {
+    // Solo tipos activos; en edición se conserva el tipo actual aunque esté inactivo.
+    async getTypes(moduleId: number, currentTypeId?: number) {
         const { data, error } = await supabase
             .from("types")
             .select("*")
-            .eq("module_id", moduleId);
+            .eq("module_id", moduleId)
+            .or(currentTypeId ? `is_active.eq.true,id.eq.${currentTypeId}` : "is_active.eq.true");
 
         if (error) throw error;
         return data as ReturnType[];
@@ -73,11 +75,13 @@ export const returnsService = {
 
     // Por defecto sin "Crédito" (CRE) ni "Débito" (DEB): son del circuito de
     // crédito de franquicia, no un medio con el que se devuelve dinero.
-    async getPaymentMethods(includeCredit = false) {
+    // Solo métodos activos; en edición se conservan los métodos ya usados (keepIds).
+    async getPaymentMethods(includeCredit = false, keepIds: number[] = []) {
         const { data, error } = await supabase
             .from("payment_methods")
             .select("*")
-            .eq("active", true);
+            .eq("active", true)
+            .or(keepIds.length > 0 ? `is_active.eq.true,id.in.(${keepIds.join(",")})` : "is_active.eq.true");
 
         if (error) throw error;
         return excludeCreditPaymentMethods(data ?? [], includeCredit);

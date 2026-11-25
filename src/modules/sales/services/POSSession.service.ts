@@ -17,7 +17,7 @@ import { invokeFunction } from "@/integrations/supabase/invokeFunction";
 export const getCashRegisters = async (): Promise<CashRegister[]> => {
   // Fetch business accounts, CHR type IDs, open status, and open sessions in parallel
   const [baResult, typesResult, statusesResult] = await Promise.all([
-    supabase.from("business_accounts").select("id, name, business_account_type_id, total_amount"),
+    supabase.from("business_accounts").select("id, name, business_account_type_id, total_amount").eq("is_active", true),
     supabase.from("types").select("id, code, module:modules!inner(code)").eq("code", "CHR").eq("modules.code", "BNA"),
     statussesByModuleCode("POS"),
   ]);

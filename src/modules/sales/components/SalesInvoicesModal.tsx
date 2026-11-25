@@ -69,6 +69,7 @@ interface InvoiceType {
   id: number;
   name: string;
   code: string;
+  is_active: boolean;
 }
 
 interface SalesInvoicesModalProps {
@@ -184,7 +185,7 @@ export const SalesInvoicesModal = ({
 
       const { data, error } = await supabase
         .from("types")
-        .select("id, name, code")
+        .select("id, name, code, is_active")
         .eq("module_id", modules.id)
         .order("id");
 
@@ -617,7 +618,7 @@ export const SalesInvoicesModal = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {invoiceTypes.map((type) => (
+              {invoiceTypes.filter((type) => type.is_active).map((type) => (
                 <DropdownMenuItem
                   key={type.id}
                   onClick={() => handleSelectInvoiceType(type)}
