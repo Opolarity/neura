@@ -62,6 +62,8 @@ export const useProductionOrderDetail = ({
   const [submitting, setSubmitting] = useState(false);
 
   const [classes, setClasses] = useState<ProductionOrderClassOption[]>([]);
+  /** La clase que ya tiene la orden: se conserva en el select aunque esté inactiva. */
+  const [savedClass, setSavedClass] = useState<ProductionOrderClassOption | null>(null);
   const [explosions, setExplosions] = useState<ExplosionOption[]>([]);
   /**
    * Las recetas de cada prenda, por variación.
@@ -265,6 +267,7 @@ export const useProductionOrderDetail = ({
       const detail = await productionOrderByIdApi(orderId);
       setName(detail.name);
       setClassId(detail.productionOrderClassId.toString());
+      setSavedClass({ id: detail.productionOrderClassId, name: detail.productionOrderClassName });
       setDescription(detail.description ?? "");
       setItems(detail.items);
       setStatus(detail.status);
@@ -481,7 +484,10 @@ export const useProductionOrderDetail = ({
     status,
     reloadOrder: loadOrder,
     submitting,
-    classes,
+    classes:
+      savedClass && !classes.some((c) => c.id === savedClass.id)
+        ? [...classes, savedClass]
+        : classes,
     explosions,
     explosionsByVariation,
     name,

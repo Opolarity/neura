@@ -46,6 +46,7 @@ export const inventoryTypesApi = async (): Promise<
     .from("modules")
     .select("types(id,name,code)")
     .eq("code", "STK")
+    .eq("types.is_active", true)
     .order("name");
   if (error) throw error;
   return data ?? [];

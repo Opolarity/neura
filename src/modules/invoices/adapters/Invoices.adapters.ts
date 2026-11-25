@@ -22,11 +22,12 @@ export const invoicesAdapter = (response: InvoicesResponse): InvoicesAdapted => 
 };
 
 export const invoiceTypesAdapter = (
-  response: { id: number; name: string; code?: string | null }[]
+  response: { id: number; name: string; code?: string | null; is_active: boolean }[]
 ): InvoiceType[] => {
   return response.map((item) => ({
     id: item.id,
     name: item.name,
     code: item.code ?? null,
+    isActive: item.is_active,
   }));
 };

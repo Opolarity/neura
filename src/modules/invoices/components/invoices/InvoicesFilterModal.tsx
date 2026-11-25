@@ -139,7 +139,7 @@ const InvoicesFilterModal = ({ activeFilters, onApply, onClear, invoiceTypes = [
               <div className="grid gap-2">
                 <Label>Tipo de comprobante</Label>
                 <MultiSelect
-                  options={invoiceTypes.map((t) => ({
+                  options={invoiceTypes.filter((t) => t.isActive).map((t) => ({
                     label: t.name,
                     value: String(t.id),
                   }))}

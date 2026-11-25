@@ -212,6 +212,7 @@ export const getTypes = async (code: string): Promise<TypesApiResponse[]> => {
     .from("modules")
     .select("types(id,name,code)")
     .eq("code", code)
+    .eq("types.is_active", true)
     .order("name");
   if (error) throw error;
   return data ?? [];
@@ -353,6 +354,7 @@ export const classesByModuleCode = async (moduleCode: string): Promise<Class[]> 
     .from("modules")
     .select("classes(*)")
     .eq("code", moduleCode)
+    .eq("classes.is_active", true)
     .order("name")
     .single();
 

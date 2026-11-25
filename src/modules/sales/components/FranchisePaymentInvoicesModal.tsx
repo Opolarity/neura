@@ -31,6 +31,7 @@ interface InvoiceType {
   id: number;
   name: string;
   code: string;
+  is_active: boolean;
 }
 
 interface Invoice {
@@ -116,7 +117,7 @@ export const FranchisePaymentInvoicesModal = ({
 
       const { data, error } = await supabase
         .from("types")
-        .select("id, name, code")
+        .select("id, name, code, is_active")
         .eq("module_id", modules.id)
         .order("id");
 
@@ -207,7 +208,7 @@ export const FranchisePaymentInvoicesModal = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {invoiceTypes
-                .filter((type) => CREATABLE_TYPE_CODES.includes(type.code))
+                .filter((type) => type.is_active && CREATABLE_TYPE_CODES.includes(type.code))
                 .map((type) => (
                   <DropdownMenuItem
                     key={type.id}

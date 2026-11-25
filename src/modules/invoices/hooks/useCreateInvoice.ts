@@ -68,6 +68,15 @@ export const useCreateInvoice = () => {
   const [loading, setLoading] = useState(false);
   const [searchingClient, setSearchingClient] = useState(false);
   const [invoiceTypes, setInvoiceTypes] = useState<Types[]>([]);
+  // Tipo del comprobante en edición: sigue visible aunque esté inactivo.
+  const [currentInvoiceType, setCurrentInvoiceType] = useState<Types | null>(null);
+  const invoiceTypeOptions = useMemo(
+    () =>
+      currentInvoiceType && !invoiceTypes.some((t) => t.id === currentInvoiceType.id)
+        ? [...invoiceTypes, currentInvoiceType]
+        : invoiceTypes,
+    [invoiceTypes, currentInvoiceType],
+  );
   const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [invoiceProviders, setInvoiceProviders] = useState<InvoiceProvider[]>([]);
   const [invoiceSeries, setInvoiceSeries] = useState<InvoiceSerie[]>([]);
@@ -151,6 +160,13 @@ export const useCreateInvoice = () => {
           setPdfUrl(invoice.pdf_url || null);
           setXmlUrl(invoice.xml_url || null);
           setCdrUrl(invoice.cdr_url || null);
+
+          const { data: currentType } = await supabase
+            .from("types")
+            .select("id, name, code")
+            .eq("id", invoice.invoice_type_id)
+            .maybeSingle();
+          if (currentType) setCurrentInvoiceType(currentType);
 
           // We'll need to find the provider/serie after the dropdowns are loaded (handled by effect)
           // But we can set the IDs directly if we have them or let the dropdown data trigger the match
@@ -597,7 +613,7 @@ export const useCreateInvoice = () => {
   }, [formData.clientDocument, formData.documentTypeId, documentTypes, toast]);
 
   const handleSave = useCallback(async () => {
-    const selectedType = invoiceTypes.find((t) => t.id.toString() === formData.invoiceTypeId);
+    const selectedType = invoiceTypeOptions.find((t) => t.id.toString() === formData.invoiceTypeId);
     const isBoleta = selectedType?.code === "2";
     const isLowAmountBoleta = isBoleta && totalAmount < 700;
 
@@ -678,7 +694,7 @@ export const useCreateInvoice = () => {
     } finally {
       setSaving(false);
     }
-  }, [formData, items, totalAmount, navigate, toast, isEditing, invoiceId, invoiceTypes]);
+  }, [formData, items, totalAmount, navigate, toast, isEditing, invoiceId, invoiceTypeOptions]);
 
   const handleEmit = useCallback(async () => {
     if (!invoiceId) return;
@@ -723,7 +739,7 @@ export const useCreateInvoice = () => {
     xmlUrl,
     cdrUrl,
     searchingClient,
-    invoiceTypes,
+    invoiceTypes: invoiceTypeOptions,
     documentTypes,
     invoiceProviders,
     invoiceSeries,

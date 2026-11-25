@@ -167,6 +167,7 @@ export const supplierClassesApi = async (): Promise<SupplierClass[]> => {
     .from("classes")
     .select("id, name, code")
     .eq("module_id", moduleData.id)
+    .eq("is_active", true)
     .order("name");
 
   if (error) throw error;

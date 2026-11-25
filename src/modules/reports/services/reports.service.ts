@@ -769,6 +769,7 @@ export const filterOptionsService = {
       .from('classes')
       .select('id, name, modules!inner(code)')
       .eq('modules.code', 'MOV')
+      .eq('is_active', true)
       .order('name');
     if (error) throw error;
     return (data ?? []) as unknown as MovementClassOption[];
@@ -817,6 +818,7 @@ export const filterOptionsService = {
     const { data, error } = await supabase
       .from('sale_types')
       .select('id, name')
+      .eq('is_active', true)
       .order('name');
     if (error) throw error;
     return data ?? [];

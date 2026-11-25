@@ -47,6 +47,7 @@ export const movementsTypesApi = async (): Promise<
     .from("modules")
     .select("types(id,name,code)")
     .eq("code", "STM")
+    .eq("types.is_active", true)
     .order("name");
   if (error) throw error;
   return data ?? [];

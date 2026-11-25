@@ -123,6 +123,7 @@ export const BusinessAccountsApi = async (): Promise<{ id: number; name: string 
     const { data, error } = await supabase
         .from("business_accounts")
         .select("id, name")
+        .eq("is_active", true)
         .order("name");
 
     if (error) throw error;

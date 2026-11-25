@@ -61,6 +61,7 @@ interface InvoiceType {
   id: number;
   name: string;
   code: string;
+  is_active: boolean;
 }
 
 interface InvoicingStepProps {
@@ -166,7 +167,7 @@ export default function InvoicingStep({
 
       const { data, error } = await supabase
         .from("types")
-        .select("id, name, code")
+        .select("id, name, code, is_active")
         .eq("module_id", modules.id)
         .order("id");
 
@@ -542,7 +543,7 @@ export default function InvoicingStep({
   };
 
   const handleAutoCreateAndEmit = async (typeCode: string) => {
-    const invoiceType = invoiceTypes.find((t) => t.code === typeCode);
+    const invoiceType = invoiceTypes.find((t) => t.is_active && t.code === typeCode);
     if (!invoiceType) {
       toast({ title: "Error", description: "Tipo de comprobante no encontrado", variant: "destructive" });
       onAutoEmitComplete?.();
@@ -745,7 +746,7 @@ export default function InvoicingStep({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {invoiceTypes.map((type) => (
+                {invoiceTypes.filter((type) => type.is_active).map((type) => (
                   <DropdownMenuItem
                     key={type.id}
                     onClick={() => handleSelectInvoiceType(type)}

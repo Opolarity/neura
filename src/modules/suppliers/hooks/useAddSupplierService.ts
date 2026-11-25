@@ -179,7 +179,10 @@ export const useAddSupplierService = ({
     quotations,
     materials,
     materialClasses,
-    classes,
+    // Solo clases activas, más la que ya tiene el servicio aunque esté inactiva.
+    classes: classes.some((c) => c.id === service.supplierClassId)
+      ? classes
+      : [...classes, { id: service.supplierClassId, name: service.supplierClassName }],
     loadingCatalogs,
     form,
     setField,

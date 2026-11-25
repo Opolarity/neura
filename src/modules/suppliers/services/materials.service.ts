@@ -448,6 +448,16 @@ type SelectIn = {
         column: string,
         values: number[]
       ) => Promise<{ data: T[] | null; error: { message: string } | null }>;
+      /** `select(...).eq(...).in(...)`, para leer solo los activos. */
+      eq: (
+        column: string,
+        value: boolean
+      ) => {
+        in: <T>(
+          column: string,
+          values: number[]
+        ) => Promise<{ data: T[] | null; error: { message: string } | null }>;
+      };
     };
     /** `update(...).eq(...).select(...).single()`, la otra forma que se usa. */
     update: (values: Record<string, unknown>) => {
@@ -517,6 +527,7 @@ export const materialSuppliersApi = async (
     const { data: cuentas, error: errorCuentas } = await plano
       .from("accounts")
       .select("id, name, middle_name, last_name, last_name2")
+      .eq("is_active", true)
       .in<{
         id: number;
         name: string | null;
@@ -541,9 +552,13 @@ export const materialSuppliersApi = async (
     });
   }
 
+  // Un proveedor inactivo no se precarga: la línea nace sin él.
   return filas.map((fila) => ({
     materialId: fila.id,
-    supplierId: fila.supplier_id,
+    supplierId:
+      fila.supplier_id !== null && nombres.has(fila.supplier_id)
+        ? fila.supplier_id
+        : null,
     supplierName:
       fila.supplier_id !== null
         ? (nombres.get(fila.supplier_id) ?? null)
