@@ -16,6 +16,7 @@ import { profileRoutes } from "@/modules/profile";
 import ReportsLayout from "@/modules/reports/pages/ReportsLayout";
 import CrmCanvasLayout from "@/modules/crm/layouts/CrmCanvasLayout";
 import SplashPage from "@/shared/components/splash/SplashPage";
+import AttendanceKioskPage from "@/modules/attendance/pages/AttendanceKioskPage";
 
 // El editor visual del ecommerce va aparte: trae craft.js, CodeMirror y los
 // iconos de Font Awesome, que no tienen por qué cargarse con el resto del ERP.
@@ -69,6 +70,21 @@ export const router = createBrowserRouter([
   {
     path: "/oauth/consent",
     element: <OAuthConsent />,
+  },
+  // Kiosco de asistencia de la empresa: sin sesion ni layout. Solo marca en
+  // equipos activados (secreto del equipo en este navegador) y donde la
+  // ubicacion cae en el radio de un punto de marcacion.
+  {
+    path: "/asistencia",
+    errorElement: <RouteError />,
+    element: <AttendanceKioskPage />,
+  },
+  // Link del kiosco para compartir: activa este equipo sin sesion y deja la
+  // URL en /asistencia. Un token viejo o falso muestra el aviso.
+  {
+    path: "/asistencia/:token",
+    errorElement: <RouteError />,
+    element: <AttendanceKioskPage />,
   },
   // Editor visual de una página del ecommerce: a pantalla completa, con sesión
   // pero sin el DashboardLayout (el editor trae su propia barra y paneles).

@@ -550,3 +550,37 @@ export const sellersGuide: ReportGuide = {
     { check: 'Sin vendedor', how: 'Los pedidos de canal web o chatbot deben aparecer siempre como "Sin vendedor".' },
   ],
 };
+
+
+export const timesheetGuide: ReportGuide = {
+  name: 'cuadre de horas',
+  summary:
+    'Cuánto trabajó cada persona en el rango, a partir de sus marcas de asistencia (kiosco, «Marcar mi asistencia» o supervisor). Con esto se paga a quien cobra por hora y se revisan tardanzas y faltas.',
+  rules: [
+    'Cada marca cuenta por su hora y minuto, sin segundos, como una tarjeta de reloj: 19:16 → 19:19 son 3 min. Así la cuenta se puede rehacer a mano con lo que se ve.',
+    'Un día se arma en tramos entrada → salida; las horas del día son la suma de sus tramos.',
+    'El refrigerio del horario se descuenta solo si hubo un único tramo y fue más largo que el refrigerio. Si la persona marcó su salida y vuelta del refrigerio, se descuenta lo que realmente tomó.',
+    'Monto (por hora) = minutos de cada tramo × su tarifa ÷ 60. La tarifa es la que tenía la persona al marcar la entrada.',
+    'Tardanza: minutos después de la hora de entrada del horario, pasada su tolerancia. Falta: día con horario y sin marcas. Incompleto: una entrada sin salida (de más de 16 h) o una salida sin entrada.',
+    'Feriado (Asistencia › Feriados): no hay falta, tardanza ni extra; lo trabajado se paga con su sobretasa.',
+    'Quien cobra sueldo no tiene monto: se muestra su valor hora (sueldo ÷ 30 ÷ horas de su jornada) y, si trabajó en feriado, el extra.',
+  ],
+  cards: [
+    { title: 'Horas trabajadas', what: 'Suma de los tramos de todas las personas, menos el refrigerio cuando corresponde.', source: 'Marcas de asistencia.' },
+    { title: 'Tardanzas', what: 'Días en que alguien llegó tarde y los minutos en total.', source: 'Marcas y horario de cada persona.' },
+    { title: 'Faltas', what: 'Días con horario y sin marcas; debajo, los días incompletos.', source: 'Horario de cada persona.' },
+    { title: 'Horas extra', what: 'Lo trabajado por encima de la jornada del horario.', source: 'Marcas y horario.' },
+    { title: 'Feriados trabajados', what: 'Días feriados con marcas y sus horas.', source: 'Asistencia › Feriados.' },
+  ],
+  charts: [
+    { title: 'Ranking', text: 'Personal con más tardanzas, minutos tarde, faltas u horas extra.' },
+    { title: 'Asistencia por día', text: 'Por día, cuántas personas con horario llegaron a tiempo, tarde o faltaron.' },
+    { title: 'Detalle por trabajador', text: 'Una fila por persona; al pulsarla, cada día con todas sus marcas, horas y monto.' },
+  ],
+  excel:
+    '«Descargar» baja lo filtrado: la hoja Resumen (una fila por persona) y Por día (cada día con sus tramos, minutos, horas, tardanza, extra y monto). En el detalle de una persona, «Excel» baja solo sus días.',
+  validation: [
+    { check: 'Horas de un día', how: 'Suma los minutos de cada tramo que ves en el detalle (entrada → salida, sin segundos) y resta el refrigerio si aparece.' },
+    { check: 'Monto', how: 'Minutos × tarifa ÷ 60; debe coincidir con el saldo de esa persona en Pagos y cobros › Operarios › Por hora para el mismo rango.' },
+  ],
+};

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,10 +26,16 @@ import {
 } from "@/components/ui/command";
 import { PageLoader } from "@/shared/components/page-loader";
 import useCreateUser from "../hooks/useCreateUser";
+import { toast } from "@/shared/hooks/use-toast";
+import { EmployeeRecordFields } from "@/modules/attendance/components/EmployeeRecordFields";
+import { useEmployeeRecord } from "@/modules/attendance/hooks/useEmployeeRecord";
+import { saveEmployeeRecordApi } from "@/modules/attendance/services/attendance.service";
 
 const CreateUser = () => {
   const { uid } = useParams();
   const isEdit = !!uid;
+  // Se llama después de guardar el usuario; se arma más abajo, con la ficha.
+  const saveAttendanceRef = useRef<() => Promise<boolean>>(async () => true);
 
   const {
     formData,
@@ -56,7 +62,29 @@ const CreateUser = () => {
     isSearchingDocument,
     isDocumentFound,
     handleDocumentLookup,
-  } = useCreateUser(uid, isEdit);
+    recordId,
+  } = useCreateUser(uid, isEdit, () => saveAttendanceRef.current());
+
+  // "Asistencia y pago" de su ficha (solo al editar, con attendance.config).
+  // En personalizado todos son colaboradores: sueldo mensual y marcan con su
+  // sesión (el PIN es opcional, para el kiosco o el reloj de huella).
+  const accountId = isEdit ? recordId : null;
+  const attendance = useEmployeeRecord(accountId, "COL");
+  const showAttendance = isEdit && attendance.visible;
+  saveAttendanceRef.current = async () => {
+    if (!showAttendance || !accountId) return true;
+    try {
+      await saveEmployeeRecordApi(accountId, attendance.value, null);
+      return true;
+    } catch (error) {
+      toast({
+        title: "El usuario se guardó, pero no su asistencia y pago",
+        description: error instanceof Error ? error.message : undefined,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
 
   if (fetchingUser || optionsLoading) {
     return <PageLoader message="Cargando datos del usuario..." />;
@@ -77,7 +105,17 @@ const CreateUser = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={(e) => {
+          const faltan = showAttendance ? attendance.missing(null) : [];
+          if (faltan.length > 0) {
+            e.preventDefault();
+            toast({ title: `Asistencia y pago: falta ${faltan.join(", ")}`, variant: "destructive" });
+            return;
+          }
+          void handleSubmit(e);
+        }}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-3">
             <Card>
@@ -507,6 +545,17 @@ const CreateUser = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {showAttendance && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Asistencia y pago</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <EmployeeRecordFields state={attendance} idPrefix="user-attendance" />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Actions - Below both columns */}
             <div className="flex justify-end gap-4 mt-6">
