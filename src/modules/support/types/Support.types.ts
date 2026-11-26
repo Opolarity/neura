@@ -27,7 +27,7 @@ export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB
 export interface SupportRequestApiItem {
   id: string;
   title: string | null;
-  /** "recibido" | "rechazado" | nombre del estado de la tarea (configurable). */
+  /** "recibido" | "respondido" | "rechazado" | nombre del estado de la tarea (configurable). */
   status: string | null;
   task_code: string | null;
   /**
@@ -43,7 +43,7 @@ export interface SupportRequestApiItem {
   reporter_name: string | null;
   /** "solicitud" | "tarea" — conjunto que podría crecer, se trata como string. */
   status_source: string | null;
-  /** todo | in_progress | done | blocked | cancelled | ... (ABIERTO) o null. */
+  /** todo | in_progress | done | blocked | answered | cancelled | ... (ABIERTO) o null. */
   status_category: string | null;
   /** URL de la página desde donde se creó; null en lo creado antes de registrarla. */
   origin_url: string | null;
