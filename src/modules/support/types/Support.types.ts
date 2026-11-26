@@ -27,7 +27,7 @@ export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB
 export interface SupportRequestApiItem {
   id: string;
   title: string | null;
-  /** "recibido" | "rechazado" | nombre del estado de la tarea (configurable). */
+  /** "recibido" | "respondido" | "rechazado" | nombre del estado de la tarea (configurable). */
   status: string | null;
   task_code: string | null;
   /**
@@ -43,13 +43,23 @@ export interface SupportRequestApiItem {
   reporter_name: string | null;
   /** "solicitud" | "tarea" — conjunto que podría crecer, se trata como string. */
   status_source: string | null;
-  /** todo | in_progress | done | blocked | cancelled | ... (ABIERTO) o null. */
+  /** todo | in_progress | done | blocked | answered | cancelled | ... (ABIERTO) o null. */
   status_category: string | null;
   /** URL de la página desde donde se creó; null en lo creado antes de registrarla. */
   origin_url: string | null;
   /** Host ya normalizado por la API externa; "" cuando no hay origen. */
   origin_host: string | null;
   attachments_count: number | null;
+  /**
+   * Mensajes del equipo de OPOLARITY que el cliente puede ver. Opcional: las
+   * versiones anteriores de la API externa no lo devuelven.
+   */
+  team_messages_count?: number | null;
+  /**
+   * Cuántos de esos mensajes llegaron después del último mensaje del cliente:
+   * respuestas del equipo que el cliente todavía no contestó. Opcional.
+   */
+  team_replies_new?: number | null;
 }
 
 /**
@@ -106,6 +116,10 @@ export interface SupportRequestListItem {
   /** Nombre legible del origen ("Sin origen" cuando no hay). */
   originLabel: string;
   attachmentsCount: number;
+  /** Mensajes del equipo de OPOLARITY visibles para el cliente (0 si la API no lo manda). */
+  teamMessagesCount: number;
+  /** Respuestas del equipo aún sin contestar por el cliente (0 si la API no lo manda). */
+  teamRepliesNew: number;
   createdAt: string;
   updatedAt: string;
 }
