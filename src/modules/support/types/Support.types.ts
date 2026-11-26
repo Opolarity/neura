@@ -60,6 +60,16 @@ export interface SupportRequestApiItem {
   origin_host: string | null;
   attachments_count: number | null;
   /**
+   * Mensajes del equipo de OPOLARITY que el cliente puede ver. Opcional: las
+   * versiones anteriores de la API externa no lo devuelven.
+   */
+  team_messages_count?: number | null;
+  /**
+   * Cuántos de esos mensajes llegaron después del último mensaje del cliente:
+   * respuestas del equipo que el cliente todavía no contestó. Opcional.
+   */
+  team_replies_new?: number | null;
+  /**
    * Último mensaje del hilo que ve el cliente, sin contenido (T-990). Opcional:
    * las versiones anteriores de la API externa no lo devuelven. null si la
    * solicitud todavía no tiene conversación.
@@ -152,6 +162,10 @@ export interface SupportRequestListItem {
   /** Nombre legible del origen ("Sin origen" cuando no hay). */
   originLabel: string;
   attachmentsCount: number;
+  /** Mensajes del equipo de OPOLARITY visibles para el cliente (0 si la API no lo manda). */
+  teamMessagesCount: number;
+  /** Respuestas del equipo aún sin contestar por el cliente (0 si la API no lo manda). */
+  teamRepliesNew: number;
   createdAt: string;
   updatedAt: string;
   /** Hay respuestas de soporte sin leer (false si el backend no lo informa). */

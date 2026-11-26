@@ -49,6 +49,9 @@ export const adaptSupportRequestsResponse = (
       originHost,
       originLabel: originLabelFromHost(originHost),
       attachmentsCount: item.attachments_count ?? 0,
+      // ?? 0: las versiones anteriores de la API no mandan estos conteos
+      teamMessagesCount: item.team_messages_count ?? 0,
+      teamRepliesNew: item.team_replies_new ?? 0,
       createdAt: item.created_at,
       updatedAt: item.updated_at,
       hasUnread: item.has_unread === true,
