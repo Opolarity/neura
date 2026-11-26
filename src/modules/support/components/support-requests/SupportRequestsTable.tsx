@@ -14,6 +14,7 @@ import { formatDateDisplay, formatDateTime } from "@/shared/utils/date";
 import type { SupportRequestListItem } from "../../types/Support.types";
 import { formatSupportCodes } from "../../utils/requestCodes";
 import { SupportStatusBadge } from "./SupportStatusBadge";
+import { SupportTeamRepliesIndicator } from "./SupportTeamRepliesIndicator";
 
 interface SupportRequestsTableProps {
   requests: SupportRequestListItem[];
@@ -117,7 +118,10 @@ export const SupportRequestsTable = ({
               </Badge>
             </TableCell>
             <TableCell>
-              <SupportStatusBadge item={request} />
+              <div className="flex items-center gap-2">
+                <SupportStatusBadge item={request} />
+                <SupportTeamRepliesIndicator count={request.teamRepliesNew} />
+              </div>
             </TableCell>
             <TableCell>
               {request.reporterName || <span className="text-muted-foreground">-</span>}
