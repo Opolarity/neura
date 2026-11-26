@@ -35,7 +35,7 @@ export interface SupportRequestApiItem {
    */
   code?: number | null;
   title: string | null;
-  /** "recibido" | "rechazado" | nombre del estado de la tarea (configurable). */
+  /** "recibido" | "respondido" | "rechazado" | nombre del estado de la tarea (configurable). */
   status: string | null;
   /** Código de la tarea vinculada (el `T-n`), o null si todavía no es tarea. */
   task_code: number | null;
@@ -52,7 +52,7 @@ export interface SupportRequestApiItem {
   reporter_name: string | null;
   /** "solicitud" | "tarea" — conjunto que podría crecer, se trata como string. */
   status_source: string | null;
-  /** todo | in_progress | done | blocked | cancelled | ... (ABIERTO) o null. */
+  /** todo | in_progress | done | blocked | answered | cancelled | ... (ABIERTO) o null. */
   status_category: string | null;
   /** URL de la página desde donde se creó; null en lo creado antes de registrarla. */
   origin_url: string | null;
