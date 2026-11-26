@@ -115,6 +115,9 @@ export const adaptSupportRequestDetail = (
     originLabel: originLabelFromHost(originHost),
     // El conteo del listado puede no venir en el detalle: se cae a los adjuntos reales
     attachmentsCount: item.attachments_count ?? attachments.length,
+    // ?? 0: las versiones anteriores de la API no mandan estos conteos
+    teamMessagesCount: item.team_messages_count ?? 0,
+    teamRepliesNew: item.team_replies_new ?? 0,
     createdAt: item.created_at,
     updatedAt: item.updated_at,
     descriptionHtml: item.description?.trim() || null,
