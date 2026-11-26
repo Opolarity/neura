@@ -21,6 +21,7 @@ import { SupportConversation } from "./SupportConversation";
 import { SupportReplyBox } from "./SupportReplyBox";
 import { SupportRequestsErrorState } from "./SupportRequestsErrorState";
 import { SupportStatusBadge } from "./SupportStatusBadge";
+import { SupportTeamRepliesIndicator } from "./SupportTeamRepliesIndicator";
 
 interface SupportRequestDetailSheetProps {
   open: boolean;
@@ -220,6 +221,7 @@ export const SupportRequestDetailSheet = ({
                 {detail.requestType === "ticket" ? "Problema" : "Sugerencia"}
               </Badge>
               <SupportStatusBadge item={detail} />
+              <SupportTeamRepliesIndicator count={detail.teamRepliesNew} />
               {detail.taskCode && (
                 <span className="text-xs text-muted-foreground">
                   Tarea {detail.taskCode}
