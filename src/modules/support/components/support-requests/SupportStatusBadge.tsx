@@ -18,12 +18,16 @@ const CATEGORY_VARIANT: Record<string, StatusVariant> = {
   in_progress: "info",
   done: "success",
   blocked: "warning",
+  // El equipo de Neura respondió y espera al cliente: amarillo.
+  answered: "warning",
   cancelled: "destructive",
 };
 
 // Prioridad 2: solo cuando todavía no es tarea (status_source = "solicitud").
 const SOLICITUD_VARIANT: Record<string, StatusVariant> = {
   recibido: "info",
+  // El equipo de Neura respondió y espera al cliente: amarillo.
+  respondido: "warning",
   rechazado: "destructive",
 };
 
