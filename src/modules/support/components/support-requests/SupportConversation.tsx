@@ -14,6 +14,7 @@ import type { SupportAttachmentFile, SupportMessage } from "../../types/Support.
 import { SupportAttachmentLink } from "./SupportAttachmentLink";
 import { SupportMessageText } from "./SupportMessageText";
 import { SupportRichText } from "./SupportRichText";
+import { looksLikeSupportHtml } from "../../utils/sanitizeSupportHtml";
 
 interface SupportConversationProps {
   messages: SupportMessage[];
@@ -210,14 +211,20 @@ const MessageBubble = ({
               sending && "opacity-70",
             )}
           >
-            {/* content es texto plano con Markdown simple: se pinta con su
-                formato y nunca se inserta como HTML (a diferencia de la
-                descripción). Las palabras y URLs largas bajan de línea. */}
+            {/* content suele ser texto plano con Markdown simple: se pinta con
+                su formato sin pasar por innerHTML. Algunos mensajes del equipo
+                (bots de Tasks) llegan en HTML: esos se sanean y se pintan como
+                la descripción. Las palabras y URLs largas bajan de línea. */}
             {message.descriptionHtml ? (
               // Primer mensaje: la descripción de la solicitud, que sí es HTML
               <SupportRichText
                 html={message.descriptionHtml}
                 className="[overflow-wrap:anywhere]"
+              />
+            ) : looksLikeSupportHtml(message.content) ? (
+              <SupportRichText
+                html={message.content}
+                className="[overflow-wrap:anywhere] [&_p:last-child]:mb-0"
               />
             ) : (
               <SupportMessageText text={message.content} />
