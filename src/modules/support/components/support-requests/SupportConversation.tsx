@@ -214,14 +214,17 @@ const MessageBubble = ({
             {/* content suele ser texto plano con Markdown simple: se pinta con
                 su formato sin pasar por innerHTML. Algunos mensajes del equipo
                 (bots de Tasks) llegan en HTML: esos se sanean y se pintan como
-                la descripción. Las palabras y URLs largas bajan de línea. */}
+                la descripción. Solo los del equipo (origin "internal", lo fija
+                Tasks): lo que escribe el solicitante, incluido el formulario
+                público, sigue siempre como texto. Las palabras y URLs largas
+                bajan de línea. */}
             {message.descriptionHtml ? (
               // Primer mensaje: la descripción de la solicitud, que sí es HTML
               <SupportRichText
                 html={message.descriptionHtml}
                 className="[overflow-wrap:anywhere]"
               />
-            ) : looksLikeSupportHtml(message.content) ? (
+            ) : message.origin === "internal" && looksLikeSupportHtml(message.content) ? (
               <SupportRichText
                 html={message.content}
                 className="[overflow-wrap:anywhere] [&_p:last-child]:mb-0"
