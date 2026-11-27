@@ -74,6 +74,7 @@ import {
   fetchSaleProducts,
 } from "../services";
 import { findExactScanMatch } from "../utils/scan";
+import { franchiseIntakeErrorToast } from "../utils/franchiseIntakeError";
 import {
   calculateSubtotal,
   calculateDiscountAmount,
@@ -1242,19 +1243,12 @@ export const useCreateSale = () => {
         const errText = await response.text();
         console.error("Error response from franchisee API:", errText);
 
-        // Un franquiciado que no usa Neura no tiene tenant en el ERP de
-        // franquiciados: create-consignment-intake responde 422 con
-        // `Tenant "<code>" no encontrado`. Solo ese 422 se traduce; los otros
-        // ("Supplier", "Usuario", "Warehouse ... no encontrado") son fallos
-        // reales y siguen con el error genérico.
-        let upstreamError = "";
-        try {
-          upstreamError = String((JSON.parse(errText) as { error?: unknown })?.error ?? "");
-        } catch {
-          // Respuesta no-JSON: no es el caso del tenant.
-        }
-        if (response.status === 422 && /^Tenant ".*" no encontrado$/.test(upstreamError)) {
-          toast({ title: "Franquiciado no usa Neura", variant: "destructive" });
+        // Los 422 de create-consignment-intake son datos que faltan en el ERP
+        // de franquiciados (tenant, proveedor/usuario Overtake, almacén,
+        // SKUs): se dice cuál en vez de un "Error 422" a secas.
+        const intakeError = franchiseIntakeErrorToast(response.status, errText);
+        if (intakeError) {
+          toast({ ...intakeError, variant: "destructive" });
           return;
         }
 
