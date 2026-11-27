@@ -40,3 +40,11 @@ export const sanitizeSupportHtml = (html: string | null): string => {
 
   return doc.body.innerHTML;
 };
+
+/**
+ * ¿El mensaje viene en HTML? Lo normal es texto con Markdown, pero los bots
+ * de Tasks publican algunas respuestas con etiquetas (`<p>`, `<strong>`...):
+ * pintadas como texto se verían las etiquetas.
+ */
+export const looksLikeSupportHtml = (content: string): boolean =>
+  /<(p|div|br|ul|ol|li|h[1-6]|pre|code|table|blockquote|strong|em|a|img)\b[^>]*>/i.test(content);
